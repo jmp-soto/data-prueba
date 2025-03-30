@@ -37,7 +37,7 @@ Resources:
     Properties:
       S3BucketArn: !Sub "arn:aws:s3:::stage-nelson-${Stage}"
       S3Config:
-        BucketAccessRoleArn: !Sub "arn:aws:iam::${AWSAccountId}:role/role-${pTeamName}-datasync-${Stage}"
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${Stage}"
       Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
   
   DataSyncDestinationLocationOptimizador:
@@ -45,7 +45,7 @@ Resources:
     Properties:
       S3BucketArn: !Sub "arn:aws:s3:::stage-maria-${Stage}"
       S3Config:
-        BucketAccessRoleArn: !Sub "arn:aws:iam::${AWSAccountId}:role/role-${pTeamName}-datasync-${Stage}"
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${Stage}"
       Subdirectory: "/regional/externa/rg_in_optimizador_stage/"
   
   DataSyncTaskEjecOptimizador:
