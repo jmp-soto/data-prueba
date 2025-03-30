@@ -59,7 +59,7 @@ Resources:
                 Action:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
-                Resource: !Sub "arn:aws:s3:::stage-nelson-${Stage}"
+                Resource: !Sub "arn:aws:s3:::stage-maria-${Stage}"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
                 Action:
@@ -70,7 +70,7 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
-                Resource: !Sub "arn:aws:s3:::stage-nelson-${Stage}/*"
+                Resource: !Sub "arn:aws:s3:::stage-maria-${Stage}/*"
                  
 
 
