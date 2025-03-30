@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    Default: dev
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOptId:
+    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbStageName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+
+Resources:
+  rgInQaseAnalytics:
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbStageName
+      TableInput:
+        Description: ''
+        Name: rg_in_qase_analytics
+        Parameters:
+          EXTERNAL: 'TRUE'
+          compressionType: SNAPPY
+          skip.header.line.count: '1'
+        PartitionKeys:
+          - Name: dt
+            Type: date
+        Retention: 0
+        StorageDescriptor:
+          Columns:
+            - Name: prueflos
+              Type: string
+            - Name: vorglfnr
+              Type: string
+            - Name: merknr
+              Type: string
+            - Name: detailerg
+              Type: string
+            - Name: attribut
+              Type: string
+            - Name: ersteller
+              Type: string
+            - Name: erstelldat
+              Type: date
+            - Name: aenderer
+              Type: string
+            - Name: aenderdat
+              Type: date
+            - Name: probenr
+              Type: string
+            - Name: stuecknr
+              Type: string
+            - Name: pruefer
+              Type: string
+            - Name: pruefdatuv
+              Type: date
+            - Name: pruefdatub
+              Type: date
+            - Name: pruefzeitv
+              Type: timestamp
+            - Name: pruefzeitb
+              Type: timestamp
+            - Name: pruefbemkt
+              Type: string
+            - Name: prltextkz
+              Type: string
+            - Name: ltextspr
+              Type: string
+            - Name: messwertni
+              Type: string
+            - Name: messwert
+              Type: double
+            - Name: katalgart1
+              Type: string
+            - Name: gruppe1
+              Type: string
+            - Name: code1
+              Type: string
+            - Name: version1
+              Type: string
+            - Name: katalgart2
+              Type: string
+            - Name: gruppe2
+              Type: string
+            - Name: code2
+              Type: string
+            - Name: version2
+              Type: string
+            - Name: katalgart3
+              Type: string
+            - Name: gruppe3
+              Type: string
+            - Name: code3
+              Type: string
+            - Name: version3
+              Type: string
+            - Name: katalgart4
+              Type: string
+            - Name: gruppe4
+              Type: string
+            - Name: code4
+              Type: string
+            - Name: version4
+              Type: string
+            - Name: katalgart5
+              Type: string
+            - Name: grupvers5
+              Type: string
+            - Name: gruppe5
+              Type: string
+            - Name: code5
+              Type: string
+            - Name: version5
+              Type: string
+            - Name: anzfehler
+              Type: integer
+            - Name: fehlklas
+              Type: string
+            - Name: mbewertg
+              Type: string
+            - Name: estuecknr
+              Type: string
+            - Name: serialnr
+              Type: string
+            - Name: maschine
+              Type: string
+            - Name: position
+              Type: string
+            - Name: zeiterstl
+              Type: timestamp
+            - Name: zeitaend
+              Type: timestamp
+            - Name: original_input
+              Type: string
+            - Name: diff_dec_places
+              Type: integer
+            - Name: inpproc_ready
+              Type: string
+          Compressed: false
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Location: !Sub s3://koa-prueba-345345345345/regional/sap/rg_in_qase
+          NumberOfBuckets: -1
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Parameters: {}
+          SerdeInfo:
+            Parameters:
+              serialization.format: '1'
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+          SortColumns: []
+          StoredAsSubDirectories: false
+        TableType: EXTERNAL_TABLE
+    Type: AWS::Glue::Table

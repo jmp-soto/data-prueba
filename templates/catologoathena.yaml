@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    Default: dev
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOptId:
+    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+
+
+Resources:
+  MyGlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseInput:
+        Name: "prueba_athena_database"
+        Description: "Base de datos en el catálogo predeterminado de AWS Glue tablas procesadas"

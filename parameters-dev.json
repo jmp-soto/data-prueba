@@ -1,0 +1,29 @@
+[
+  {
+      "TEAM": "da"
+  },
+  {
+      "ENVIRONMENT": "dev"
+  },
+  {
+      "BRANCH_NAME": "develop"
+  },
+  {
+      "REPOSITORY_NAME":"github-trust-repo"
+  },    
+  {
+      "ARTIFACTORY_BUCKET":"test-artifacts-dev-josemaria"
+  },
+  {
+      "AWS_ACCOUNT_ID":"039612881651"
+  },
+  {
+      "AWS_ACCOUNT_ID_CASA":"160885287080"
+  },
+  {
+      "DB_STAGE":"prueba_athena_database"
+  },
+  {
+      "AWS_ACCOUNT":"ecodistribucion"
+  }
+]

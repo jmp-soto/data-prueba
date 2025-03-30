@@ -1,0 +1,95 @@
+# LAMBDA 
+
+# myLambdaFunction:
+#     Type: AWS::Lambda::Function
+#     Properties:
+#       FunctionName: !Sub "function-${Stage}"
+#       Description: "Lambda function desplegada dinámicamente"
+#       MemorySize: 256
+#       Timeout: 30
+#       Code:
+#         S3Bucket: !ImportValue da-ArtifactsBucketlibName
+#         S3Key: lambda/stage_misupply/src/lambda_function.zip
+#       Role: !ImportValue LambdaMisupplyRole-Arn
+#       Handler: lambda_function.lambda_handler
+#       Runtime: python3.9
+#       Environment:
+#         Variables:
+#           ENVIRONMENT: !Ref Stage
+#           REGION: !Ref pAWSRegion
+#       Layers:
+#         - !Ref dataWranglerLayer
+#         - !Ref requestLayer
+  
+#ROL datasync
+# DataSyncRole:
+#     Type: AWS::IAM::Role
+#     Properties:
+#       RoleName: !Sub "role-datasync-${pTeamName}-${pAccountName}-${Stage}"
+#       AssumeRolePolicyDocument:
+#         Version: "2012-10-17"
+#         Statement:
+#           - Effect: "Allow"
+#             Principal:
+#               Service: "datasync.amazonaws.com"
+#             Action: "sts:AssumeRole"
+#       ManagedPolicyArns:
+#         - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+#         - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+#         - "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+#         - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+#         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+#         - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+#       MaxSessionDuration: 43200
+#       Path: "/"
+#       Policies:
+#         - PolicyName: !Sub "access-to-s3-policy-${pTeamName}-${pAWSAccountId}-prueba"
+#           PolicyDocument:
+#             Version: "2012-10-17"
+#             Statement:
+#               - Sid: AccessToS3Bucket
+#                 Effect: "Allow"
+#                 Action:
+#                   - "s3:GetBucketLocation"
+#                   - "s3:ListBucket"
+#                   - "s3:ListBucketMultipartUploads"
+#                 Resource: "arn:aws:s3:::proyectodatasync-ecodistribucion-039612881651"
+#               - Sid: AccessToS3Objects
+#                 Effect: "Allow"
+#                 Action:
+#                   - "s3:AbortMultipartUpload"
+#                   - "s3:DeleteObject"
+#                   - "s3:GetObject"
+#                   - "s3:ListMultipartUploadParts"
+#                   - "s3:PutObject"
+#                   - "s3:GetObjectTagging"
+#                   - "s3:ListBucket"
+#                   - "s3:PutObjectTagging"
+#                 Resource: "arn:aws:s3:::proyectodatasync-ecodistribucion-039612881651/*"
+
+
+  # S3BucketPolicy:
+  #   Type: "AWS::S3::BucketPolicy"
+  #   Properties:
+  #     Bucket: !Ref S3Bucket
+  #     PolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Sid: "AccessAccountDatalakeObjectDataSync"
+  #           Effect: "Allow"
+  #           Principal:
+  #             AWS: "arn:aws:iam::160885287080:root"
+  #           Action:
+  #             - "s3:GetBucketLocation"
+  #             - "s3:ListBucket"
+  #             - "s3:ListBucketMultipartUploads"
+  #             - "s3:AbortMultipartUpload"
+  #             - "s3:DeleteObject"
+  #             - "s3:GetObject"
+  #             - "s3:ListMultipartUploadParts"
+  #             - "s3:PutObjectTagging"
+  #             - "s3:GetObjectTagging"
+  #             - "s3:PutObject"
+  #           Resource:
+  #             - !Sub "arn:aws:s3:::${S3Bucket}"
+  #             - !Sub "arn:aws:s3:::${S3Bucket}/*"

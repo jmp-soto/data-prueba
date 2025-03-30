@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template para crear un único bucket S3 con subdirectorios específicos
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    Default: dev
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOptId:
+    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+
+Resources:
+  ArtifactsBucketlib:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref pArtifactsBucket
+  
+  daEcodistribucionBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "stage", !Ref Stage]]
+      AccessControl: Private
+
+  daEcodistribucionBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Join ['-', ["aws-athena-query-results", !Ref pAWSRegion, !Ref pAWSAccountId]]
+      AccessControl: Private
+
+  daEcodistribucionStagelib:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Join ['-', ["koa", !Ref pAccountName, !Ref pAWSAccountId]]
+      AccessControl: Private
+
+  S3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Join ['-', ["proyectodatasync", !Ref pAccountName, !Ref pAWSAccountId]] # Cambia el nombre si es necesario
+
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AccessAccountDatalakeObjectDataSync"
+            Effect: "Allow"
+            Principal:
+              AWS: "arn:aws:iam::160885287080:root"
+            Action:
+              - "s3:GetBucketLocation"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:DeleteObject"
+              - "s3:GetObject"
+              - "s3:ListMultipartUploadParts"
+              - "s3:PutObjectTagging"
+              - "s3:GetObjectTagging"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${S3Bucket}"
+              - !Sub "arn:aws:s3:::${S3Bucket}/*"
+Outputs:
+  ArtifactsBucketlibName:
+    Description: Nombre del bucket creado
+    Value: !Ref ArtifactsBucketlib
+    Export:
+      Name: da-ArtifactsBucketlibName
+
+  daEcodistribucionStagelib:
+    Description: Nombre del bucket creado
+    Value: !Ref daEcodistribucionStagelib
+    Export:
+      Name: da-daEcodistribucionStagelib
