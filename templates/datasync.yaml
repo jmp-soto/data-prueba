@@ -64,7 +64,7 @@ Resources:
   DataSyncS3LocationOptimizador:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::stage-maria-${Stage}"
+      S3BucketArn: !Sub "arn:aws:s3:::stage-yvoone-${Stage}"
       S3Config:
         BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${Stage}"
       Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
