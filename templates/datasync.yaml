@@ -81,8 +81,8 @@ Resources:
     Type: AWS::DataSync::Task
     Properties:
       Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
-      SourceLocationArn: !Ref DataSyncDestinationLocationOptimizador
-      DestinationLocationArn: !Ref DataSyncS3LocationOptimizador
+      SourceLocationArn: !Ref DataSyncS3LocationOptimizador
+      DestinationLocationArn: !Ref DataSyncDestinationLocationOptimizador
       Options:
         VerifyMode: "ONLY_FILES_TRANSFERRED"
         OverwriteMode: "ALWAYS"
