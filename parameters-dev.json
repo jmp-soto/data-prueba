@@ -15,10 +15,10 @@
       "ARTIFACTORY_BUCKET":"test-artifacts-dev-josemaria"
   },
   {
-      "AWS_ACCOUNT_ID":"039612881651"
+      "AWS_ACCOUNT_ID":"682033497219"
   },
   {
-      "AWS_ACCOUNT_ID_CASA":"160885287080"
+      "AWS_ACCOUNT_ID_CASA":"681689809494"
   },
   {
       "DB_STAGE":"prueba_athena_database"
