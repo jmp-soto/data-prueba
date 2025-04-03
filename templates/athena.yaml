@@ -40,7 +40,6 @@ Resources:
       DatabaseName: !Ref pdbStageName
       TableInput:
         Name: rg_in_optimizador_stage
-        Description:
         TableType: EXTERNAL_TABLE
         Parameters:
           #format and compression source file  
