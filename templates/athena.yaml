@@ -32,80 +32,8 @@ Parameters:
   pdbStageName:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
-
+  pdbAnalyticsName:
+    Description: "AWS database Analytics (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: "db_ecodistribucion_regional_analitycs"
 Resources:
-   BrScThanosPalletsHeadersAnalytics:
-    Properties:
-      CatalogId: !Ref pAWSAccountId
-      DatabaseName: !Ref pdbStageName
-      TableInput:
-        Name: rg_in_optimizador_analitycs
-        TableType: EXTERNAL_TABLE
-        Parameters:
-          #format and compression source file  
-          "classification": "json"
-          "compressionType": "SNAPPY"
-          #projection parameter
-          "projection.enabled": "true"
-          "projection.year.type": "integer"
-          "projection.year.digits": "4"
-          "projection.year.range": "2023,2035"
-          "projection.month.type": "integer"
-          "projection.month.digits": "2"
-          "projection.month.range": "01,12"
-          "projection.day.type": "integer"
-          "projection.day.digits": "2"
-          "projection.day.range": "01,31"
-        PartitionKeys:
-        - {Name: year, Type: string}
-        - {Name: month, Type: string}
-        - {Name: day, Type: string}
-        StorageDescriptor:
-          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
-          Columns:
-            - {Name: plan_id, Type: bigint}
-            - {Name: plan_created_at, Type: timestamp}
-            - {Name: plan_bukrs, Type: string}
-            - {Name: plan_profile, Type: string}
-            - {Name: plan_tpp, Type: string}
-            - {Name: plan_date, Type: date}
-            - {Name: plan_user_id, Type: int}
-            - {Name: plan_description, Type: string}
-            - {Name: calc_id, Type: bigint}
-            - {Name: calc_created_at, Type: timestamp}
-            - {Name: calc_bukrs, Type: string}
-            - {Name: calc_ptot, Type: int}
-            - {Name: calc_ptotm, Type: int}
-            - {Name: calc_ptotc, Type: int}
-            - {Name: calc_tknumr, Type: string}
-            - {Name: calc_ptotr, Type: int}
-            - {Name: calc_clients, Type: int}
-            - {Name: calc_utilization, Type: string}
-            - {Name: calc_peso, Type: string}
-            - {Name: calc_utilizationp, Type: string}
-            - {Name: calc_exception_sap, Type: string}
-            - {Name: calc_status, Type: string}
-            - {Name: calc_transactionid, Type: string}
-            - {Name: calc_transactionidexport, Type: string}
-            - {Name: calc_ntrip, Type: int}
-            - {Name: calc_truck, Type: string}
-            - {Name: calc_truck_box, Type: string}
-            - {Name: calc_delivery_pallet, Type: string}
-            - {Name: calc_user_comments, Type: string}
-            - {Name: calc_planheader_id, Type: bigint}
-            - {Name: sap_bukrs, Type: string}
-            - {Name: sap_tknum, Type: string}
-            - {Name: sap_shtyp, Type: string}
-            - {Name: sap_tplst, Type: string}
-            - {Name: sap_erdat, Type: timestamp}
-            - {Name: sap_route, Type: string}
-            - {Name: sap_tdlnr, Type: string}
-            - {Name: sap_rpfar1, Type: string}
-            - {Name: sap_rpmowa, Type: string}
-            - {Name: sap_stdis, Type: string}
-          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://stage-nelson-${Stage}/regional/externa/rg_in_optimizador_stage
-          Compressed: True
-          SerdeInfo:
-            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-    Type: AWS::Glue::Table
