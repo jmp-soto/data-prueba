@@ -21,7 +21,7 @@
       "AWS_ACCOUNT_ID_CASA":"681689809494"
   },
   {
-      "DB_STAGE":"db_ecodistribucion_regional_stage"
+      "DB_STAGE":"db_ecodistribucion_regional_analitycs"
   },
   {
       "AWS_ACCOUNT":"ecodistribucion"
