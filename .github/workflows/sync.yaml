@@ -15,7 +15,7 @@ jobs:
     env:
       AWS_BUCKET_NAME: "prueba-exampe-josemaria-git"
       REGION: "us-east-1"
-      ARTIFACTS_S3: "test-artifacts-dev-josemaria"
+      ARTIFACTS_S3: "testa-artifacts-dev-josemaria"
       AWS_ACCOUNT_ID: "345345345345"
       AWS_ACCOUNT_OPTIMIZADOR: "5345345345"  
       ENVIRONMENT: "dev" 

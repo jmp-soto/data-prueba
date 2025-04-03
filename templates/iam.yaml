@@ -117,7 +117,7 @@ Resources:
 
 Outputs:
   lambdaMisupplyApiRole:
-  Description: lambdaMisupplyApiRole Arn
-  Value: !GetAtt lambdaMisupplyApiRole.Arn
-  Export:
-    Name: lambdaMisupplyApiRole-Arn
+    Description: lambdaMisupplyApiRole Arn
+    Value: !GetAtt lambdaMisupplyApiRole.Arn
+    Export:
+      Name: lambdaMisupplyApiRole-Arn
