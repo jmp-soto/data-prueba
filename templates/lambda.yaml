@@ -59,37 +59,5 @@ Resources:
           ENVIRONMENT: !Ref Stage
           REGION: !Ref pAWSRegion
 
-  
-  dataWranglerLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      CompatibleRuntimes:
-        - python3.9
-      Content:
-        S3Bucket: !ImportValue da-ArtifactsBucketlibName
-        S3Key: layers/awswrangler-layer-py3-9.zip
-      Description: Data Wrangler Layer for Python 3.9
-      LayerName: !Sub awswrangler-layer-py3-9-${Stage}
 
-  requestLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      CompatibleRuntimes:
-        - python3.12
-      Content:
-        S3Bucket: !ImportValue da-ArtifactsBucketlibName
-        S3Key: layers/request-layer-py3-12.zip
-      Description: Request Layer for Python 3.12
-      LayerName: !Sub request-py3-12-${Stage}
-
-
-
-
-
-Outputs: 
-  myLambdaFunction:
-    Description: myLambdaFunction Arn
-    Value: !GetAtt myLambdaFunction.Arn
-    Export:
-      Name: DA-myLambdaFunctionArn
 
