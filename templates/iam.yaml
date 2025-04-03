@@ -115,7 +115,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:secretsmanager:${pAWSRegion}:${pAWSAccountId}:secret:*"
 
-outputs:
+Outputs:
   lambdaMisupplyApiRole:
   Description: lambdaMisupplyApiRole Arn
   Value: !GetAtt lambdaMisupplyApiRole.Arn
