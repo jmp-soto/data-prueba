@@ -38,7 +38,7 @@ Resources:
       FifoQueue: true
       ContentBasedDeduplication: true
       VisibilityTimeout: 30
-      MessageRetentionPeriod: 345600 
+      MessageRetentionPeriod: 34560 
       
 
 
