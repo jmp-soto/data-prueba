@@ -92,4 +92,4 @@
   #             - "s3:PutObject"
   #           Resource:
   #             - !Sub "arn:aws:s3:::${S3Bucket}"
-  #             - !Sub "arn:aws:s3:::${S3Bucket}/*"
+  #             - !Sub "arn:aws:s3:::${S3Bucket}/*"""
