@@ -21,7 +21,7 @@
       "AWS_ACCOUNT_ID_CASA":"681689809494"
   },
   {
-      "DB_STAGE":"prueba_athena_database"
+      "DB_STAGE":"db_ecodistribucion_regional_stage"
   },
   {
       "AWS_ACCOUNT":"ecodistribucion"

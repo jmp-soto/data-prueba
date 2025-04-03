@@ -34,142 +34,79 @@ Parameters:
     Type: String
 
 Resources:
-  rgInQaseAnalytics:
+   BrScThanosPalletsHeadersAnalytics:
     Properties:
       CatalogId: !Ref pAWSAccountId
       DatabaseName: !Ref pdbStageName
       TableInput:
-        Description: ''
-        Name: rg_in_qase_analytics
-        Parameters:
-          EXTERNAL: 'TRUE'
-          compressionType: SNAPPY
-          skip.header.line.count: '1'
-        PartitionKeys:
-          - Name: dt
-            Type: date
-        Retention: 0
-        StorageDescriptor:
-          Columns:
-            - Name: prueflos
-              Type: string
-            - Name: vorglfnr
-              Type: string
-            - Name: merknr
-              Type: string
-            - Name: detailerg
-              Type: string
-            - Name: attribut
-              Type: string
-            - Name: ersteller
-              Type: string
-            - Name: erstelldat
-              Type: date
-            - Name: aenderer
-              Type: string
-            - Name: aenderdat
-              Type: date
-            - Name: probenr
-              Type: string
-            - Name: stuecknr
-              Type: string
-            - Name: pruefer
-              Type: string
-            - Name: pruefdatuv
-              Type: date
-            - Name: pruefdatub
-              Type: date
-            - Name: pruefzeitv
-              Type: timestamp
-            - Name: pruefzeitb
-              Type: timestamp
-            - Name: pruefbemkt
-              Type: string
-            - Name: prltextkz
-              Type: string
-            - Name: ltextspr
-              Type: string
-            - Name: messwertni
-              Type: string
-            - Name: messwert
-              Type: double
-            - Name: katalgart1
-              Type: string
-            - Name: gruppe1
-              Type: string
-            - Name: code1
-              Type: string
-            - Name: version1
-              Type: string
-            - Name: katalgart2
-              Type: string
-            - Name: gruppe2
-              Type: string
-            - Name: code2
-              Type: string
-            - Name: version2
-              Type: string
-            - Name: katalgart3
-              Type: string
-            - Name: gruppe3
-              Type: string
-            - Name: code3
-              Type: string
-            - Name: version3
-              Type: string
-            - Name: katalgart4
-              Type: string
-            - Name: gruppe4
-              Type: string
-            - Name: code4
-              Type: string
-            - Name: version4
-              Type: string
-            - Name: katalgart5
-              Type: string
-            - Name: grupvers5
-              Type: string
-            - Name: gruppe5
-              Type: string
-            - Name: code5
-              Type: string
-            - Name: version5
-              Type: string
-            - Name: anzfehler
-              Type: integer
-            - Name: fehlklas
-              Type: string
-            - Name: mbewertg
-              Type: string
-            - Name: estuecknr
-              Type: string
-            - Name: serialnr
-              Type: string
-            - Name: maschine
-              Type: string
-            - Name: position
-              Type: string
-            - Name: zeiterstl
-              Type: timestamp
-            - Name: zeitaend
-              Type: timestamp
-            - Name: original_input
-              Type: string
-            - Name: diff_dec_places
-              Type: integer
-            - Name: inpproc_ready
-              Type: string
-          Compressed: false
-          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://koa-prueba-345345345345/regional/sap/rg_in_qase
-          NumberOfBuckets: -1
-          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
-          Parameters: {}
-          SerdeInfo:
-            Parameters:
-              serialization.format: '1'
-            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-          SortColumns: []
-          StoredAsSubDirectories: false
+        Name: rg_in_optimizador_stage
+        Description:
         TableType: EXTERNAL_TABLE
+        Parameters:
+          #format and compression source file  
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          #projection parameter
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+        - {Name: year, Type: string}
+        - {Name: month, Type: string}
+        - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: plan_id, Type: bigint}
+            - {Name: plan_created_at, Type: timestamp}
+            - {Name: plan_bukrs, Type: string}
+            - {Name: plan_profile, Type: string}
+            - {Name: plan_tpp, Type: string}
+            - {Name: plan_date, Type: date}
+            - {Name: plan_user_id, Type: int}
+            - {Name: plan_description, Type: string}
+            - {Name: calc_id, Type: bigint}
+            - {Name: calc_created_at, Type: timestamp}
+            - {Name: calc_bukrs, Type: string}
+            - {Name: calc_ptot, Type: int}
+            - {Name: calc_ptotm, Type: int}
+            - {Name: calc_ptotc, Type: int}
+            - {Name: calc_tknumr, Type: string}
+            - {Name: calc_ptotr, Type: int}
+            - {Name: calc_clients, Type: int}
+            - {Name: calc_utilization, Type: string}
+            - {Name: calc_peso, Type: string}
+            - {Name: calc_utilizationp, Type: string}
+            - {Name: calc_exception_sap, Type: string}
+            - {Name: calc_status, Type: string}
+            - {Name: calc_transactionid, Type: string}
+            - {Name: calc_transactionidexport, Type: string}
+            - {Name: calc_ntrip, Type: int}
+            - {Name: calc_truck, Type: string}
+            - {Name: calc_truck_box, Type: string}
+            - {Name: calc_delivery_pallet, Type: string}
+            - {Name: calc_user_comments, Type: string}
+            - {Name: calc_planheader_id, Type: bigint}
+            - {Name: sap_bukrs, Type: string}
+            - {Name: sap_tknum, Type: string}
+            - {Name: sap_shtyp, Type: string}
+            - {Name: sap_tplst, Type: string}
+            - {Name: sap_erdat, Type: timestamp}
+            - {Name: sap_route, Type: string}
+            - {Name: sap_tdlnr, Type: string}
+            - {Name: sap_rpfar1, Type: string}
+            - {Name: sap_rpmowa, Type: string}
+            - {Name: sap_stdis, Type: string}
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Location: !Sub s3://stage-nelson-${Stage}/regional/externa/rg_in_optimizador_stage
+          Compressed: True
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
     Type: AWS::Glue::Table
