@@ -59,6 +59,7 @@ Resources:
                 Action:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
+                  - "s3:GetObject"
                 Resource: !Sub "arn:aws:s3:::stage-yvoone-${Stage}"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
