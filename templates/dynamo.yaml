@@ -6,36 +6,38 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     Default: dev
   pBranchName:
-    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Description: "Branch Name (all lowercase, no symbols or spaces)"
     Type: String
   pArtifactsBucket:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
   pAWSRegion:
-    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Description: "AWS region (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountId:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "AWS account (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountOptId:
-    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Description: "AWS account optimizador Id (all lowercase, no symbols or spaces)"
     Type: String
   pAccountName:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "AWS account (all lowercase, no symbols or spaces)"
     Type: String
   pTeamName:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "AWS team name (all lowercase, no symbols or spaces)"
     Type: String
   pdeploymentDate:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "Deployment date"
     Type: String
   ltags:
     Type: CommaDelimitedList
+    Default: |
 
-Conditions:  
-   OnlyDev: !Equals
-     - !Ref "AWS::AccountId"
-     - '149536487709'
+Conditions:
+  OnlyDev: !Equals
+    - !Ref "AWS::AccountId"
+    - '149536487709'
+
 Resources:
   MiTablaDynamoDB:
     Type: AWS::DynamoDB::Table
@@ -43,9 +45,9 @@ Resources:
       TableName: MiTablaEjemplo
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: userId       # HASH de la tabla
+        - AttributeName: userId
           AttributeType: S
-        - AttributeName: status       # HASH del GSI
+        - AttributeName: status
           AttributeType: S
       KeySchema:
         - AttributeName: userId
@@ -62,3 +64,11 @@ Resources:
           Value: !Select [1, !Split [ "=", !Select [0, !Ref ltags ]]]
         - Key: !Select [0, !Split [ "=", !Select [1, !Ref ltags ]]]
           Value: !Select [1, !Split [ "=", !Select [1, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [2, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [2, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [3, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [3, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [4, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [4, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [5, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [5, !Ref ltags ]]]
