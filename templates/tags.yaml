@@ -21,7 +21,7 @@ Resources:
         S3Bucket: testa-artifacts-dev-josemaria
         S3Key: path/tag-builder-lambda.zip
 
-  LambdaExecutionRole:
+    LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: LambdaTagBuilderExecutionRole
@@ -52,7 +52,7 @@ Resources:
 
 Outputs:
   GeneratedTags:
-    Description: Lista de Tags generada dinámicamente
+    Description: Lista de Tags generada dinámicamente (formato JSON string)
     Value: !GetAtt TagBuilder.Tags
     Export:
       Name: ExportedTagsList
