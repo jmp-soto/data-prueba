@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::LanguageExtensions
 
 Parameters:
   Stage:
@@ -33,6 +32,9 @@ Parameters:
   ltags:
     Type: CommaDelimitedList
     Description: "Lista de etiquetas en formato key=value"
+  pImportedTags:
+    Type: String
+    Default: !ImportValue ExportedTagsList
 
 Conditions:
   OnlyDev: !Equals
@@ -60,4 +62,4 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-      Tags:
+      Tags: !Ref pImportedTags

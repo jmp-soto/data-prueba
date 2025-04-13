@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Stack que crea una Lambda Custom Resource para generar etiquetas dinámicas (Tags) a partir de una lista "key=value"
+
+Parameters:
+  pTagList:
+    Type: CommaDelimitedList
+    Default: "I_APLICACION=SDLF,I_PROYECTO=SDLF,I_STAGE=StageB,I_SIGLA=SAN,I_CREW=DIV. TRANSFORMACION DATA ANALYTICS,I_TEAM=Riskvolution+,I_RESPONSABLE_LT=Erick Benites Cuenca,I_CC=8770000000,I_AMBIENTE=dev,I_CUENTA=058528764918,I_PIPELINE=tablas-maestras"
+
+Resources:
+
+  TagBuilderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: TagBuilderFunction
+      Handler: index.handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 10
+      Code:
+        S3Bucket: testa-artifacts-dev-josemaria
+        S3Key: path/tag-builder-lambda.zip
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaTagBuilderExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  TagBuilder:
+    Type: Custom::TagBuilder
+    Properties:
+      ServiceToken: !GetAtt TagBuilderFunction.Arn
+      TagList: !Ref pTagList
+
+Outputs:
+  GeneratedTags:
+    Description: Lista de Tags generada dinámicamente
+    Value: !GetAtt TagBuilder.Tags
+    Export:
+      Name: ExportedTagsList

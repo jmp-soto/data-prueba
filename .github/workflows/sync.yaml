@@ -74,29 +74,6 @@ jobs:
           echo "Processed tags: ${TAGS}"
 
 
-      - name: Procesar Tagss
-        run: |
-          # Convertir JSON a formato YAML seguro
-          JSON=$(cat tags.json)
-          
-          # Crear archivo temporal con los tags en formato YAML
-          echo "      Tags:" > temp_tags.yaml
-          echo "$JSON" | jq -r '
-            to_entries | map(
-              "        - Key: \"" + .key + "\"\n          Value: \"" + .value + "\""
-            ) | join("\n")' >> temp_tags.yaml
-          
-          # Insertar los tags en el template
-          sed -i '/Tags:/r temp_tags.yaml' templates/dynamo.yaml
-          sed -i '/Tags:/d' templates/dynamo.yaml  # Elimina la línea Tags: original
-          
-          # Mostrar resultado para debug
-          echo "Template actualizado:"
-          grep -A 10 "Tags:" templates/dynamo.yaml
-          
-          # Limpiar archivo temporal
-          rm temp_tags.yaml
-
         # 2. Configura las credenciales de AWS
       - name: connect to AWS
         uses: aws-actions/configure-aws-credentials@v1
@@ -197,6 +174,31 @@ jobs:
                 pdeploymentDate=$TIMESTAMP
           aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
 
+      - name: Deploy tags
+        id: tags
+        shell: bash
+        if: contains(github.event.head_commit.message, '-tags') || contains(github.event.head_commit.message, '-all')
+        env:
+          STACK_NAME: da-josemaria-tags
+        run: |
+          aws cloudformation deploy --template-file templates/tags.yaml \
+            --region $REGION \
+            --stack-name $STACK_NAME \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+                pTeamName=$TEAM \
+                Stage=$ENVIRONMENT \
+                pBranchName=$BRANCH_NAME \
+                pArtifactsBucket=$ARTIFACTORY_BUCKET \
+                pAWSRegion=$REGION \
+                pAWSAccountId=$AWS_ACCOUNT_ID \
+                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
+                pdbStageName=$DB_STAGE \
+                pAccountName=$AWS_ACCOUNT \
+                pdeploymentDate=$TIMESTAMP 
+          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
+      
       - name: Deploy IAM
         id: iam
         shell: bash
@@ -259,6 +261,8 @@ jobs:
                 pdeploymentDate=$TIMESTAMP 
           aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
       
+      
+
       - name: Deploy Events Bridge
         id: events_bridge
         shell: bash
