@@ -70,10 +70,11 @@ jobs:
           # Leer el JSON
           JSON=$(cat tags.json)
           
-          TAGS=$(echo "$JSON" | jq -r 'map_values(to_entries | map("\(.key)=\(.value)") | join(", "))')
-
+          # Convertir a formato key=value
+          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(", ")')
+          
           # Imprimir el resultado
-          echo "$TAGS"
+          echo "TAGS=${TAGS}" >> $GITHUB_ENV
 
 
 
