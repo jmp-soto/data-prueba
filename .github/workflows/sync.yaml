@@ -67,11 +67,12 @@ jobs:
 
       - name: Process Tags
         run: |
-          # Convert JSON to escaped key=value pairs
+          # Convertir el JSON a pares de clave=valor escapados
           JSON=$(cat tags.json)
-          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value|gsub("&"; "and")|gsub(" "; "_"))") | join(",")')
+          TAGS=$(echo "$JSON" | jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(",")')
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
           echo "Processed tags: ${TAGS}"
+
 
 
         # 2. Configura las credenciales de AWS
