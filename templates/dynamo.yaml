@@ -59,8 +59,16 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-      Tags: 
-        !ForEach
-          - !Ref ltags
-          - Key: !Select [0, !Split [ "=", !Ref ltags ]]
-            Value: !Select [1, !Split [ "=", !Ref ltags ]]
+      Tags:
+        - Key: !Select [0, !Split [ "=", !Select [0, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [0, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [1, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [1, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [2, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [2, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [3, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [3, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [4, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [4, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [5, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [5, !Ref ltags ]]]
