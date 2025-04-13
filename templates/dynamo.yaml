@@ -34,7 +34,6 @@ Parameters:
     Description: "Lista de etiquetas en formato key=value"
     Default: "Area=Data & Analitica,Proyecto=Manufactura y Distribución,Responsable_po=Carlos Amarilla,despliegue=CLF Gitgub-trust-repo,cuenta=039612881651,dev=Josemaria Paucar"
 
-
 Conditions:
   OnlyDev: !Equals
     - !Ref "AWS::AccountId"
@@ -66,3 +65,11 @@ Resources:
           Value: !Select [1, !Split [ "=", !Select [ 0, !Ref ltags ]]]
         - Key: !Select [0, !Split [ "=", !Select [ 1, !Ref ltags ]]]
           Value: !Select [1, !Split [ "=", !Select [ 1, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [ 2, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [ 2, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [ 3, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [ 3, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [ 4, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [ 4, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [ 5, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [ 5, !Ref ltags ]]]
