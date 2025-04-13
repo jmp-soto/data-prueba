@@ -32,47 +32,7 @@ Parameters:
   ltags:
     Type: CommaDelimitedList
     Description: "Lista de etiquetas en formato key=value"
-    
-Conditions:
-  OnlyDev: !Equals
-    - !Ref "AWS::AccountId"
-    - '149536487709'
 
-AWSTemplateFormatVersion: 2010-09-09
-
-Parameters:
-  Stage:
-    Type: String
-    Description: Environment name (dev/qa/prod)
-    Default: dev
-  pBranchName:
-    Description: "Branch Name (all lowercase, no symbols or spaces)"
-    Type: String
-  pArtifactsBucket:
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSRegion:
-    Description: "AWS region (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSAccountId:
-    Description: "AWS account (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSAccountOptId:
-    Description: "AWS account optimizador Id (all lowercase, no symbols or spaces)"
-    Type: String
-  pAccountName:
-    Description: "AWS account (all lowercase, no symbols or spaces)"
-    Type: String
-  pTeamName:
-    Description: "AWS team name (all lowercase, no symbols or spaces)"
-    Type: String
-  pdeploymentDate:
-    Description: "Deployment date"
-    Type: String
-  ltags:
-    Type: CommaDelimitedList
-    Description: "Lista de etiquetas en formato key=value"
-    
 Conditions:
   OnlyDev: !Equals
     - !Ref "AWS::AccountId"
@@ -99,16 +59,8 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-      Tags:
-        - Key: !Select [0, !Split [ "=", !Select [0, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [0, !Ref ltags ]]]
-        - Key: !Select [0, !Split [ "=", !Select [1, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [1, !Ref ltags ]]]
-        - Key: !Select [0, !Split [ "=", !Select [2, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [2, !Ref ltags ]]]
-        - Key: !Select [0, !Split [ "=", !Select [3, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [3, !Ref ltags ]]]
-        - Key: !Select [0, !Split [ "=", !Select [4, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [4, !Ref ltags ]]]
-        - Key: !Select [0, !Split [ "=", !Select [5, !Ref ltags ]]]
-          Value: !Select [1, !Split [ "=", !Select [5, !Ref ltags ]]]
+      Tags: 
+        !ForEach
+          - !Ref ltags
+          - Key: !Select [0, !Split [ "=", !Ref ltags ]]
+            Value: !Select [1, !Split [ "=", !Ref ltags ]]
