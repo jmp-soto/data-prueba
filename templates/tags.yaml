@@ -24,7 +24,7 @@ Resources:
   LambdaExecutionRoles:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LambdaTagBuilderExecutionRole
+      RoleName: LambdaTagBuilderExecutionRoles
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -51,8 +51,8 @@ Resources:
       TagList: !Ref pTagList
 
 Outputs:
-  GeneratedTags:
+  GeneratedTagss:
     Description: Lista de Tags generada dinámicamente (formato JSON string)
     Value: !GetAtt TagBuilders.Tags
     Export:
-      Name: ExportedTagsList
+      Name: ExportedTagsLists

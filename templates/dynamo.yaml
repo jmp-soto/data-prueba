@@ -34,7 +34,7 @@ Parameters:
     Description: "Lista de etiquetas en formato key=value"
   pImportedTags:
     Type: String
-    Default: !ImportValue ExportedTagsList
+    Default: !ImportValue ExportedTagsLists
 
 Conditions:
   OnlyDev: !Equals
