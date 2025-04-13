@@ -6,25 +6,25 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     Default: dev
   pBranchName:
-    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Description: "Branch Name"
     Type: String
   pArtifactsBucket:
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Description: "Artifact Bucket"
     Type: String
   pAWSRegion:
-    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Description: "AWS region"
     Type: String
   pAWSAccountId:
-    Description: "AWS account (all lowercase, no symbols or spaces)"
+    Description: "AWS account ID"
     Type: String
   pAWSAccountOptId:
-    Description: "AWS account optimizador Id (all lowercase, no symbols or spaces)"
+    Description: "AWS account optimizador ID"
     Type: String
   pAccountName:
-    Description: "AWS account (all lowercase, no symbols or spaces)"
+    Description: "AWS account name"
     Type: String
   pTeamName:
-    Description: "AWS team name (all lowercase, no symbols or spaces)"
+    Description: "Team name"
     Type: String
   pdeploymentDate:
     Description: "Deployment date"
@@ -32,7 +32,7 @@ Parameters:
   ltags:
     Type: CommaDelimitedList
     Description: "Lista de etiquetas en formato key=value"
-    
+
 Conditions:
   OnlyDev: !Equals
     - !Ref "AWS::AccountId"
@@ -60,27 +60,15 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        - Key: !Select [0, !Split ["=", !Select [0, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [0, !Ref ltags]] }
-        - Key: !Select [0, !Split ["=", !Select [1, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [1, !Ref ltags]] }
-        - Key: !Select [0, !Split ["=", !Select [2, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [2, !Ref ltags]] }
-        - Key: !Select [0, !Split ["=", !Select [3, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [3, !Ref ltags]] }
-        - Key: !Select [0, !Split ["=", !Select [4, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [4, !Ref ltags]] }
-        - Key: !Select [0, !Split ["=", !Select [5, !Ref ltags]]]
-          Value: !Sub
-            - ${DecodedValue}
-            - { DecodedValue: !Select [1, !Split ["=", !Select [5, !Ref ltags]] }
+        - Key: Area
+          Value: !Select [1, !Split ["=", !Select [0, !Ref ltags]]]
+        - Key: Proyecto
+          Value: !Select [1, !Split ["=", !Select [1, !Ref ltags]]]
+        - Key: Responsable_po
+          Value: !Select [1, !Split ["=", !Select [2, !Ref ltags]]]
+        - Key: despliegue
+          Value: !Select [1, !Split ["=", !Select [3, !Ref ltags]]]
+        - Key: cuenta
+          Value: !Select [1, !Split ["=", !Select [4, !Ref ltags]]]
+        - Key: dev
+          Value: !Select [1, !Split ["=", !Select [5, !Ref ltags]]]

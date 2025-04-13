@@ -67,14 +67,14 @@ jobs:
 
       - name: Convert JSON to key=value format
         run: |
-          # Leer el JSON
+          # Leer el JSON y convertirlo a formato key=value
           JSON=$(cat tags.json)
+          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(",")')
           
-          # Convertir a formato key=value
-          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(", ")')
-          
-          # Imprimir el resultado
+          # Escapar comas y otros caracteres especiales
+          TAGS=$(echo "$TAGS" | sed 's/,/\\,/g')
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
+          echo "Tags procesados: ${TAGS}"
 
 
 
