@@ -62,13 +62,15 @@ Resources:
       Tags:
         - Key: !Select [0, !Split ["=", !Select [0, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [0, !Ref ltags]]]
-        - Key: Proyecto
+        - Key: !Select [0, !Split ["=", !Select [1, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [1, !Ref ltags]]]
-        - Key: Responsable_po
+        - Key: !Select [0, !Split ["=", !Select [2, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [2, !Ref ltags]]]
-        - Key: despliegue
+        - Key: !Select [0, !Split ["=", !Select [3, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [3, !Ref ltags]]]
-        - Key: cuenta
+        - Key: !Select [0, !Split ["=", !Select [4, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [4, !Ref ltags]]]
-        - Key: dev
+        - Key: !Select [0, !Split ["=", !Select [5, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [5, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [6, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [6, !Ref ltags]]]  
