@@ -1,13 +1,48 @@
-{
-  "Area": "Data and Analitica",
+[
+  {
+    "Key": "I_APLICACION",
+    "Value": "SDLF"
+  },
+  {
+    "Key": "I_PROYECTO",
+    "Value": "SDLF"
+  },
+  {
+    "Key": "I_STAGE",
+    "Value": "StageB"
+  },
+  {
+    "Key": "I_SIGLA",
+    "Value": "SAN"
+  },
+  {
+    "Key": "I_CREW",
+    "Value": "DIV. TRANSFORMACION DATA ANALYTICS"
+  },
+  {
+    "Key": "I_TEAM",
+    "Value": "Riskvolution+"
+  },
+  {
+    "Key": "I_RESPONSABLE_LT",
+    "Value": "Ricardo Linares"
+  },
+  {
+    "Key": "I_CC",
+    "Value": "8770000000"
+  },
+  {
+  "Key": "I_AMBIENTE",
+  "Value": "dev"
+  },
+  {
+    "Key": "I_CUENTA",
+    "Value": "058528764918"
+  },
+  {
+    "Key": "I_PIPELINE",
+    "Value": "tablas-maestras"
+  }
+]
 
-  "Proyecto": "Manufactura y Distribución",
 
-  "Responsable_po": "Carlos Amarilla",
-
-  "cuenta": "039612881651",
-
-  "dev": "Josemaria Paucar",
-
-  "lider_tecnico": "Ricardo Salinas"
-}
