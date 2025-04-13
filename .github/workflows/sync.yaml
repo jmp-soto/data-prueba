@@ -74,19 +74,28 @@ jobs:
           echo "Processed tags: ${TAGS}"
 
 
-      - name: Procesar Tagssss
+      - name: Procesar Tagss
         run: |
-          # Convertir JSON a formato CloudFormation YAML
+          # Convertir JSON a formato YAML seguro
           JSON=$(cat tags.json)
-          YAML_TAGS=$(echo "$JSON" | jq -r '
+          
+          # Crear archivo temporal con los tags en formato YAML
+          echo "      Tags:" > temp_tags.yaml
+          echo "$JSON" | jq -r '
             to_entries | map(
-              "        - Key: \(.key)\n          Value: \"\(.value)\""
-            ) | join("\n")')
+              "        - Key: \"" + .key + "\"\n          Value: \"" + .value + "\""
+            ) | join("\n")' >> temp_tags.yaml
           
           # Insertar los tags en el template
-          sed -i "/Tags:/a $YAML_TAGS" templates/dynamo.yaml
+          sed -i '/Tags:/r temp_tags.yaml' templates/dynamo.yaml
+          sed -i '/Tags:/d' templates/dynamo.yaml  # Elimina la línea Tags: original
           
-          echo "Tags actualizados en el template"
+          # Mostrar resultado para debug
+          echo "Template actualizado:"
+          grep -A 10 "Tags:" templates/dynamo.yaml
+          
+          # Limpiar archivo temporal
+          rm temp_tags.yaml
 
         # 2. Configura las credenciales de AWS
       - name: connect to AWS
