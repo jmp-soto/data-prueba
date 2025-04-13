@@ -253,6 +253,32 @@ jobs:
                 pdeploymentDate=$TIMESTAMP 
           aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
       
+      
+      - name: Deploy Events Bridge
+        id: events_bridge
+        shell: bash
+        if: contains(github.event.head_commit.message, '-dynamo') || contains(github.event.head_commit.message, '-all')
+        env:
+          STACK_NAME: da-josemaria-dynamo
+        run: |
+          aws cloudformation deploy --template-file templates/dynamo.yaml \
+            --region $REGION \
+            --stack-name $STACK_NAME \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+                pTeamName=$TEAM \
+                Stage=$ENVIRONMENT \
+                pBranchName=$BRANCH_NAME \
+                pArtifactsBucket=$ARTIFACTORY_BUCKET \
+                pAWSRegion=$REGION \
+                pAWSAccountId=$AWS_ACCOUNT_ID \
+                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
+                pdbStageName=$DB_STAGE \
+                pAccountName=$AWS_ACCOUNT \
+                pdeploymentDate=$TIMESTAMP 
+          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
+      
       - name: Deploy Events
         id: events
         shell: bash
