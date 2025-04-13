@@ -29,6 +29,9 @@ Parameters:
   pdeploymentDate:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
+  ltags:
+    Type: CommaDelimitedList
+
 Conditions:  
    OnlyDev: !Equals
      - !Ref "AWS::AccountId"
@@ -55,5 +58,7 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        - Key: Environment
-          Value: Desarrollo
+        - Key: !Select [0, !Split [ "=", !Select [0, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [0, !Ref ltags ]]]
+        - Key: !Select [0, !Split [ "=", !Select [1, !Ref ltags ]]]
+          Value: !Select [1, !Split [ "=", !Select [1, !Ref ltags ]]]
