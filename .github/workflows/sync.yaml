@@ -180,7 +180,7 @@ jobs:
         shell: bash
         if: contains(github.event.head_commit.message, '-tags') || contains(github.event.head_commit.message, '-all')
         env:
-          STACK_NAME: da-josemaria-tags
+          STACK_NAME: da-josemaria-tagsss
         run: |
           aws cloudformation deploy --template-file templates/tags.yaml \
             --region $REGION \
