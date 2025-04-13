@@ -29,7 +29,10 @@ Parameters:
   pdeploymentDate:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
-
+  Conditions:  
+    OnlyDev: !Equals
+      - !Ref "AWS::AccountId"
+      - '149536487709'
 Resources:
   MyEventRule:
       Type: AWS::Events::Rule
@@ -38,12 +41,13 @@ Resources:
         State: "ENABLED"
         Targets:
           - Id: "MyLambdaTarget"
-            Arn: "arn:aws:lambda:us-east-1:039612881651:function:function-dev-prueba"
+            Arn: "arn:aws:lambda:us-east-1:${pAWSAccountId}:function:lambda-da-eta-ml"
 
 
 
   S3CreateObjectRule:
     Type: AWS::Events::Rule
+    Condition: OnlyDev
     Properties:
       Name: S3CreateObjectEventRuleprueba
       Description: "Regla que captura eventos de creación de objetos en S3 y activa una función Lambda."
@@ -70,6 +74,7 @@ Resources:
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
+    Condition: OnlyDev
     Properties:
       FunctionName: arn:aws:lambda:us-east-1:039612881651:function:lambda-example-Josemaria-api_Misupply
       Action: lambda:InvokeFunction
@@ -77,6 +82,7 @@ Resources:
       SourceArn: !GetAtt S3CreateObjectRule.Arn
 Outputs: 
   MyEventRule:
+    Condition: OnlyDev
     Description: MyEventRule Arn
     Value: !GetAtt MyEventRule.Arn
     Export:
