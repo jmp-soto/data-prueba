@@ -29,10 +29,10 @@ Parameters:
   pdeploymentDate:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
-  Conditions:  
-    OnlyDev: !Equals
-      - !Ref "AWS::AccountId"
-      - '149536487709'
+Conditions:  
+   OnlyDev: !Equals
+     - !Ref "AWS::AccountId"
+     - '149536487709'
 Resources:
   MyEventRule:
       Type: AWS::Events::Rule
