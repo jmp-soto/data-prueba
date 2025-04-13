@@ -254,8 +254,8 @@ jobs:
           aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
       
       
-      - name: Deploy Events Bridge
-        id: events_bridge
+      - name: Deploy dynamo
+        id: dynamo
         shell: bash
         if: contains(github.event.head_commit.message, '-dynamo') || contains(github.event.head_commit.message, '-all')
         env:
