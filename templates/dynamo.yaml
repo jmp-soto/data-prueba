@@ -60,7 +60,7 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        - Key: Area
+        - Key: !Select [0, !Split ["=", !Select [0, !Ref ltags]]]
           Value: !Select [1, !Split ["=", !Select [0, !Ref ltags]]]
         - Key: Proyecto
           Value: !Select [1, !Split ["=", !Select [1, !Ref ltags]]]
