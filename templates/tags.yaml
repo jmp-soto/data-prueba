@@ -21,7 +21,7 @@ Resources:
         S3Bucket: testa-artifacts-dev-josemaria
         S3Key: path/tag-builder-lambda.zip
 
-    LambdaExecutionRole:
+  LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: LambdaTagBuilderExecutionRole
