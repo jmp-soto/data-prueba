@@ -67,7 +67,7 @@ jobs:
 
       - name: Save list from tag.json to a variable and print
         run: |
-          TAGS=$(cat tag.json)  
+          TAGS=$(cat tags.json)  
           echo "$TAGS"  
 
 
