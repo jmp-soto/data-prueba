@@ -65,17 +65,13 @@ jobs:
           echo "AWS_ACCOUNT=$AWS_ACCOUNT"
 
 
-      - name: Convert JSON to key=value format
+      - name: Process Tags
         run: |
-          # Leer el JSON y convertirlo a formato key=value
+          # Convert JSON to escaped key=value pairs
           JSON=$(cat tags.json)
-          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value)") | join(",")')
-          
-          # Escapar comas y otros caracteres especiales
-          TAGS=$(echo "$TAGS" | sed 's/,/\\,/g')
+          TAGS=$(echo "$JSON" | jq -r 'to_entries | map("\(.key)=\(.value|gsub("&"; "and")|gsub(" "; "_"))") | join(",")')
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
-          echo "Tags procesados: ${TAGS}"
-
+          echo "Processed tags: ${TAGS}"
 
 
 
