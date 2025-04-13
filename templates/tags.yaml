@@ -9,19 +9,19 @@ Parameters:
 
 Resources:
 
-  TagBuilderFunction:
+  TagBuilderFunctions:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: TagBuilderFunction
+      FunctionName: TagBuilderFunctions
       Handler: index.handler
       Runtime: python3.12
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !GetAtt LambdaExecutionRoles.Arn
       Timeout: 10
       Code:
         S3Bucket: testa-artifacts-dev-josemaria
         S3Key: path/tag-builder-lambda.zip
 
-  LambdaExecutionRole:
+  LambdaExecutionRoles:
     Type: AWS::IAM::Role
     Properties:
       RoleName: LambdaTagBuilderExecutionRole
@@ -44,15 +44,15 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
-  TagBuilder:
+  TagBuilders:
     Type: Custom::TagBuilder
     Properties:
-      ServiceToken: !GetAtt TagBuilderFunction.Arn
+      ServiceToken: !GetAtt TagBuilderFunctions.Arn
       TagList: !Ref pTagList
 
 Outputs:
   GeneratedTags:
     Description: Lista de Tags generada dinámicamente (formato JSON string)
-    Value: !GetAtt TagBuilder.Tags
+    Value: !GetAtt TagBuilders.Tags
     Export:
       Name: ExportedTagsList
