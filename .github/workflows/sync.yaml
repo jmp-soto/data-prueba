@@ -65,6 +65,13 @@ jobs:
           echo "AWS_ACCOUNT=$AWS_ACCOUNT"
 
 
+      - name: Save list from tag.json to a variable and print
+        run: |
+          TAGS=$(cat tag.json)  
+          echo "$TAGS"  
+
+
+
 
         # 2. Configura las credenciales de AWS
       - name: connect to AWS
