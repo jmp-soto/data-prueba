@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    Default: dev
+  pBranchName:
+    Description: "Branch Name"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID"
+    Type: String
+  pAWSAccountOptId:
+    Description: "AWS account optimizador ID"
+    Type: String
+  pAccountName:
+    Description: "AWS account name"
+    Type: String
+  pTeamName:
+    Description: "Team name"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date"
+    Type: String
+  ltags:
+    Type: CommaDelimitedList
+    Description: "Lista de etiquetas en formato key=value"
+
+Conditions:
+  OnlyDev: !Equals
+    - !Ref "AWS::AccountId"
+    - '149536487709'
+
+Resources:
+  MiTablaDynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MiTablaEjemplo
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatusIndex
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: !Select [0, !Split ["=", !Select [0, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [0, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [1, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [1, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [2, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [2, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [3, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [3, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [4, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [4, !Ref ltags]]]
+        - Key: !Select [0, !Split ["=", !Select [5, !Ref ltags]]]
+          Value: !Select [1, !Split ["=", !Select [5, !Ref ltags]]]
