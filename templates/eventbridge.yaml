@@ -41,7 +41,7 @@ Resources:
         State: "ENABLED"
         Targets:
           - Id: "MyLambdaTarget"
-            Arn: "arn:aws:lambda:us-east-1:${pAWSAccountId}:function:lambda-da-eta-ml"
+            Arn: !Sub "arn:aws:lambda:us-east-1:${pAWSAccountId}:function:lambda-da-eta-ml"
 
 
 
