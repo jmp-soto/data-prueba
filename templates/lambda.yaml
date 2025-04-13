@@ -34,7 +34,7 @@ Parameters:
   pRDAWSAccountId:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
-    default: 681689809494
+    Default: 681689809494
 
 
 Resources:
