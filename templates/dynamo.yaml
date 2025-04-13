@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::LanguageExtensions
 
 Parameters:
   Stage:
@@ -60,17 +61,8 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        - Key: !Select [0, !Split ["=", !Select [0, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [0, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [1, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [1, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [2, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [2, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [3, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [3, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [4, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [4, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [5, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [5, !Ref ltags]]]
-        - Key: !Select [0, !Split ["=", !Select [6, !Ref ltags]]]
-          Value: !Select [1, !Split ["=", !Select [6, !Ref ltags]]]  
+        Fn::ForEach:
+          - tag
+          - !Ref ltags
+          - Key: !Select [0, !Split ["=", tag]]
+            Value: !Select [1, !Split ["=", tag]]
