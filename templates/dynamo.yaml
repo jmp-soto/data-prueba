@@ -61,12 +61,3 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        Fn::Transform:
-          Name: AWS::LanguageExtensions
-          Parameters:
-            ForEach:
-              - Name: "tag"
-                In: !Ref ltags
-                Outputs:
-                  - Key: !Select [0, !Split ["=", !Ref tag]]
-                    Value: !Select [1, !Split ["=", !Ref tag]]
