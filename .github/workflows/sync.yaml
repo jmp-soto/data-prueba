@@ -70,7 +70,9 @@ jobs:
           # Leer el JSON
           JSON=$(cat tags.json)
           
-          TAGS=$(echo "$JSON" | jq -r 'map_to_entries | map("\(.key)=\(.value)") | join(", ")')
+          TAGS=$(echo "$JSON" | jq -r 'map_values(to_entries | map("\(.key)=\(.value)") | join(", "))')
+
+          # Imprimir el resultado
           echo "$TAGS"
 
 
