@@ -308,7 +308,6 @@ jobs:
                 pTeamName=$TEAM \
                 Stage=$ENVIRONMENT \
                 pBranchName=$BRANCH_NAME \
-                ltags=$TAGS \
                 pArtifactsBucket=$ARTIFACTORY_BUCKET \
                 pAWSRegion=$REGION \
                 pAWSAccountId=$AWS_ACCOUNT_ID \
