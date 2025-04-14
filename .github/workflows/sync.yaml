@@ -73,6 +73,13 @@ jobs:
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
           echo "Processed tags: ${TAGS}"
 
+      - name: Process Tags_comillas
+        run: |
+          # Convertir el JSON a pares de clave=valor escapados
+          JSON=$(cat tags.json)
+          TAGS_comillas=$(echo "$JSON" | jq -r 'map("\"" + .Key + "=" + (.Value | gsub(" "; " ") | gsub("&"; "&")) + "\"") | join(" ")')
+          echo "TAGS_comillas=${TAGS_comillas}" >> $GITHUB_ENV
+          echo "Processed tags: ${TAGS_comillas}"
 
 
         # 2. Configura las credenciales de AWS
