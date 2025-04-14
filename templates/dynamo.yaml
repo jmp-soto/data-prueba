@@ -29,12 +29,6 @@ Parameters:
   pdeploymentDate:
     Description: "Deployment date"
     Type: String
-  ltags:
-    Type: CommaDelimitedList
-    Description: "Lista de etiquetas en formato key=value"
-  pImportedTags:
-    Type: String
-    Default: !ImportValue ExportedTagsLists
 
 Conditions:
   OnlyDev: !Equals
@@ -62,4 +56,3 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-      Tags: !Ref pImportedTags
