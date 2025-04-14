@@ -69,7 +69,7 @@ jobs:
         run: |
           # Convertir el JSON a pares de clave=valor escapados
           JSON=$(cat tags.json)
-          TAGS=$(echo "$JSON" | jq -r 'map("\(.Key)=\(.Value|gsub(" "; " ")|gsub("&"; "&"))") | join(" ")')
+          TAGS=$(echo "$JSON" | jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "y"))") | join(" ")')
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
           echo "Processed tags: ${TAGS}"
 
