@@ -191,7 +191,7 @@ Resources:
         ['arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole']
       Policies:
         -
-          PolicyName: "S3BucketAccessPolicy"
+          PolicyName: "S3BucketAccessPolicysss"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
