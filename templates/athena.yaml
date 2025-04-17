@@ -37,7 +37,7 @@ Parameters:
     Type: String
     Default: "db_ecodistribucion_regional_analitycs"
 Resources:
-   BrScThanosPalletsHeadersAnalytics:
+  BrScThanosPalletsHeadersAnalytics:
     Properties:
       CatalogId: !Ref pAWSAccountId
       DatabaseName: !Ref pdbAnalyticsName
@@ -170,6 +170,7 @@ Resources:
                   - 'logs:PutLogEvents'
                 Resource:
                   - 'arn:aws:logs:*:*:*:/aws-glue/*'
+
 
   MyRole:
     Type: AWS::IAM::Role
