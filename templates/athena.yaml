@@ -110,3 +110,133 @@ Resources:
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
     Type: AWS::Glue::Table
+
+
+  MyGlueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: glueprueba
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'glue.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'MyGluePolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'glue:*'
+                  - 's3:GetBucketLocation'
+                  - 's3:ListBucket'
+                  - 's3:ListAllMyBuckets'
+                  - 's3:GetBucketAcl'
+                  - 'ec2:DescribeVpcEndpoints'
+                  - 'ec2:DescribeRouteTables'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DescribeSecurityGroups'
+                  - 'ec2:DescribeSubnets'
+                  - 'ec2:DescribeVpcAttribute'
+                  - 'iam:ListRolePolicies'
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'cloudwatch:PutMetricData'
+                Resource: '*'
+              - Effect: 'Allow'
+                Action: 's3:CreateBucket'
+                Resource:
+                  - 'arn:aws:s3:::aws-glue-*'
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:DeleteObject'
+                Resource:
+                  - 'arn:aws:s3:::aws-glue-*/*'
+                  - 'arn:aws:s3:::*/*aws-glue-*/*'
+              - Effect: 'Allow'
+                Action: 's3:GetObject'
+                Resource:
+                  - 'arn:aws:s3:::crawler-public*'
+                  - 'arn:aws:s3:::aws-glue-*'
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - 'arn:aws:logs:*:*:*:/aws-glue/*'
+
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: pruebarolescrawler
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        ['arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole']
+      Policies:
+        -
+          PolicyName: "S3BucketAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource: 
+                  !Join
+                    - ''
+                    - - arn:aws:s3:::stage-nelson-dev
+                      - "*"
+  
+  MyCrawler2:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: "testcrawler1"
+      Role: !Ref MyRole
+      DatabaseName: !Ref pdbAnalyticsName
+      Targets:
+        S3Targets:
+          - Path: arn:aws:s3:::stage-nelson-dev
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+        DeleteBehavior: "LOG"
+      Tags:
+        "Key1": "Value1"
+      Schedule:
+        ScheduleExpression: "cron(0/10 * ? * MON-FRI *)"
+  #MiGlueCrawler:
+  #  Type: AWS::Glue::Crawler
+  #  Properties:
+  #    Name: mi-crawler
+  #    Role: !Sub "arn:aws:iam::${pAWSAccountId}:role/glueprueba"
+  #    DatabaseName: !Ref pdbAnalyticsName
+  #    Targets:
+  #      S3Targets:
+  #        - Path: s3://mi-bucket/datos/
+  #    Schedule:
+  #      ScheduleExpression: cron(0 12 * * ? *)  # Ejecuta todos los días a las 12:00 UTC
+  #    SchemaChangePolicy:
+  #      UpdateBehavior: UPDATE_IN_DATABASE
+  #      DeleteBehavior: DEPRECATE_IN_DATABASE
+  #    RecrawlPolicy:
+  #      RecrawlBehavior: CRAWL_EVERYTHING
+  #    Tags:
+  #      Proyecto: ETL
+  #      Entorno: Producción
