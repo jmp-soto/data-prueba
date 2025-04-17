@@ -214,7 +214,7 @@ Resources:
       DatabaseName: !Ref pdbAnalyticsName
       Targets:
         S3Targets:
-          - Path: arn:aws:s3:::stage-nelson-dev
+          - Path: !Ref pArtifactsBucket
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
         DeleteBehavior: "LOG"
