@@ -12,7 +12,7 @@
       "REPOSITORY_NAME":"github-trust-repo"
   },    
   {
-      "ARTIFACTORY_BUCKET":"stage-nelson-dev"
+      "ARTIFACTORY_BUCKET":"testa-artifacts-dev-josemaria "
   },
   {
       "AWS_ACCOUNT_ID":"682033497219"
