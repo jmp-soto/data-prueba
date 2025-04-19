@@ -30,6 +30,3 @@ Parameters:
   pdeploymentDate:
     Description: "Aws account (all lowercase, no symbols or spaces)"
     Type: String
-
-Resources:
-

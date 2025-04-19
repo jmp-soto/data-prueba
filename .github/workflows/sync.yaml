@@ -117,7 +117,7 @@ jobs:
                 pdeploymentDate=$TIMESTAMP
           aws cloudformation describe-stack-events --stack-name $S3_STACK_NAME --max-items 5
 
-      #- name: Sync Folder to S3
+      #- name: Sync Folder to S3#
       #  id: sync-folder
       #  run: |
       #    aws s3 sync ./stage_lib s3://$AWS_BUCKET_NAME/
