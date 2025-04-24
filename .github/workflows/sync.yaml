@@ -105,7 +105,7 @@ jobs:
           aws s3 cp ./layers/awswrangler-layer-py3-9.zip s3://$ARTIFACTORY_BUCKET/layers/
           aws s3 cp ./layers/request-layer-py3-12.zip s3://$ARTIFACTORY_BUCKET/layers/
 
-      # Other resources
+      # Other resources#
       - name: Deploy Layers
         if: contains(github.event.pull_request.title, '-layers') || contains(github.event.pull_request.title, '-all')
         run: deploy_stack "layers.yaml" "da-josemaria-layers" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
