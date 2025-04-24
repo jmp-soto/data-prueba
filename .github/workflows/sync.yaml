@@ -1,15 +1,14 @@
 name: CloudFormation deploy
 
 on:
-  #pull_request:
-  #  types: [closed]
-  #  branches: [develop, qa, prod]
-  push:
-    branches:
-      - develop
+  pull_request:
+    types: [closed]
+    branches: [develop, qa, prod]
+
+
 jobs:
   build:
-    #if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
