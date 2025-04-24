@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template to create IAM roles and policies for Ecodistribucion Misupply
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Team name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Type: String
+  pDevelopFlag:
+    Description: "Flag to indicate if this is a development environment"
+    Type: String
+    Default: "false"
+    AllowedValues: 
+      - "true"
+      - "false"
+
+Conditions:
+  OnlyDev: !Equals [!Ref pDevelopFlag, "true"]
+
+Resources:
+  lambdaMisupplyApiRole:
+    Type: AWS::IAM::Role
+    Condition: OnlyDev
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-misupplyapi-${Stage}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${pTeamName}-${pAccountName}-access-to-s3-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AccessToS3Policy
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-stage-${Stage}/*"
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-stage-${Stage}"
+              - Sid: ReadSecretsManager
+                Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecrets"
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${pAWSRegion}:${pAWSAccountId}:secret:*"
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Stage
+        - Key: "Team"
+          Value: !Ref pTeamName
+        - Key: "DeploymentDate"
+          Value: !Ref pdeploymentDate
+
+Outputs:
+  LambdaMisupplyApiRoleArn:
+    Description: The ARN of the Lambda Misupply API IAM Role
+    Value: !GetAtt lambdaMisupplyApiRole.Arn
+    Condition: OnlyDev

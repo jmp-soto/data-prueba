@@ -1,0 +1,36 @@
+[
+    {
+        "TEAM": "prueba"
+    },
+    {
+        "ENVIRONMENT": "qa"
+    },
+    {
+        "BRANCH_NAME": "qa"
+    },
+    {
+        "REPOSITORY_NAME":"prueba-koa-iac-josemaria"
+    },    
+    {
+        "ARTIFACTORY_BUCKET":"prueba-josemaria-artifacts-qa"
+    },
+    {
+        "AWS_ACCOUNT_ID":"774305614631"
+    },
+    {
+        "AWS_ACCOUNT_ID_OPT":"263124028558"
+    },
+    {
+        "DB_STAGE":"db_josemaria_regional_stage"
+    },
+    {
+        "DB_ANALYTICS":"db_josemaria_regional_analytics"
+    },
+    {
+        "AWS_ACCOUNT":"josemaria"
+    },
+    {
+        "AWS_RUTADIGITAL_ID":"590183961442"
+    }
+  ]
+  

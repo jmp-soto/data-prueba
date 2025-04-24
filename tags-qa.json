@@ -1,0 +1,30 @@
+[
+  {
+    "Key": "Area",
+    "Value": "DIV. Data & Analitica"
+  },
+  {
+    "Key": "Squad",
+    "Value": "Manufactura & Distribución"
+  },
+  {
+    "Key": "Responsable_po",
+    "Value": "Nicolas Aiccardi"
+  },
+  {
+    "Key": "Responsable_funcional",
+    "Value": "Ricardo Salinas"
+  },
+  {
+    "Key": "Env",
+    "Value": "qa"
+  },
+  {
+    "Key": "Environment",
+    "Value": "qa"
+  },
+  {
+    "Key": "Client",
+    "Value": "ecodistribucion"
+  }
+]

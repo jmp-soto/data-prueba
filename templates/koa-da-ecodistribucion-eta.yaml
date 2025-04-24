@@ -1,0 +1,228 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating IAM roles, policies, and Lambda functions for ETA services
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "team Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Date (all lowercase, no symbols or spaces)"
+    Type: String
+  pRDAWSAccountId:
+    Description: "AWS account ID for Lambda invocation permission"
+    Type: String
+
+Conditions:
+  IsDev: !Equals [!Ref Stage, "dev"]
+
+Resources:
+  # Lambda layers
+  dataWranglerLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub "${pTeamName}-data-wrangler-layer"
+      Description: "Data Wrangler Layer for Lambda functions"
+      CompatibleRuntimes:
+        - python3.9
+      Content:
+        S3Bucket: !Ref pArtifactsBucket
+        S3Key: !Sub "layers/data_wrangler_layer.zip"
+
+  requestLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub "${pTeamName}-request-layer"
+      Description: "Request Layer for Lambda functions"
+      CompatibleRuntimes:
+        - python3.9
+      Content:
+        S3Bucket: !Ref pArtifactsBucket
+        S3Key: !Sub "layers/request_layer.zip"
+
+  etaRole:
+    Type: AWS::IAM::Role
+    Condition: IsDev
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-eta-${Stage}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketfile"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AccessToS3Policy
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-stage-file-${Stage}/*"
+              - Sid: ReadSecretsManager
+                Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecrets"
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${pAWSRegion}:${pAWSAccountId}:secret:*"
+              - Sid: AccessTosqsPolicy
+                Effect: Allow
+                Action:
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                  - "sqs:GetQueueAttributes"
+                  - "sqs:GetQueueUrl"
+                  - "sqs:SendMessage"
+                Resource:
+                  - "*"
+              - Sid: AccessToLogsPolicy
+                Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
+
+  defaultEtaRole:
+    Type: AWS::IAM::Role
+    Condition: !Not [IsDev]
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-eta-${Stage}-default"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  daEtaSpLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "lambda-${pTeamName}-eta-sp"
+      Description: "Lambda function Eta SimplyRoute"
+      MemorySize: 2048
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import json
+
+          def lambda_handler(event, context):
+              print("Hola Mundo desde Lambda!")
+              return {
+                  "statusCode": 200,
+                  "body": json.dumps({
+                      "message": "Hola Mundo!",
+                      "event": event
+                  })
+              }
+      Role: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Stage
+          REGION: !Ref pAWSRegion
+      Layers:
+        - !Ref dataWranglerLayer
+        - !Ref requestLayer
+      Tags:
+        - Key: Environment
+          Value: !Ref Stage
+        - Key: Team
+          Value: !Ref pTeamName
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt daEtaSpLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
+      SourceAccount: !Ref pRDAWSAccountId
+
+  
+  daEtaSMlLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "lambda-${pTeamName}-eta-ml"
+      Description: "Lambda function Modelo para obtener ETA"
+      MemorySize: 2048
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import json
+
+          def lambda_handler(event, context):
+              print("Hola Mundo desde Lambda!")
+              return {
+                  "statusCode": 200,
+                  "body": json.dumps({
+                      "message": "Hola Mundo!",
+                      "event": event
+                  })
+              }
+      Role: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Stage
+          REGION: !Ref pAWSRegion
+      Layers:
+        - !Ref dataWranglerLayer
+        - !Ref requestLayer
+      Tags:
+        - Key: Environment
+          Value: !Ref Stage
+        - Key: Team
+          Value: !Ref pTeamName
+
+Outputs:
+  EtaRoleArn:
+    Description: "ARN of the ETA Role"
+    Value: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
+    Export:
+      Name: etaRole-Arn
