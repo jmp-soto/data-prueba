@@ -65,25 +65,27 @@ jobs:
       # Create a reusable deployment function
       - name: Define deployment function
         run: |
-          echo 'function deploy_stack() {
-            local template=$1
-            local stack_name=$2
-            local extra_params="${3:-}"
-            
-            echo "Deploying $stack_name using $template"
-            aws cloudformation deploy \
-              --template-file templates/$template \
-              --region $REGION \
-              --stack-name $stack_name \
-              --capabilities CAPABILITY_NAMED_IAM \
-              --no-fail-on-empty-changeset \
-              --tags $TAGS \
-              --parameter-overrides \
-                $COMMON_PARAMS \
-                $extra_params
-
-            aws cloudformation describe-stack-events --stack-name $stack_name --max-items 5 --output table
-          }' >> $GITHUB_ENV
+          echo '#!/bin/bash' > deploy_stack.sh
+          echo 'function deploy_stack() {' >> deploy_stack.sh
+          echo '  local template=$1' >> deploy_stack.sh
+          echo '  local stack_name=$2' >> deploy_stack.sh
+          echo '  local extra_params="${3:-}"' >> deploy_stack.sh
+          echo '' >> deploy_stack.sh
+          echo '  echo "Deploying $stack_name using $template"' >> deploy_stack.sh
+          echo '  aws cloudformation deploy \\' >> deploy_stack.sh
+          echo '    --template-file templates/$template \\' >> deploy_stack.sh
+          echo '    --region $REGION \\' >> deploy_stack.sh
+          echo '    --stack-name $stack_name \\' >> deploy_stack.sh
+          echo '    --capabilities CAPABILITY_NAMED_IAM \\' >> deploy_stack.sh
+          echo '    --no-fail-on-empty-changeset \\' >> deploy_stack.sh
+          echo '    --tags $TAGS \\' >> deploy_stack.sh
+          echo '    --parameter-overrides \\' >> deploy_stack.sh
+          echo '      $COMMON_PARAMS \\' >> deploy_stack.sh
+          echo '      $extra_params' >> deploy_stack.sh
+          echo '' >> deploy_stack.sh
+          echo '  aws cloudformation describe-stack-events --stack-name $stack_name --max-items 5 --output table' >> deploy_stack.sh
+          echo '}' >> deploy_stack.sh
+          chmod +x deploy_stack.sh
 
 
 
