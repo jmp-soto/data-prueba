@@ -18,7 +18,7 @@ jobs:
       contents: read
       pull-requests: write
 
-      env:
+    env:
       ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
       REGION: "us-east-1"
       TIMESTAMP: ${{ format('{0:yyyyMMddHHmmss}', github.event.pull_request.merged_at) }}
