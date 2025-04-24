@@ -65,26 +65,32 @@ jobs:
       # Create a reusable deployment function
       - name: Define deployment function
         run: |
+          cat << 'EOF' > deploy_stack.sh
+          #!/bin/bash
+          set -e
+
           function deploy_stack() {
             local template=$1
             local stack_name=$2
             local extra_params="${3:-}"
 
-            echo "Deploying $stack_name using $template"
+            echo "Deploying \$stack_name using \$template"
             aws cloudformation deploy \
-              --template-file templates/$template \
-              --region $REGION \
-              --stack-name $stack_name \
+              --template-file templates/\$template \
+              --region \$REGION \
+              --stack-name \$stack_name \
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
-              --tags $TAGS \
+              --tags \$TAGS \
               --parameter-overrides \
-                $COMMON_PARAMS \
-                $extra_params
+                \$COMMON_PARAMS \
+                \$extra_params
 
-            aws cloudformation describe-stack-events --stack-name $stack_name --max-items 5 --output table
+            aws cloudformation describe-stack-events --stack-name \$stack_name --max-items 5 --output table
           }
-          echo "function deploy_stack() { $(declare -f deploy_stack | tail -n +2)" >> $GITHUB_ENV
+          EOF
+
+          chmod +x deploy_stack.sh
 
 
 
