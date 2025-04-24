@@ -21,9 +21,10 @@ jobs:
     env:
       ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
       REGION: "us-east-1"
-      TIMESTAMP: ${{ format('{0:yyyyMMddHHmmss}', github.event.pull_request.merged_at) }}
-
+      
     steps:
+      - name: Set timestamp
+        run: echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Checkout Repo
         uses: actions/checkout@v2
