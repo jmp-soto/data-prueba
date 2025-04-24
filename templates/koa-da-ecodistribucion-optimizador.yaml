@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template para crear roles, políticas IAM y recursos de DataSync para Ecodistribucion
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Team name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Type: String
+  pDeveloper:
+    Description: "Developer name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Päucar
+  pdbAnalyticsName:
+    Description: "Analytics database name"
+    Type: String
+
+Resources:
+  DataSyncRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-datasync-${Stage}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "datasync.amazonaws.com"
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+      MaxSessionDuration: 3600
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketStage"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AccessToS3Bucket
+                Effect: "Allow"
+                Action:
+                  - "s3:GetBucketLocation"
+                  - "s3:ListBucket"
+                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
+              - Sid: AccessToS3Objects
+                Effect: "Allow"
+                Action:
+                  - "s3:AbortMultipartUpload"
+                  - "s3:GetObject"
+                  - "s3:ListMultipartUploadParts"
+                  - "s3:PutObject"
+                  - "s3:GetObjectTagging"
+                  - "s3:ListBucket"
+                  - "s3:PutObjectTagging"
+                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}/*"
+
+  S3LocationOptimizador:
+    Type: AWS::DataSync::LocationS3
+    Properties:
+      S3BucketArn: !Sub "arn:aws:s3:::da-optimizador-stage-${Stage}"
+      S3Config:
+        BucketAccessRoleArn: !GetAtt DataSyncRole.Arn
+      Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
+
+  S3DestinationLocationOptimizador:
+    Type: AWS::DataSync::LocationS3
+    Properties:
+      S3BucketArn: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
+      S3Config:
+        BucketAccessRoleArn: !GetAtt DataSyncRole.Arn
+      Subdirectory: "/regional/externa/rg_in_optimizador_analytics/"
+
+  TaskEjecOptimizador:
+    Type: AWS::DataSync::Task
+    Properties:
+      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
+      SourceLocationArn: !Ref S3LocationOptimizador
+      DestinationLocationArn: !Ref S3DestinationLocationOptimizador
+      Options:
+        VerifyMode: "ONLY_FILES_TRANSFERRED"
+        OverwriteMode: "ALWAYS"
+        TransferMode: "CHANGED"
+      Includes:
+        - FilterType: "SIMPLE_PATTERN"
+          Value: "/year=*"
+      Schedule:
+        ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
+
+  OptimizadorTableAnalytics:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: rg_in_optimizador_analitycs
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+        - {Name: year, Type: string}
+        - {Name: month, Type: string}
+        - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: plan_id, Type: bigint}
+            - {Name: plan_created_at, Type: timestamp}
+            - {Name: plan_bukrs, Type: string}
+            - {Name: plan_profile, Type: string}
+            - {Name: plan_tpp, Type: string}
+            - {Name: plan_date, Type: date}
+            - {Name: plan_user_id, Type: int}
+            - {Name: plan_description, Type: string}
+            - {Name: calc_id, Type: bigint}
+            - {Name: calc_created_at, Type: timestamp}
+            - {Name: calc_bukrs, Type: string}
+            - {Name: calc_ptot, Type: int}
+            - {Name: calc_ptotm, Type: int}
+            - {Name: calc_ptotc, Type: int}
+            - {Name: calc_tknumr, Type: string}
+            - {Name: calc_ptotr, Type: int}
+            - {Name: calc_clients, Type: int}
+            - {Name: calc_utilization, Type: string}
+            - {Name: calc_peso, Type: string}
+            - {Name: calc_utilizationp, Type: string}
+            - {Name: calc_exception_sap, Type: string}
+            - {Name: calc_status, Type: string}
+            - {Name: calc_transactionid, Type: string}
+            - {Name: calc_transactionidexport, Type: string}
+            - {Name: calc_ntrip, Type: int}
+            - {Name: calc_truck, Type: string}
+            - {Name: calc_truck_box, Type: string}
+            - {Name: calc_delivery_pallet, Type: string}
+            - {Name: calc_user_comments, Type: string}
+            - {Name: calc_planheader_id, Type: bigint}
+            - {Name: sap_bukrs, Type: string}
+            - {Name: sap_tknum, Type: string}
+            - {Name: sap_shtyp, Type: string}
+            - {Name: sap_tplst, Type: string}
+            - {Name: sap_erdat, Type: timestamp}
+            - {Name: sap_route, Type: string}
+            - {Name: sap_tdlnr, Type: string}
+            - {Name: sap_rpfar1, Type: string}
+            - {Name: sap_rpmowa, Type: string}
+            - {Name: sap_stdis, Type: string}
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/regional/externa/rg_in_optimizador_analytics
+          Compressed: True
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+
+Outputs:
+  DataSyncRoleArn:
+    Description: ARN of the DataSync IAM Role
+    Value: !GetAtt DataSyncRole.Arn
+  TaskEjecOptimizadorArn:
+    Description: ARN of the DataSync Task
+    Value: !Ref TaskEjecOptimizador

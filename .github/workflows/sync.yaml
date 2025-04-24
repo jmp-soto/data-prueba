@@ -1,47 +1,39 @@
-name: Sync File to S3
+name: CloudFormation deploy
 
 on:
-  push:
-    branches:
-      - develop # Solo se ejecutará cuando haya cambios en la rama main
+  pull_request:
+    types: [closed]
+    branches: [develop, qa, prod]
 
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
-  sync:
+  build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    env:
-      AWS_BUCKET_NAME: "prueba-exampe-josemaria-git"
+    environment:
+      name: ${{ github.base_ref }}
+    
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+      env:
+      ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
       REGION: "us-east-1"
-      ARTIFACTS_S3: "testa-artifacts-dev-josemaria"
-      AWS_ACCOUNT_ID: "345345345345"
-      AWS_ACCOUNT_OPTIMIZADOR: "5345345345"  
-      ENVIRONMENT: "dev" 
+      TIMESTAMP: ${{ format('{0:yyyyMMddHHmmss}', github.event.pull_request.merged_at) }}
+
     steps:
 
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: Set timestamp
+      - name: Set parameters and tags files
         run: |
-          echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+          echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
+          echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
       
 
-      - name: Set Parameters File
-        run: |
-          if [[ "${{ github.ref_name }}" == "develop" ]]; then
-            echo "PARAMETERS_FILE=./parameters-dev.json" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "qa" ]]; then
-            echo "PARAMETERS_FILE=./parameters-qa.json" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "prod" ]]; then
-            echo "PARAMETERS_FILE=./parameters-prod.json" >> $GITHUB_ENV
-          else
-            echo "PARAMETERS_FILE=tags.json" >> $GITHUB_ENV
-          fi
-
-      # Paso 2: Leer el JSON y exportar las claves como variables de entorno
       - name: Load JSON into Environment Variables
         run: |
           for row in $(jq -c '.[]' $PARAMETERS_FILE); do
@@ -50,415 +42,94 @@ jobs:
             echo "${key}=${value}" >> $GITHUB_ENV
           done
           echo "Loaded variables from $PARAMETERS_FILE."
-
-      # Paso 3: Validar los valores cargados
-      - name: Validate Variables
-        run: |
-          echo "TEAM=$TEAM"
-          echo "ENVIRONMENT=$ENVIRONMENT"
-          echo "BRANCH_NAME=$BRANCH_NAME"
-          echo "REPOSITORY_NAME=$REPOSITORY_NAME"
-          echo "ARTIFACTORY_BUCKET=$ARTIFACTORY_BUCKET"
-          echo "AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID"
-          echo "AWS_ACCOUNT_ID_PRUEBA=$AWS_ACCOUNT_ID_PRUEBA"
-          echo "DB_STAGE=$DB_STAGE"
-          echo "AWS_ACCOUNT=$AWS_ACCOUNT"
-
-
+      
       - name: Process Tags
         run: |
-          # Convertir el JSON a pares de clave=valor escapados
-          JSON=$(cat tags.json)
-          TAGS=$(echo "$JSON" | jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "y"))") | join(" ")')
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
-          echo "Processed tags: ${TAGS}"
 
-      - name: Process Tags_comillas
-        run: |
-          # Convertir el JSON a pares de clave=valor escapados
-          JSON=$(cat tags.json)
-          TAGS_comillas=$(jq -r 'map("\(.Key)=" + (.Value | gsub(" "; "\\\\ ") | gsub("&"; "\\\\&"))) | join(" ")' tags.json)
-          echo "TAGS_comillas=${TAGS_comillas}" >> $GITHUB_ENV
-          echo "Processed tags: ${TAGS_comillas}"
-
-        ##TAGS_comillas=$(echo "$JSON" | jq -r 'map("\"" + .Key + "=" + (.Value | gsub(" "; " ") | gsub("&"; "&")) + "\"") | join(" ")')
-        # 2. Configura las credenciales de AWS
-      - name: connect to AWS
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-session-name: awssyncsession
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          role-session-name: pruebarolesession
+          aws-region: ${{ env.REGION }}
       
+      # Define common CloudFormation parameters
+      - name: Set common parameters
+        run: |
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pdeploymentDate=$TIMESTAMP" >> $GITHUB_ENV
+
       
+      # Create a reusable deployment function
+      - name: Define deployment function
+        run: |
+          function deploy_stack() {
+            local template=$1
+            local stack_name=$2
+            local extra_params="${3:-}"
+
+            echo "Deploying $stack_name using $template"
+            aws cloudformation deploy \
+              --template-file templates/$template \
+              --region $REGION \
+              --stack-name $stack_name \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --no-fail-on-empty-changeset \
+              --tags $TAGS \
+              --parameter-overrides \
+                $COMMON_PARAMS \
+                $extra_params
+
+            aws cloudformation describe-stack-events --stack-name $stack_name --max-items 5 --output table
+          }
+          echo "function deploy_stack() { $(declare -f deploy_stack | tail -n +2)" >> $GITHUB_ENV
+
+
+      # Deploy resources based on PR title
+      - name: Deploy IAM
+        if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
+        run: deploy_stack "iam.yaml" "da-josemaria-iam" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
 
       - name: Deploy S3
-        id: s3
-        shell: bash
-        if: contains(github.event.head_commit.message, '-s3') || contains(github.event.head_commit.message, '-all')
-        env:
-          S3_STACK_NAME: da-josemaria-s3
-        run: |
-          aws cloudformation deploy --template-file templates/s3.yaml \
-            --region $REGION \
-            --stack-name $S3_STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP
-          aws cloudformation describe-stack-events --stack-name $S3_STACK_NAME --max-items 5
+        if: contains(github.event.pull_request.title, '-s3')
+        run: deploy_stack "s3.yaml" "da-josemaria-s3" "ArtifactsBucket=$ARTIFACTORY_BUCKET"
 
-      #- name: Sync Folder to S3#
-      #  id: sync-folder
-      #  run: |
-      #    aws s3 sync ./stage_lib s3://$AWS_BUCKET_NAME/
-      #    echo "Folder synchronized to S3 bucket: $AWS_BUCKET_NAME"
-      - name: Copy 'src' Folders and Zip lambda_function.py to S3
-        id: process-src
-        if: contains(github.event.head_commit.message, '-src') || contains(github.event.head_commit.message, '-all')
-        run: |
-          # Define el bucket S3
-          BUCKET_NAME=$ARTIFACTS_S3
-
-          # Encuentra todas las carpetas que contienen 'src'
-          find stage_lib -type d -name 'src' | while read src_path; do
-            # Recrear la ruta en S3
-            s3_path=$(echo $src_path | sed "s|stage_lib|s3://$BUCKET_NAME|")
-            aws s3api put-object --bucket $BUCKET_NAME --key "$(echo $s3_path | sed 's|s3://[^/]\+/||')/"
-
-            # Copiar los archivos dentro del directorio 'src' a S3
-            find "$src_path" -type f | while read file; do
-              file_key=$(echo $file | sed "s|stage_lib|s3://$BUCKET_NAME|")
-            done
-
-            # Si existe un archivo lambda_function.py, zip y subir
-            lambda_file="$src_path/lambda_function.py"
-            if [ -f "$lambda_file" ]; then
-              zip_file="$src_path/lambda_function.zip"
-              zip -j "$zip_file" "$lambda_file"
-
-              # Subir el archivo zip al S3
-              zip_s3_path=$(echo $zip_file | sed "s|stage_lib|s3://$BUCKET_NAME|")
-              aws s3 cp "$zip_file" "$zip_s3_path"
-
-              # Eliminar el archivo ZIP local después de subirlo
-              rm "$zip_file"
-            fi
-          done
-
-          echo "All 'src' files copied and lambda_function.py zipped and uploaded to S3."
-      - name: Deploy SQS
-        id: SQS
-        shell: bash
-        if: contains(github.event.head_commit.message, '-sqs') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-sqs
-        run: |
-          aws cloudformation deploy --template-file templates/sqs.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --s3-bucket prueba-exampe-josemaria-git \
-            -- tags $TAGS \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-
-      - name: Deploy tags
-        id: tags
-        shell: bash
-        if: contains(github.event.head_commit.message, '-tags') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-tagsss
-        run: |
-          aws cloudformation deploy --template-file templates/tags.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-      
-      - name: Deploy IAM
-        id: iam
-        shell: bash
-        if: contains(github.event.head_commit.message, '-iam') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-iam
-        run: |
-          aws cloudformation deploy --template-file templates/iam.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5
-
+      # Layer upload section
       - name: Upload layers to S3
-        if: contains(github.event.head_commit.message, '-layer') || contains(github.event.head_commit.message, '-all')
-        run: |
-          aws s3 cp ./layers/awswrangler-layer-py3-9.zip s3://$ARTIFACTS_S3/layers/
-          aws s3 cp ./layers/request-layer-py3-12.zip s3://$ARTIFACTS_S3/layers/
-
-          awswrangler_layer_py3_9_md5=$(md5sum ./layers/awswrangler-layer-py3-9.zip | awk '{print $1}')
-          request_layer_py3_12_md5=$(md5sum ./layers/request-layer-py3-12.zip | awk '{print $1}')
-
-          echo "awswranglerlayerpy39MD5=$awswrangler_layer_py3_9_md5" >> $GITHUB_ENV
-          echo "requestlayerpy312MD5=$request_layer_py3_12_md5" >> $GITHUB_ENV
-          
-      - name: Deploy Lambda
-        id: lambda
-        shell: bash
-        if: contains(github.event.head_commit.message, '-lambda') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-lambda
-        run: |
-          aws cloudformation deploy --template-file templates/lambda.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-      
-      
-
-      - name: Deploy Events Bridge
-        id: events_bridge
-        shell: bash
-        if: contains(github.event.head_commit.message, '-bridge') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-eventbridge
-        run: |
-          aws cloudformation deploy --template-file templates/eventbridge.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-      
-      
-      - name: Deploy dynamo
-        id: dynamo
-        shell: bash
-        if: contains(github.event.head_commit.message, '-dynamo') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-dynamo
-        run: |
-          aws cloudformation deploy --template-file templates/dynamo.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --tags $TAGS \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-      
-      - name: Deploy Events
-        id: events
-        shell: bash
-        if: contains(github.event.head_commit.message, '-events') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-events
-        run: |
-          aws cloudformation deploy --template-file templates/events.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --s3-bucket prueba-exampe-josemaria-git \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5 --output table
-
-      - name: Upload layers to S3
-        if: contains(github.event.head_commit.message, '-layer') 
+        if: contains(github.event.pull_request.title, '-layer')
         run: |
           aws s3 cp ./layers/awswrangler-layer-py3-9.zip s3://$ARTIFACTORY_BUCKET/layers/
           aws s3 cp ./layers/request-layer-py3-12.zip s3://$ARTIFACTORY_BUCKET/layers/
 
-          awswrangler_layer_py3_9_md5=$(md5sum ./layers/awswrangler-layer-py3-9.zip | awk '{print $1}')
-          request_layer_py3_12_md5=$(md5sum ./layers/request-layer-py3-12.zip | awk '{print $1}')
+      # Other resources
+      - name: Deploy Layers
+        if: contains(github.event.pull_request.title, '-layers') || contains(github.event.pull_request.title, '-all')
+        run: deploy_stack "layers.yaml" "da-josemaria-layers" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
 
-          echo "awswranglerlayerpy39MD5=$awswrangler_layer_py3_9_md5" >> $GITHUB_ENV
-          echo "requestlayerpy312MD5=$request_layer_py3_12_md5" >> $GITHUB_ENV
+      - name: Deploy CATALOGO ATHENA DB
+        if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
+        run: deploy_stack "athenacatalogo.yaml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
-      - name: Deploy ATHENA
-        id: athena
-        shell: bash
-        if: contains(github.event.head_commit.message, '-athena') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-athena
+      # Remaining stack deployments
+      - name: Deploy remaining stacks
         run: |
-          aws cloudformation deploy --template-file templates/athena.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5
-    
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-josemaria-eta.yaml" "koa-da-josemaria-eta"
+          fi
 
-      - name: Deploy DATABASE ATHENA
-        id: athenacatologo
-        shell: bash
-        if: contains(github.event.head_commit.message, '-catalogoathena')
-        env:
-          STACK_NAME: da-josemaria-catalogoathena
-        run: |
-          aws cloudformation deploy --template-file templates/catologoathena.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-josemaria-misupply.yaml" "koa-da-josemaria-misupply"
+          fi
 
-      - name: Deploy DATABASE
-        id: athenacatologos
-        shell: bash
-        if: contains(github.event.head_commit.message, '-catalogoathena')
-        env:
-          STACK_NAME: da-josemaria-catalogoathenas
-        run: |
-          aws cloudformation deploy --template-file templates/catologoathena.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP 
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-josemaria-nps-feedback.yaml" "koa-da-josemaria-nps-feedback"
+          fi
+
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-josemaria-optimizador.yaml" "koa-da-josemaria-optimizador"
+          fi
+
+
+
       
-      - name: Deploy DATASYNC
-        id: datasync
-        shell: bash
-        if: contains(github.event.head_commit.message, '-datasync') || contains(github.event.head_commit.message, '-all')
-        env:
-          STACK_NAME: da-josemaria-datasync
-        run: |
-          aws cloudformation deploy --template-file templates/datasync.yaml \
-            --region $REGION \
-            --stack-name $STACK_NAME \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides \
-                pTeamName=$TEAM \
-                Stage=$ENVIRONMENT \
-                pBranchName=$BRANCH_NAME \
-                pArtifactsBucket=$ARTIFACTORY_BUCKET \
-                pAWSRegion=$REGION \
-                pAWSAccountId=$AWS_ACCOUNT_ID \
-                pAWSAccountOptId=$AWS_ACCOUNT_ID_PRUEBA \
-                pdbStageName=$DB_STAGE \
-                pAccountName=$AWS_ACCOUNT \
-                pdeploymentDate=$TIMESTAMP
-          aws cloudformation describe-stack-events --stack-name $STACK_NAME --max-items 5
