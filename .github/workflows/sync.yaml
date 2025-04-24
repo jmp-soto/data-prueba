@@ -112,7 +112,7 @@ jobs:
 
       - name: Deploy CATALOGO ATHENA DB
         if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
-        run: deploy_stack "athenacatalogo.yaml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+        run: source ./deploy_stack.sh deploy_stack "athenacatalogo.yaml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
       # Remaining stack deployments
       - name: Deploy remaining stacks
