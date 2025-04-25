@@ -439,7 +439,7 @@ Resources:
                 Effect: Allow
                 Action: iam:PassRole
                 Resource:
-                  - arn:aws:iam::682033497219:role/service-role/Role-glue-service-full-access
+                  - arn:aws:iam::682033497219:role/Role-glue-service-full-access
                 Condition:
                   StringEquals:
                     iam:PassedToService: glue.amazonaws.com
