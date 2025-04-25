@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template para crear lambdas para procesamiento de NPS feedback
+Description: Template for creating AWS Proyecto NPS
 
 Parameters:
   Stage:
@@ -12,31 +12,37 @@ Parameters:
   pArtifactsBucket:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
   pAWSRegion:
-    Description: "AWS region"
+    Description: "AWS region (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountId:
-    Description: "AWS account ID"
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountOpt:
-    Description: "AWS account optimizer ID"
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
     Type: String
   pAccountName:
-    Description: "AWS account name"
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
     Type: String
   pTeamName:
-    Description: "Team Name"
+    Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
   pdeploymentDate:
-    Description: "Deployment date"
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
     Type: String
-  pDeveloper:
-    Description: "Developer name"
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
     Type: String
-    Default: josemaria_paucar
-  pRDAWSAccountId:
-    Description: "RD AWS Account ID"
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
   # Country parameters
   pCountryCl:
     Description: "Country code for Chile"
@@ -65,111 +71,89 @@ Parameters:
   requestLayerArn:
     Type: String
     Description: "ARN of the Request Lambda layer"
-  etaRoleArn:
-    Type: String
-    Description: "ARN of the ETA IAM role"
 
 Resources:
-  daNpsFeedbackConsolidadoLambda:
+  npsFeedbackRole:
+
+
+  npsFeedbackCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Truck
+          AttributeType: S
+        - AttributeName: Execution_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Truck
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Execution_date
+          KeySchema:
+            - AttributeName: Execution_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  consolidadoNpsFeedbackCLLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${pCountryCl}-lambda-${pTeamName}-nps-feedback-consolidado"
-      Description: "Lambda function consolidado nps"
-      MemorySize: 2048
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-consolidado-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt npsFeedbackRole.Arn
+      Runtime: python3.13
       Timeout: 900
+      MemorySize: 2048
       Code:
         ZipFile: |
-          import json
+          import os
 
-          def lambda_handler(event, context):
-              print("NPS Feedback Consolidado Lambda")
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
-                  "body": json.dumps({
-                      "message": "NPS Feedback Consolidado procesado con éxito",
-                      "event": event
-                  })
+                  "body": f"Hola mundo desde {desarrollador}"
               }
-      Role: !Ref etaRoleArn
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.9
       Environment:
         Variables:
-          ENVIRONMENT: !Ref Stage
-          REGION: !Ref pAWSRegion
-          COUNTRY: !Ref pCountryCl
-      Layers:
-        - !Ref dataWranglerLayerArn
-        - !Ref requestLayerArn
+          DEVELOPER: !Ref pdeveloper
+          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
+          IAM_ROLE: !Ref statisticsDbAnalitycsRole
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Developer
-          Value: !Ref pDeveloper
-        - Key: DeploymentDate
-          Value: !Ref pdeploymentDate
+        - Key: develop
+          Value: !Ref pdeveloper
   
-  daNpsFeedbackRtLambda:
+  rtNpsFeedbackCLLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${pCountryCl}-lambda-${pTeamName}-nps-feedback-rt"
-      Description: "Lambda function real time nps"
-      MemorySize: 2048
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt npsFeedbackRole.Arn
+      Runtime: python3.13
       Timeout: 900
+      MemorySize: 2048
       Code:
         ZipFile: |
-          import json
+          import os
 
-          def lambda_handler(event, context):
-              print("NPS Feedback RealTime Lambda")
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
-                  "body": json.dumps({
-                      "message": "NPS Feedback RealTime procesado con éxito",
-                      "event": event
-                  })
+                  "body": f"Hola mundo desde {desarrollador}"
               }
-      Role: !Ref etaRoleArn
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.9
       Environment:
         Variables:
-          ENVIRONMENT: !Ref Stage
-          REGION: !Ref pAWSRegion
-          COUNTRY: !Ref pCountryCl
-      Layers:
-        - !Ref dataWranglerLayerArn
-        - !Ref requestLayerArn
+          DEVELOPER: !Ref pdeveloper
+          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
+          IAM_ROLE: !Ref statisticsDbAnalitycsRole
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Developer
-          Value: !Ref pDeveloper
-        - Key: DeploymentDate
-          Value: !Ref pdeploymentDate
-
-  LambdaInvokePermissionRt:
-    Type: AWS::Lambda::Permission
-    DependsOn: daNpsFeedbackRtLambda
-    Properties:
-      FunctionName: !GetAtt daNpsFeedbackRtLambda.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
-      SourceAccount: !Ref pRDAWSAccountId
-
-Outputs:
-  ConsolidadoLambdaArn:
-    Description: "ARN of the NPS Feedback Consolidado Lambda function"
-    Value: !GetAtt daNpsFeedbackConsolidadoLambda.Arn
-    Export:
-      Name: !Sub "${pCountryCl}-${pTeamName}-nps-feedback-consolidado-arn"
-  
-  RealTimeLambdaArn:
-    Description: "ARN of the NPS Feedback RealTime Lambda function"
-    Value: !GetAtt daNpsFeedbackRtLambda.Arn
-    Export:
-      Name: !Sub "${pCountryCl}-${pTeamName}-nps-feedback-rt-arn"
+        - Key: develop
+          Value: !Ref pdeveloper
