@@ -296,7 +296,7 @@ Resources:
         - AttributeName: DatabaseName
           AttributeType: S
       KeySchema:
-        - AttributeName: table_name
+        - AttributeName: Table_name
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: DatabaseName
