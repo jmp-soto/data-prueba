@@ -59,7 +59,7 @@ jobs:
       # Define common CloudFormation parameters
       - name: Set common parameters
         run: |
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
       
       # Create a reusable deployment function
@@ -152,7 +152,7 @@ jobs:
           fi
 
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" "pdbAnalyticsName=$DB_ANALYTICS" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+            deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" "pdbAnalyticsName=$DB_ANALYTICS"
           fi
 
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
