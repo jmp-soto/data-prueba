@@ -254,6 +254,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
+      VisibilityTimeout: 900
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
         maxReceiveCount: 3 
