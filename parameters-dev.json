@@ -13,6 +13,9 @@
   },    
   {
       "ARTIFACTORY_BUCKET":"prueba-josemaria-artifacts-dev"
+  },    
+  {
+      "ANALYTICS_BUCKET":"stage-nelson-dev"
   },
   {
       "AWS_ACCOUNT_ID":"682033497219"

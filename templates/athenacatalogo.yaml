@@ -12,6 +12,9 @@ Parameters:
   pArtifactsBucket:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
   pAWSRegion:
     Description: "AWS region (all lowercase, no symbols or spaces)"
     Type: String
