@@ -226,6 +226,11 @@ Resources:
                   - arn:aws:s3:::aws-glue-*/*
                   - arn:aws:s3:::crawler-public*
                   - arn:aws:s3:::stage-nelson-dev/*
+                  
+              - Sid: AllowPassRoleToGlue
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt statisticsDbGlueRole.Arn
 
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
