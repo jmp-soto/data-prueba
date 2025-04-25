@@ -239,7 +239,6 @@ Resources:
               }
       Environment:
         Variables:
-          DEVELOPER: !Ref pdeveloper
           DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
           IAM_ROLE: !Ref statisticsDbAnalitycsRole
           ACCOUNT_ID: !Ref pAWSAccountId
