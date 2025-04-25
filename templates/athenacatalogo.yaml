@@ -99,7 +99,7 @@ Resources:
       DatabaseName: !Ref pdbAnalyticsName
       Targets:
         S3Targets:
-          - Path: !Sub "s3://${pArtifactsBucket}"
+          - Path: !Sub "s3://${pbucketAnalytics}"
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
         DeleteBehavior: "LOG"
@@ -107,7 +107,7 @@ Resources:
         Key1: "Value1"
       Schedule:
         ScheduleExpression: "cron(0 10 ? * * *)"
-      Description: !Sub "Crawler to analyze data in ${pArtifactsBucket} bucket for ${Stage} environment"
+      Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
 
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
