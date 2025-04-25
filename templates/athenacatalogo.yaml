@@ -385,6 +385,7 @@ Resources:
             Principal:
               Service:
                 - glue.amazonaws.com
+                - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: GlueServiceFullAccessPolicy
