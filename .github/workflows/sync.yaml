@@ -152,7 +152,7 @@ jobs:
           fi
 
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" "pdbAnalyticsName=$DB_ANALYTICS"
+            deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" "pdbAnalyticsName=$DB_ANALYTICS" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           fi
 
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
