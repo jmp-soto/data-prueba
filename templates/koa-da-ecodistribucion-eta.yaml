@@ -195,7 +195,6 @@ Resources:
           import os
 
           def handler(event, context):
-              desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
                   "body": f"Hola mundo desde {desarrollador}"
@@ -231,7 +230,7 @@ Resources:
           import os
 
           def handler(event, context):
-              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              
               return {
                   "statusCode": 200,
                   "body": f"Hola mundo desde {desarrollador}"
