@@ -69,9 +69,6 @@ Parameters:
     Default: "rg"
   # Required for referenced resources
 
-Conditions:
-  OnlyDev: !Equals [!Ref pDevelopFlag, "true"]
-
 Resources:
   misupplyRole:
     Type: AWS::IAM::Role
