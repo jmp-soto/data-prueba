@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template for creating AWS Proyecto NPS
+Description: Template for creating AWS Proyecto Eta
 
 Parameters:
   Stage:
@@ -69,8 +69,8 @@ Parameters:
     Default: "rg"
   # Required for referenced resources
 
-Conditions:
-  IsDev: !Equals [!Ref Stage, "dev"]
+#Conditions:
+#  IsDev: !Equals [!Ref Stage, "dev"]
 
 Resources:
   projectEtaClRole:
@@ -246,19 +246,34 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  taMlCLSqsDeadLetter:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+  # taMlCLSqsDeadLetter:
+  #   Type: AWS::SQS::Queue
+  #   Properties:
+  #     QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+
+  # taMlCLSqs:
+  #   Type: AWS::SQS::Queue
+  #   Properties:
+  #     QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
+  #     RedrivePolicy:
+  #       deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
+  #       maxReceiveCount: 3 
 
   taMlCLSqs:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
-        maxReceiveCount: 3 
+      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
 
 
+  taMlCLSqsMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt taMlCLSqs.Arn
+      FunctionName: !GetAtt etaMlCLLambda.Arn
+      BatchSize: 1               # Cantidad de mensajes por invocación
+      Enabled: true
       
   
