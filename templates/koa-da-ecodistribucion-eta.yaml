@@ -75,7 +75,6 @@ Parameters:
 Resources:
   projectEtaClRole:
     Type: AWS::IAM::Role
-    Condition: IsDev
     Properties:
       RoleName: !Sub "Role-${pTeamName}-Eta-${pCountryCl}"
       ManagedPolicyArns:
