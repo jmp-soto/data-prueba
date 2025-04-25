@@ -109,13 +109,15 @@ Resources:
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "Role-${pTeamName}-statistics-db-Analytics"
+      RoleName: !Sub "Role-${pTeamName}-statistics-db-Analytics"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service: glue.amazonaws.com
+              Service:
+                - glue.amazonaws.com
+                - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: GlueAndDynamoDBAccessPolicy
@@ -172,7 +174,7 @@ Resources:
                 Action:
                   - iam:PassRole
                 Resource:
-                  - arn:aws:iam::{pAWSAccountId}:role/service-role/ColumnStatisticsRole-rg_in_optimizador_stage
+                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/service-role/Role-${pTeamName}-statistics-db-Analytics"
                 Condition:
                   StringEquals:
                     iam:PassedToService: glue.amazonaws.com
@@ -186,11 +188,12 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:DescribeTable
                 Resource:
-                  - ! Sub "arn:aws:dynamodb:us-east-1:{pAWSAccountId}:table/${pTeamName}-analytics-db-Analytics-${Stage}"
-                  - ! Sub "arn:aws:dynamodb:us-east-1:{pAWSAccountId}:table/${pTeamName}-analytics-db-Analytics-${Stage}/index/*"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-${pTeamName}-statistics-db-Analytics"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-${pTeamName}-statistics-db-Analytics/index/*"
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: !Ref pAWSAccountId
+
 
   statisticsDbAnalitycsDynamo:
     Type: AWS::DynamoDB::Table
