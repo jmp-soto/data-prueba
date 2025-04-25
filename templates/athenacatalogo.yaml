@@ -195,6 +195,7 @@ Resources:
 
 
 
+
   statisticsDbAnalitycsDynamo:
     Type: AWS::DynamoDB::Table
     Properties:
