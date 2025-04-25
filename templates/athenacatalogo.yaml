@@ -333,6 +333,7 @@ Resources:
           DEVELOPER: !Ref pdeveloper
           DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
           IAM_ROLE: !Ref statisticsDbGlueRole
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
