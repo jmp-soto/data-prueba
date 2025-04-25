@@ -110,88 +110,89 @@ Resources:
       Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
 
   statisticsDbAnalitycsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "Role-${pTeamName}-statistics-db-Analytics"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - glue.amazonaws.com
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: GlueAndDynamoDBAccessPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: GlueFullAccess
-                Effect: Allow
-                Action:
-                  - glue:*
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListAllMyBuckets
-                  - s3:GetBucketAcl
-                  - iam:ListRolePolicies
-                  - iam:GetRole
-                  - iam:GetRolePolicy
-                  - cloudwatch:PutMetricData
-                Resource: "*"
-              - Sid: GlueS3Access
-                Effect: Allow
-                Action:
-                  - s3:CreateBucket
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                  - s3:GetBucketLocation
-                Resource:
-                  - arn:aws:s3:::aws-glue-*
-                  - arn:aws:s3:::aws-glue-*/*
-                  - arn:aws:s3:::crawler-public*
-                  - arn:aws:s3:::stage-nelson-dev/*
-                  - arn:aws:s3:::stage-nelson-dev
-              - Sid: GlueLogs
-                Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*:/aws-glue/*
-              - Sid: LakeFormationDataAccess
-                Effect: Allow
-                Action: lakeformation:GetDataAccess
-                Resource: "*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: "682033497219"
-              - Sid: IAMPassExecutionRole
-                Effect: Allow
-                Action:
-                  - iam:PassRole
-                Resource: 
-                  - arn:aws:iam::682033497219:role/service-role/Role-prueba-statistics-db-Analytics
-                Condition:
-                  StringEquals:
-                    iam:PassedToService: glue.amazonaws.com
-              - Sid: DynamoDBAccess
-                Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:BatchGetItem
-                  - dynamodb:Scan
-                  - dynamodb:Query
-                  - dynamodb:DescribeTable
-                Resource:
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics/index/*
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: "682033497219"
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: !Sub "Role-${pTeamName}-statistics-db-Analytics"
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - glue.amazonaws.com
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+    Policies:
+      - PolicyName: GlueAndDynamoDBAccessPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: GlueFullAccess
+              Effect: Allow
+              Action:
+                - glue:*
+                - s3:GetBucketLocation
+                - s3:ListBucket
+                - s3:ListAllMyBuckets
+                - s3:GetBucketAcl
+                - iam:ListRolePolicies
+                - iam:GetRole
+                - iam:GetRolePolicy
+                - cloudwatch:PutMetricData
+              Resource: "*"
+            - Sid: GlueS3Access
+              Effect: Allow
+              Action:
+                - s3:CreateBucket
+                - s3:GetObject
+                - s3:PutObject
+                - s3:DeleteObject
+                - s3:ListBucket
+                - s3:GetBucketLocation
+              Resource:
+                - arn:aws:s3:::aws-glue-*
+                - arn:aws:s3:::aws-glue-*/*
+                - arn:aws:s3:::crawler-public*
+                - arn:aws:s3:::stage-nelson-dev/*
+                - arn:aws:s3:::stage-nelson-dev
+            - Sid: GlueLogs
+              Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: arn:aws:logs:*:*:*:/aws-glue/*
+            - Sid: LakeFormationDataAccess
+              Effect: Allow
+              Action: lakeformation:GetDataAccess
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  aws:ResourceAccount: "682033497219"
+            - Sid: IAMPassExecutionRole
+              Effect: Allow
+              Action:
+                - iam:PassRole
+              Resource: 
+                - arn:aws:iam::682033497219:role/service-role/Role-prueba-statistics-db-Analytics
+              Condition:
+                StringEquals:
+                  iam:PassedToService: glue.amazonaws.com
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:BatchGetItem
+                - dynamodb:Scan
+                - dynamodb:Query
+                - dynamodb:DescribeTable
+              Resource:
+                - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics
+                - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics/index/*
+              Condition:
+                StringEquals:
+                  aws:ResourceAccount: "682033497219"
+
 
 
 
