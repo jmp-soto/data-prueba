@@ -67,7 +67,7 @@ jobs:
         env:
           REGION: $REGION
         run: |
-          cat << 'EOF' > deploy_stack.sh
+          cat << EOF > deploy_stack.sh
           #!/bin/bash
           set -e
 
