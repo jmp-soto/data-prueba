@@ -155,8 +155,8 @@ jobs:
             deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" 
           fi
 
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-josemaria-optimizador.yaml" "koa-da-josemaria-optimizador"
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-ecodistribucion-optimizador.yaml" "koa-da-ecodistribucion-optimizador"
           fi
 
 
