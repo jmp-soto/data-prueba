@@ -185,7 +185,7 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Sid: GlueFull_statisticsDbLambdaRole
+              - Sid: GlueFull-statisticsDbLambdaRole
                 Effect: Allow
                 Action:
                   - glue:*
@@ -198,7 +198,7 @@ Resources:
                   - iam:GetRolePolicy
                   - cloudwatch:PutMetricData
                 Resource: "*"
-              - Sid: DynamoDBAccess_statisticsDbLambdaRole
+              - Sid: DynamoDBAccess-statisticsDbLambdaRole
                 Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -212,7 +212,7 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: !Ref pAWSAccountId
-              - Sid: GlueS3Access_statisticsDbLambdaRole
+              - Sid: GlueS3Access-statisticsDbLambdaRole
                 Effect: Allow
                 Action:
                   - s3:CreateBucket
