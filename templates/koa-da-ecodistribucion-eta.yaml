@@ -246,34 +246,28 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  # taMlCLSqsDeadLetter:
-  #   Type: AWS::SQS::Queue
-  #   Properties:
-  #     QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
-
-  # taMlCLSqs:
-  #   Type: AWS::SQS::Queue
-  #   Properties:
-  #     QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
-  #     RedrivePolicy:
-  #       deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
-  #       maxReceiveCount: 3 
+  taMlCLSqsDeadLetter:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
 
   taMlCLSqs:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+      QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
+        maxReceiveCount: 3 
       Tags:
         - Key: develop
-          Value: !Ref pdeveloper
-
+          Value: !Ref pdeveloper      
 
   taMlCLSqsMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !GetAtt taMlCLSqs.Arn
       FunctionName: !GetAtt etaMlCLLambda.Arn
-      BatchSize: 1               # Cantidad de mensajes por invocación
+      BatchSize: 1               
       Enabled: true
       
   
