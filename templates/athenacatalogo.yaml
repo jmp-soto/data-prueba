@@ -291,17 +291,17 @@ Resources:
       TableName: !Sub "table-${pTeamName}-statistics-db-Analytics"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: table_name
+        - AttributeName: Table_name
           AttributeType: S
-        - AttributeName: database_name
+        - AttributeName: DatabaseName
           AttributeType: S
       KeySchema:
         - AttributeName: table_name
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: database_name
+        - IndexName: DatabaseName
           KeySchema:
-            - AttributeName: database_name
+            - AttributeName: DatabaseName
               KeyType: HASH
           Projection:
             ProjectionType: ALL
@@ -333,6 +333,7 @@ Resources:
           DEVELOPER: !Ref pdeveloper
           DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
           IAM_ROLE: !Ref statisticsDbGlueRole
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
