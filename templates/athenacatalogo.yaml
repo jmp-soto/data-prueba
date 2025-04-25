@@ -108,276 +108,11 @@ Resources:
       Schedule:
         ScheduleExpression: "cron(0 10 ? * * *)"
       Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
-
-  statisticsDbGlueRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "Role-${pTeamName}-statistics-db-Glue"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - glue.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: GlueFullAccessPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: GlueFullAccess
-                Effect: Allow
-                Action:
-                  - glue:*
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListAllMyBuckets
-                  - s3:GetBucketAcl
-                  - iam:ListRolePolicies
-                  - iam:GetRole
-                  - iam:GetRolePolicy
-                  - cloudwatch:PutMetricData
-                Resource: "*"
-              - Sid: GlueS3Access
-                Effect: Allow
-                Action:
-                  - s3:CreateBucket
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                  - s3:GetBucketLocation
-                Resource:
-                  - arn:aws:s3:::aws-glue-*
-                  - arn:aws:s3:::aws-glue-*/*
-                  - arn:aws:s3:::crawler-public*
-                  - arn:aws:s3:::stage-nelson-dev/*
-              - Sid: GlueLogs
-                Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*:/aws-glue/*
-              - Sid: LakeFormationDataAccess
-                Effect: Allow
-                Action: lakeformation:GetDataAccess
-                Resource: "*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: !Ref pAWSAccountId
-
-  statisticsDbLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "Role-${pTeamName}-statistics-db-Lambda"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: LambdaDynamoDBAccessPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: GlueFullstatisticsDbLambdaRole
-                Effect: Allow
-                Action:
-                  - glue:*
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListAllMyBuckets
-                  - s3:GetBucketAcl
-                  - iam:ListRolePolicies
-                  - iam:GetRole
-                  - iam:GetRolePolicy
-                  - cloudwatch:PutMetricData
-                Resource: "*"
-              - Sid: DynamoDBAccessstatisticsDbLambdaRole
-                Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:BatchGetItem
-                  - dynamodb:Scan
-                  - dynamodb:Query
-                  - dynamodb:DescribeTable
-                Resource:
-                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
-                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics/index/*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: !Ref pAWSAccountId
-              - Sid: GlueS3AccessstatisticsDbLambdaRole
-                Effect: Allow
-                Action:
-                  - s3:CreateBucket
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                  - s3:GetBucketLocation
-                Resource:
-                  - arn:aws:s3:::aws-glue-*
-                  - arn:aws:s3:::aws-glue-*/*
-                  - arn:aws:s3:::crawler-public*
-                  - arn:aws:s3:::stage-nelson-dev/*
-
-              - Sid: AllowPassRoleToGlue
-                Effect: Allow
-                Action: iam:PassRole
-                Resource: !GetAtt statisticsDbGlueRole.Arn
-                Condition:
-                  StringEqualsIfExists:
-                    iam:PassedToService: glue.amazonaws.com
-
+  
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub "Role-${pTeamName}-statistics-db-Analytics"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - glue.amazonaws.com
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: GlueAndDynamoDBAccessPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: GlueFullAccess
-                Effect: Allow
-                Action:
-                  - glue:*
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListAllMyBuckets
-                  - s3:GetBucketAcl
-                  - iam:ListRolePolicies
-                  - iam:GetRole
-                  - iam:GetRolePolicy
-                  - cloudwatch:PutMetricData
-                Resource: "*"
-              - Sid: GlueS3Access
-                Effect: Allow
-                Action:
-                  - s3:CreateBucket
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                  - s3:GetBucketLocation
-                Resource:
-                  - arn:aws:s3:::aws-glue-*
-                  - arn:aws:s3:::aws-glue-*/*
-                  - arn:aws:s3:::crawler-public*
-                  - arn:aws:s3:::stage-nelson-dev/*
-              - Sid: GlueLogs
-                Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*:/aws-glue/*
-              - Sid: LakeFormationDataAccess
-                Effect: Allow
-                Action: lakeformation:GetDataAccess
-                Resource: "*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: !Ref pAWSAccountId
-              - Sid: IAMPassExecutionRole
-                Effect: Allow
-                Action:
-                  - iam:PassRole
-                Resource: 
-                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/service-role/Role-prueba-statistics-db-Analytics"
-                Condition:
-                  StringEquals:
-                    iam:PassedToService: glue.amazonaws.com
-              - Sid: DynamoDBAccess
-                Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:BatchGetItem
-                  - dynamodb:Scan
-                  - dynamodb:Query
-                  - dynamodb:DescribeTable
-                Resource:
-                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
-                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics/index/*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: !Ref pAWSAccountId
-
-
-
-
-  statisticsDbAnalitycsDynamo:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub "table-${pTeamName}-statistics-db-Analytics"
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: Table_name
-          AttributeType: S
-        - AttributeName: DatabaseName
-          AttributeType: S
-      KeySchema:
-        - AttributeName: Table_name
-          KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: DatabaseName
-          KeySchema:
-            - AttributeName: DatabaseName
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-
-  statisticsDbAnalyticsLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: HolaMundoLambda
-      Handler: index.handler
-      Role: !GetAtt statisticsDbLambdaRole.Arn
-      Runtime: python3.13
-      Timeout: 900
-      MemorySize: 2048
-      Code:
-        ZipFile: |
-          import os
-
-          def handler(event, context):
-              desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {
-                  "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
-              }
-      Environment:
-        Variables:
-          DEVELOPER: !Ref pdeveloper
-          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
-          IAM_ROLE: !Ref statisticsDbGlueRole
-          ACCOUNT_ID: !Ref pAWSAccountId
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-
-  GlueServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: Role-glue-service-full-access
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -390,7 +125,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: GlueServiceFullAccessPolicy
+        - PolicyName: GlueServiceAccessPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -434,12 +169,12 @@ Resources:
                 Resource: "*"
                 Condition:
                   StringEquals:
-                    aws:ResourceAccount: "682033497219"
+                    aws:ResourceAccount: ${pAWSAccountId}
               - Sid: IAMPassExecutionRole
                 Effect: Allow
                 Action: iam:PassRole
                 Resource:
-                  - arn:aws:iam::682033497219:role/Role-glue-service-full-access
+                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/Role-${pTeamName}-statistics-db-Analytics"
                 Condition:
                   StringEquals:
                     iam:PassedToService: glue.amazonaws.com
@@ -452,11 +187,74 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:DescribeTable
                 Resource:
-                  - !Sub "arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics"
-                  - !Sub "arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics/index/*"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics/index/*"
                 Condition:
                   StringEquals:
-                    aws:ResourceAccount: "682033497219"
+                    aws:ResourceAccount: !Ref pAWSAccountId
+
+  statisticsDbAnalitycsDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-statistics-db-Analytics"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Table_name
+          AttributeType: S
+        - AttributeName: DatabaseName
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Table_name
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: DatabaseName
+          KeySchema:
+            - AttributeName: DatabaseName
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  statisticsDbAnalyticsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "lambda-${pTeamName}-statistics-db-Analytics"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt statisticsDbAnalitycsRole.Arn
+      Runtime: python3.13
+      Timeout: 900
+      MemorySize: 2048
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          DEVELOPER: !Ref pdeveloper
+          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
+          IAM_ROLE: !Ref statisticsDbAnalitycsRole
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  statisticsDbAnalyticsLambdaEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: "cron(0 11 * * ? *)" 
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-statistics-db-Analytics"
+            Arn: !Sub "arn:aws:lambda:us-east-1:${pAWSAccountId}:function:lambda-${pTeamName}-statistics-db-Analytics"
+  
 
 Outputs:
   StageDatabase:
