@@ -160,9 +160,7 @@ Resources:
               }
       Environment:
         Variables:
-          DEVELOPER: !Ref pdeveloper
-          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
-          IAM_ROLE: !Ref statisticsDbAnalitycsRole
+          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
@@ -189,9 +187,7 @@ Resources:
               }
       Environment:
         Variables:
-          DEVELOPER: !Ref pdeveloper
-          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
-          IAM_ROLE: !Ref statisticsDbAnalitycsRole
+          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
