@@ -143,7 +143,7 @@ jobs:
       - name: Deploy remaining stacks
         run: |
           source ./deploy_stack.sh
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
             deploy_stack "koa-da-ecodistribucion-eta.yaml" "koa-da-ecodistribucion-eta" "pdbAnalyticsName=$DB_ANALYTICS"
           fi
 
