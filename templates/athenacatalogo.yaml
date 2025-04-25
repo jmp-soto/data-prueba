@@ -91,10 +91,10 @@ Resources:
                   - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}/*"
                   - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}"
   
-  analyticsCrawler:
+  analyticsDbCrawler:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: !Sub "${pTeamName}-analytics-crawler-${Stage}"
+      Name: !Sub "Glue-${pTeamName}-crawler-db-Analytics"
       Role: !GetAtt crawlerRoleAnalytics.Arn
       DatabaseName: !Ref pdbAnalyticsName
       Targets:
@@ -104,7 +104,8 @@ Resources:
         UpdateBehavior: "UPDATE_IN_DATABASE"
         DeleteBehavior: "LOG"
       Tags:
-        Key1: "Value1"
+        - Key: develop
+          Value: !Ref pdeveloper
       Schedule:
         ScheduleExpression: "cron(0 10 ? * * *)"
       Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
