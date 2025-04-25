@@ -147,8 +147,8 @@ jobs:
             deploy_stack "koa-da-ecodistribucion-eta.yaml" "koa-da-ecodistribucion-eta" "pdbAnalyticsName=$DB_ANALYTICS"
           fi
 
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-josemaria-misupply.yaml" "koa-da-josemaria-misupply"
+          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "koa-da-ecodistribucion-misupply.yaml" "koa-da-ecodistribucion-misupply"
           fi
 
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
