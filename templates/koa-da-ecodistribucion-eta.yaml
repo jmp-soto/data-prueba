@@ -261,12 +261,12 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper      
 
-  # taMlCLSqsMapping:
-  #   Type: AWS::Lambda::EventSourceMapping
-  #   Properties:
-  #     EventSourceArn: !GetAtt taMlCLSqs.Arn
-  #     FunctionName: !GetAtt etaMlCLLambda.Arn
-  #     BatchSize: 1               
-  #     Enabled: true
+  taMlCLSqsMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt taMlCLSqs.Arn
+      FunctionName: !GetAtt etaMlCLLambda.Arn
+      BatchSize: 1               
+      Enabled: true
       
   
