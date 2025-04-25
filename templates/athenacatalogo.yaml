@@ -213,7 +213,7 @@ Resources:
           Projection:
             ProjectionType: ALL
       Tags:
-        - key: develop
+        - Key: develop
           Value: !Ref pdeveloper
 
   statisticsDbAnalyticsLambda:
