@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template for creating IAM roles, policies, and Lambda functions for ETA services
+Description: Template for creating AWS Proyecto ETA 
 
 Parameters:
   Stage:
@@ -12,60 +12,72 @@ Parameters:
   pArtifactsBucket:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
   pAWSRegion:
-    Description: "Aws region (all lowercase, no symbols or spaces)"
+    Description: "AWS region (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountId:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
     Type: String
   pAWSAccountOpt:
-    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
     Type: String
   pAccountName:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
     Type: String
   pTeamName:
-    Description: "team Name (all lowercase, no symbols or spaces)"
+    Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
   pdeploymentDate:
-    Description: "Date (all lowercase, no symbols or spaces)"
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
     Type: String
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
   pRDAWSAccountId:
-    Description: "AWS account ID for Lambda invocation permission"
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
     Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
 
 Conditions:
   IsDev: !Equals [!Ref Stage, "dev"]
 
 Resources:
-  # Lambda layers
-  dataWranglerLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      LayerName: !Sub "${pTeamName}-data-wrangler-layer"
-      Description: "Data Wrangler Layer for Lambda functions"
-      CompatibleRuntimes:
-        - python3.9
-      Content:
-        S3Bucket: !Ref pArtifactsBucket
-        S3Key: !Sub "layers/data_wrangler_layer.zip"
-
-  requestLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      LayerName: !Sub "${pTeamName}-request-layer"
-      Description: "Request Layer for Lambda functions"
-      CompatibleRuntimes:
-        - python3.9
-      Content:
-        S3Bucket: !Ref pArtifactsBucket
-        S3Key: !Sub "layers/request_layer.zip"
-
-  etaRole:
+  projectEtaClRole:
     Type: AWS::IAM::Role
     Condition: IsDev
     Properties:
-      RoleName: !Sub "role-${pTeamName}-eta-${Stage}"
+      RoleName: !Sub "Role-${pTeamName}-Eta-${pCountryCl}"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
         - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
@@ -122,107 +134,129 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*:*"
 
-  defaultEtaRole:
-    Type: AWS::IAM::Role
-    Condition: !Not [IsDev]
+  etaCLDynamo:
+    Type: AWS::DynamoDB::Table
     Properties:
-      RoleName: !Sub "role-${pTeamName}-eta-${Stage}-default"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "lambda.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
+      TableName: !Sub "table-${pTeamName}-eta-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Route_id
+          AttributeType: S
+        - AttributeName: Planned_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Planned_date
+          KeySchema:
+            - AttributeName: Planned_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
 
-  daEtaSpLambda:
+  etaDetailCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-detail-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Route_id
+          AttributeType: S
+        - AttributeName: Planned_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Planned_date
+          KeySchema:
+            - AttributeName: Planned_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  etaSrCLLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "lambda-${pTeamName}-eta-sp"
-      Description: "Lambda function Eta SimplyRoute"
-      MemorySize: 2048
+      FunctionName: !Sub "Lambda-${pTeamName}-sr-eta-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.13
       Timeout: 900
+      MemorySize: 2048
       Code:
         ZipFile: |
-          import json
+          import os
 
-          def lambda_handler(event, context):
-              print("Hola Mundo desde Lambda!")
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
-                  "body": json.dumps({
-                      "message": "Hola Mundo!",
-                      "event": event
-                  })
+                  "body": f"Hola mundo desde {desarrollador}"
               }
-      Role: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.9
       Environment:
         Variables:
-          ENVIRONMENT: !Ref Stage
-          REGION: !Ref pAWSRegion
-      Layers:
-        - !Ref dataWranglerLayer
-        - !Ref requestLayer
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-
-  LambdaInvokePermission:
+        - Key: develop
+          Value: !Ref pdeveloper
+  
+  etaSrCLLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt daEtaSpLambda.Arn
+      FunctionName: !GetAtt etaSrCLLambda.Arn
       Action: "lambda:InvokeFunction"
       Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
       SourceAccount: !Ref pRDAWSAccountId
 
-  
-  daEtaSMlLambda:
+  etaMlCLLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "lambda-${pTeamName}-eta-ml"
-      Description: "Lambda function Modelo para obtener ETA"
-      MemorySize: 2048
+      FunctionName: !Sub "Lambda-${pTeamName}-ml-eta-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.13
       Timeout: 900
+      MemorySize: 2048
       Code:
         ZipFile: |
-          import json
+          import os
 
-          def lambda_handler(event, context):
-              print("Hola Mundo desde Lambda!")
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
-                  "body": json.dumps({
-                      "message": "Hola Mundo!",
-                      "event": event
-                  })
+                  "body": f"Hola mundo desde {desarrollador}"
               }
-      Role: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.9
       Environment:
         Variables:
-          ENVIRONMENT: !Ref Stage
-          REGION: !Ref pAWSRegion
-      Layers:
-        - !Ref dataWranglerLayer
-        - !Ref requestLayer
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
+        - Key: develop
+          Value: !Ref pdeveloper
 
-Outputs:
-  EtaRoleArn:
-    Description: "ARN of the ETA Role"
-    Value: !If [IsDev, !GetAtt etaRole.Arn, !GetAtt defaultEtaRole.Arn]
-    Export:
-      Name: etaRole-Arn
+  taMlCLSqs:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryCl}"
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
+        maxReceiveCount: 3 
+
+  taMlCLSqsDeadLetter:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+      
+  

@@ -61,6 +61,28 @@ Resources:
       LayerName: !Sub request-layer-py3-12-${Stage}
   
   
+  # Lambda layers
+  dataWranglerLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub "${pTeamName}-data-wrangler-layer"
+      Description: "Data Wrangler Layer for Lambda functions"
+      CompatibleRuntimes:
+        - python3.9
+      Content:
+        S3Bucket: !Ref pArtifactsBucket
+        S3Key: !Sub "layers/data_wrangler_layer.zip"
+
+  requestLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub "${pTeamName}-request-layer"
+      Description: "Request Layer for Lambda functions"
+      CompatibleRuntimes:
+        - python3.9
+      Content:
+        S3Bucket: !Ref pArtifactsBucket
+        S3Key: !Sub "layers/request_layer.zip"
 
   
 

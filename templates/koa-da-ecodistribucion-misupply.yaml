@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template to create IAM roles and policies for Ecodistribucion Misupply
+Description: Template for creating AWS Proyecto Misupply
 
 Parameters:
   Stage:
@@ -7,9 +7,12 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     AllowedValues: [dev, qa, prod]
   pBranchName:
-    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
     Type: String
   pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pbucketAnalytics:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
   pAWSRegion:
@@ -25,23 +28,145 @@ Parameters:
     Description: "AWS account name (all lowercase, no symbols or spaces)"
     Type: String
   pTeamName:
-    Description: "Team name (all lowercase, no symbols or spaces)"
+    Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
   pdeploymentDate:
     Description: "Deployment date (all lowercase, no symbols or spaces)"
     Type: String
-  pDevelopFlag:
-    Description: "Flag to indicate if this is a development environment"
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
     Type: String
-    Default: "false"
-    AllowedValues: 
-      - "true"
-      - "false"
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
 
 Conditions:
   OnlyDev: !Equals [!Ref pDevelopFlag, "true"]
 
 Resources:
+  misupplyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-misupply-${pCountryRg}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt miSupplyHostDynamo.Arn
+                  - !Sub "${miSupplyHostDynamo.Arn}/index/*"
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "arn:aws:s3:::${pbucketAnalytics}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${pbucketAnalytics}"
+  
+  miSupplyHostDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-misupply-host-${pCountryRg}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Host
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Host
+          KeyType: HASH
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  miSupplyRgLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-misupply-${pCountryRg}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt   misupplyRole.Arn
+      Runtime: python3.13
+      Timeout: 900
+      MemorySize: 2048
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+  
+  misupplyLambdaEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: "cron(0 11 * * ? *)" 
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-misupply-regional"
+            Arn: !GetAtt miSupplyRgLambda.Arn
+    
+  
+  
   lambdaMisupplyApiRole:
     Type: AWS::IAM::Role
     Condition: OnlyDev
@@ -92,9 +217,3 @@ Resources:
           Value: !Ref pTeamName
         - Key: "DeploymentDate"
           Value: !Ref pdeploymentDate
-
-Outputs:
-  LambdaMisupplyApiRoleArn:
-    Description: The ARN of the Lambda Misupply API IAM Role
-    Value: !GetAtt lambdaMisupplyApiRole.Arn
-    Condition: OnlyDev

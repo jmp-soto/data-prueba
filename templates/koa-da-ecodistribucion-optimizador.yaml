@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template para crear roles, políticas IAM y recursos de DataSync para Ecodistribucion
+Description: Template for creating AWS Proyecto Optimizador
 
 Parameters:
   Stage:
@@ -7,9 +7,12 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     AllowedValues: [dev, qa, prod]
   pBranchName:
-    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
     Type: String
   pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pbucketAnalytics:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
   pAWSRegion:
@@ -25,24 +28,52 @@ Parameters:
     Description: "AWS account name (all lowercase, no symbols or spaces)"
     Type: String
   pTeamName:
-    Description: "Team name (all lowercase, no symbols or spaces)"
+    Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
   pdeploymentDate:
     Description: "Deployment date (all lowercase, no symbols or spaces)"
     Type: String
-  pDeveloper:
-    Description: "Developer name (all lowercase, no symbols or spaces)"
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
     Type: String
-    Default: Josemaria_Päucar
   pdbAnalyticsName:
-    Description: "Analytics database name"
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
 
 Resources:
-  DataSyncRole:
+  dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "role-${pTeamName}-datasync-${Stage}"
+      RoleName: !Sub "role-${pTeamName}-optimizador-${pCountryRg}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -78,28 +109,28 @@ Resources:
                   - "s3:PutObjectTagging"
                 Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}/*"
 
-  S3LocationOptimizador:
+  S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::da-optimizador-stage-${Stage}"
+      S3BucketArn: !Sub "arn:aws:s3:::${pTeamName}-optimizador-stage-${Stage}"
       S3Config:
-        BucketAccessRoleArn: !GetAtt DataSyncRole.Arn
+        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
       Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
 
-  S3DestinationLocationOptimizador:
+  S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
       S3BucketArn: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
       S3Config:
-        BucketAccessRoleArn: !GetAtt DataSyncRole.Arn
-      Subdirectory: "/regional/externa/rg_in_optimizador_analytics/"
+        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
+      Subdirectory: "/regional/externa/rg_in_optimizador/"
 
-  TaskEjecOptimizador:
+  TaskEjecOptimizadorRg:
     Type: AWS::DataSync::Task
     Properties:
       Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
-      SourceLocationArn: !Ref S3LocationOptimizador
-      DestinationLocationArn: !Ref S3DestinationLocationOptimizador
+      SourceLocationArn: !Ref S3LocationOptimizadorRg
+      DestinationLocationArn: !Ref S3DestinationOptimizadorRg
       Options:
         VerifyMode: "ONLY_FILES_TRANSFERRED"
         OverwriteMode: "ALWAYS"
@@ -110,7 +141,7 @@ Resources:
       Schedule:
         ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
 
-  OptimizadorTableAnalytics:
+  OptimizadorTableAnalyticsRg:
     Type: AWS::Glue::Table
     Properties:
       CatalogId: !Ref pAWSAccountId
@@ -179,15 +210,7 @@ Resources:
             - {Name: sap_rpmowa, Type: string}
             - {Name: sap_stdis, Type: string}
           InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/regional/externa/rg_in_optimizador_analytics
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/regional/externa/rg_in_optimizador
           Compressed: True
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
-Outputs:
-  DataSyncRoleArn:
-    Description: ARN of the DataSync IAM Role
-    Value: !GetAtt DataSyncRole.Arn
-  TaskEjecOptimizadorArn:
-    Description: ARN of the DataSync Task
-    Value: !Ref TaskEjecOptimizador
