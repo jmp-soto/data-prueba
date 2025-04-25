@@ -227,7 +227,7 @@ Resources:
     Properties:
       FunctionName: HolaMundoLambda
       Handler: index.handler
-      Role: !Ref statisticsDbAnalitycsRole
+      Role: !GetAtt statisticsDbAnalitycsRole.Arn
       Runtime: python3.13
       Timeout: 900
       MemorySize: 2048
