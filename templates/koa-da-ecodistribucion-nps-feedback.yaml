@@ -68,12 +68,6 @@ Parameters:
     Type: String
     Default: "rg"
   # Required for referenced resources
-  dataWranglerLayerArn:
-    Type: String
-    Description: "ARN of the DataWrangler Lambda layer"
-  requestLayerArn:
-    Type: String
-    Description: "ARN of the Request Lambda layer"
 
 Resources:
   npsFeedbackRole:
