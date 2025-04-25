@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template for creating AWS Proyecto ETA 
+Description: Template for creating AWS Proyecto NPS
 
 Parameters:
   Stage:
