@@ -383,9 +383,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - glue.amazonaws.com
-                - lambda.amazonaws.com
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: GlueServiceFullAccessPolicy
