@@ -167,6 +167,7 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: !Ref pAWSAccountId
+
   statisticsDbLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -184,7 +185,20 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Sid: DynamoDBAccess
+              - Sid: GlueFull_statisticsDbLambdaRole
+                Effect: Allow
+                Action:
+                  - glue:*
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketAcl
+                  - iam:ListRolePolicies
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+              - Sid: DynamoDBAccess_statisticsDbLambdaRole
                 Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -198,6 +212,20 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: !Ref pAWSAccountId
+              - Sid: GlueS3Access_statisticsDbLambdaRole
+                Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource:
+                  - arn:aws:s3:::aws-glue-*
+                  - arn:aws:s3:::aws-glue-*/*
+                  - arn:aws:s3:::crawler-public*
+                  - arn:aws:s3:::stage-nelson-dev/*
 
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
