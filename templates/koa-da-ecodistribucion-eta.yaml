@@ -246,6 +246,11 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
+  taMlCLSqsDeadLetter:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+
   taMlCLSqs:
     Type: AWS::SQS::Queue
     Properties:
@@ -254,9 +259,6 @@ Resources:
         deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
         maxReceiveCount: 3 
 
-  taMlCLSqsDeadLetter:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryCl}"
+
       
   
