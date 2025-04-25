@@ -109,6 +109,96 @@ Resources:
         ScheduleExpression: "cron(0 10 ? * * *)"
       Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
 
+  statisticsDbGlueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "Role-${pTeamName}-statistics-db-Glue"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: GlueFullAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: GlueFullAccess
+                Effect: Allow
+                Action:
+                  - glue:*
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketAcl
+                  - iam:ListRolePolicies
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+              - Sid: GlueS3Access
+                Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource:
+                  - arn:aws:s3:::aws-glue-*
+                  - arn:aws:s3:::aws-glue-*/*
+                  - arn:aws:s3:::crawler-public*
+                  - arn:aws:s3:::stage-nelson-dev/*
+              - Sid: GlueLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*:/aws-glue/*
+              - Sid: LakeFormationDataAccess
+                Effect: Allow
+                Action: lakeformation:GetDataAccess
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref pAWSAccountId
+  statisticsDbLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "Role-${pTeamName}-statistics-db-Lambda"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaDynamoDBAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: DynamoDBAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - dynamodb:DescribeTable
+                Resource:
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics/index/*"
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref pAWSAccountId
+
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -120,6 +210,7 @@ Resources:
             Principal:
               Service:
                 - glue.amazonaws.com
+                - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: GlueAndDynamoDBAccessPolicy
@@ -223,7 +314,7 @@ Resources:
     Properties:
       FunctionName: HolaMundoLambda
       Handler: index.handler
-      Role: !GetAtt statisticsDbAnalitycsRole.Arn
+      Role: !GetAtt statisticsDbLambdaRole.Arn
       Runtime: python3.13
       Timeout: 900
       MemorySize: 2048
@@ -240,7 +331,8 @@ Resources:
       Environment:
         Variables:
           DEVELOPER: !Ref pdeveloper
-          Dynamo_TABLE: !Ref statisticsDbAnalitycsDynamo
+          DYNAMO_TABLE: !Ref statisticsDbAnalitycsDynamo
+          IAM_ROLE: !Ref statisticsDbGlueRole
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
