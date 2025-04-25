@@ -193,7 +193,7 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  rtNpsFeedbackCLLdPn:
+  rtNpsFeedbackCLLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt rtNpsFeedbackCLLambda.Arn
