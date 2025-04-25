@@ -140,7 +140,6 @@ Resources:
                   - iam:GetRolePolicy
                   - cloudwatch:PutMetricData
                 Resource: "*"
-
               - Sid: GlueS3Access
                 Effect: Allow
                 Action:
@@ -156,7 +155,6 @@ Resources:
                   - arn:aws:s3:::crawler-public*
                   - arn:aws:s3:::stage-nelson-dev/*
                   - arn:aws:s3:::stage-nelson-dev
-
               - Sid: GlueLogs
                 Effect: Allow
                 Action:
@@ -164,7 +162,6 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*:/aws-glue/*
-
               - Sid: LakeFormationDataAccess
                 Effect: Allow
                 Action: lakeformation:GetDataAccess
@@ -172,7 +169,6 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: !Ref pAWSAccountId
-
               - Sid: IAMPassExecutionRole
                 Effect: Allow
                 Action:
@@ -182,7 +178,6 @@ Resources:
                 Condition:
                   StringEquals:
                     iam:PassedToService: glue.amazonaws.com
-
               - Sid: DynamoDBAccess
                 Effect: Allow
                 Action:
