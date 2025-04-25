@@ -43,6 +43,9 @@ Parameters:
     Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
     Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
   # Country parameters
   pCountryCl:
     Description: "Country code for Chile"
@@ -74,7 +77,49 @@ Parameters:
 
 Resources:
   npsFeedbackRole:
-
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "role-${pTeamName}-nps-feedback-${pCountryCl}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt npsFeedbackCLDynamo.Arn
+                  - !Sub "${npsFeedbackCLDynamo.Arn}/index/*"
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "arn:aws:s3:::${pbucketAnalytics}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${pbucketAnalytics}"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
 
   npsFeedbackCLDynamo:
     Type: AWS::DynamoDB::Table
@@ -157,3 +202,21 @@ Resources:
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
+
+  rtNpsFeedbackCLLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt rtNpsFeedbackCLLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
+      SourceAccount: !Ref pRDAWSAccountId
+
+  npsFeedbackClEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: "cron(0 7 * * ? *)" 
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-nps-feedback"
+            Arn: !Sub "arn:aws:lambda:us-east-1:${pAWSAccountId}:function:Lambda-${pTeamName}-nps-feedback-consolidado-${pCountryCl}"
+  
