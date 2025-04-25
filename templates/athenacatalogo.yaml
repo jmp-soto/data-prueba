@@ -176,7 +176,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - iam:PassRole
-                Resource:
+                Resource: 
                   - !Sub "arn:aws:iam::${pAWSAccountId}:role/service-role/Role-${pTeamName}-statistics-db-Analytics"
                 Condition:
                   StringEquals:
