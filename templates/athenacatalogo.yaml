@@ -450,8 +450,8 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:DescribeTable
                 Resource:
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/GlueTables
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/GlueTables/index/*
+                  - !Sub "arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics"
+                  - !Sub "arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics/index/*"
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: "682033497219"
