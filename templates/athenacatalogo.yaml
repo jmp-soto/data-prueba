@@ -154,7 +154,6 @@ Resources:
                   - arn:aws:s3:::aws-glue-*/*
                   - arn:aws:s3:::crawler-public*
                   - arn:aws:s3:::stage-nelson-dev/*
-                  - arn:aws:s3:::stage-nelson-dev
               - Sid: GlueLogs
                 Effect: Allow
                 Action:
@@ -168,13 +167,13 @@ Resources:
                 Resource: "*"
                 Condition:
                   StringEquals:
-                    aws:ResourceAccount: "682033497219"
+                    aws:ResourceAccount: !Ref pAWSAccountId
               - Sid: IAMPassExecutionRole
                 Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource: 
-                  - arn:aws:iam::682033497219:role/service-role/Role-prueba-statistics-db-Analytics
+                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/service-role/Role-prueba-statistics-db-Analytics"
                 Condition:
                   StringEquals:
                     iam:PassedToService: glue.amazonaws.com
@@ -187,11 +186,11 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:DescribeTable
                 Resource:
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics
-                  - arn:aws:dynamodb:us-east-1:682033497219:table/table-prueba-statistics-db-Analytics/index/*
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
+                  - !Sub "arn:aws:dynamodb:us-east-1:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics/index/*"
                 Condition:
                   StringEquals:
-                    aws:ResourceAccount: "682033497219"
+                    aws:ResourceAccount: !Ref pAWSAccountId
 
 
 
