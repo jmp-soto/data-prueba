@@ -154,8 +154,8 @@ Resources:
                   - arn:aws:s3:::aws-glue-*
                   - arn:aws:s3:::aws-glue-*/*
                   - arn:aws:s3:::crawler-public*
-                  - arn:aws:s3:::stage-nelson-dev
-                  - arn:aws:s3:::stage-nelson-dev/*
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}/*"
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}"
               - Sid: GlueLogs
                 Effect: Allow
                 Action:
