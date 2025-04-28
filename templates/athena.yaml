@@ -6,7 +6,7 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     Default: dev
   pBranchName:
-    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Description: "Branch Name(all lowercase no symbols or spaces)"
     Type: String
   pArtifactsBucket:
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
