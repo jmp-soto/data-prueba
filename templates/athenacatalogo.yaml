@@ -45,7 +45,7 @@ Parameters:
     Default: Josemaria_Paucar
 
 Resources:
-  MyGlueDatabase:
+  stageDatabase:
     Type: AWS::Glue::Database
     Properties:
       CatalogId: !Ref pAWSAccountId
