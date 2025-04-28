@@ -45,13 +45,7 @@ Parameters:
     Default: Josemaria_Paucar
 
 Resources:
-  stageDatabase:
-    Type: AWS::Glue::Database
-    Properties:
-      CatalogId: !Ref pAWSAccountId
-      DatabaseInput:
-        Name: !Ref pdbStageName
-        Description: !Sub "Base de datos en el catálogo de AWS Glue para el entorno ${Stage} (${pdbStageName})"
+
   
   analyticsDatabase:
     Type: AWS::Glue::Database
@@ -256,9 +250,7 @@ Resources:
   
 
 Outputs:
-  StageDatabase:
-    Description: "The Glue Database for stage data"
-    Value: !Ref stageDatabase
+
   AnalyticsDatabase:
     Description: "The Glue Database for analytics data"
     Value: !Ref analyticsDatabase
