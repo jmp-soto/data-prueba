@@ -258,7 +258,7 @@ Resources:
 Outputs:
   StageDatabase:
     Description: "The Glue Database for stage data"
-    Value: !Ref MyGlueDatabase
+    Value: !Ref stageDatabase
   AnalyticsDatabase:
     Description: "The Glue Database for analytics data"
     Value: !Ref analyticsDatabase
