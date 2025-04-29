@@ -146,7 +146,7 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/${pdbAnalyticsName}"
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/${pdbAnalyticsName}/*
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/${pdbAnalyticsName}/*"
               - Sid: GlueS3Access
                 Effect: Allow
                 Action:
