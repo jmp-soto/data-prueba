@@ -145,6 +145,7 @@ Resources:
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
                 Resource:
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"      # 👈 Este es clave
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*"
                 Condition:
