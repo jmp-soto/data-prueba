@@ -167,7 +167,6 @@ Resources:
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
-                  -
                 Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
   
   LambdaStatisticsExecutionRole:
@@ -200,7 +199,6 @@ Resources:
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
-                  
                 Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
               # Basic Lambda execution permissions
               - Sid: LambdaBasicExecution
