@@ -173,6 +173,9 @@ Resources:
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:catalog"
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:database/*"
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:table/*/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:table/*/*"
   
   LambdaStatisticsExecutionRole:
     Type: AWS::IAM::Role
@@ -211,6 +214,9 @@ Resources:
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:catalog"
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:database/*"
                   - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:table/*/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:table/*/*"
 
               # Basic Lambda execution permissions
               - Sid: LambdaBasicExecution
@@ -256,7 +262,14 @@ Resources:
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
-                Resource: "*"
+                Resource: 
+                Resource: 
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:table/*/*"
 
               - Sid: GlueS3Access
                 Effect: Allow
