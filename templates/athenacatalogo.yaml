@@ -145,7 +145,6 @@ Resources:
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
                 Resource: 
-                  Resource:
                   - "arn:aws:glue:us-east-1:682033497219:catalog"
                   - "arn:aws:glue:us-east-1:682033497219:database/db_ecodistribucion_regional_analitycs"
                   - "arn:aws:glue:us-east-1:682033497219:table/db_ecodistribucion_regional_analitycs/rg_in_optimizador_analitycs"
