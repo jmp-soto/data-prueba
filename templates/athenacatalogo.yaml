@@ -161,13 +161,18 @@ Resources:
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
-              # Permissions to trigger Glue stats task#
-              - Sid: TriggerGlueStatsTask
+              - Sid: GluePermissions
                 Effect: Allow
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
-                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
+                  - glue:GetDatabase
+                  - glue:GetTables
+                  - glue:GetPartitions
+                Resource: 
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:table/*/*"
   
   LambdaStatisticsExecutionRole:
     Type: AWS::IAM::Role
@@ -185,7 +190,7 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              # Permissions to read DynamoDB config
+              # DynamoDB permissions
               - Sid: ReadDynamoDBConfig
                 Effect: Allow
                 Action:
@@ -193,13 +198,20 @@ Resources:
                   - dynamodb:Query
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
 
-              # Permissions to trigger Glue stats task#
-              - Sid: TriggerGlueStatsTask
+              # Expanded Glue permissions
+              - Sid: GluePermissions
                 Effect: Allow
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
-                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
+                  - glue:GetDatabase
+                  - glue:GetTables
+                  - glue:GetPartitions
+                Resource: 
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:table/*/*"
+
               # Basic Lambda execution permissions
               - Sid: LambdaBasicExecution
                 Effect: Allow
