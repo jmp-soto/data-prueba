@@ -144,7 +144,11 @@ Resources:
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
-                Resource: "*"
+                Resource: 
+                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/Role-${pTeamName}-statistics-db-Analytics"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog*"
               - Sid: GlueS3Access
                 Effect: Allow
                 Action:
@@ -233,8 +237,8 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: !GetAtt statisticsDbAnalitycsRole.Arn
       Runtime: python3.11
-      Timeout: 900
-      MemorySize: 2048
+      Timeout: 180
+      MemorySize: 512
       Code:
         ZipFile: |
           import os
