@@ -145,10 +145,10 @@ Resources:
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
                 Resource: 
-                  - !Sub "arn:aws:iam::${pAWSAccountId}:role/Role-${pTeamName}-statistics-db-Analytics"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/db_ecodistribucion_regional_analitycs"
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/db_ecodistribucion_regional_analitycs/rg_in_optimizador_analitycs"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:tableVersion/*"
 
               - Sid: GlueS3Access
                 Effect: Allow
