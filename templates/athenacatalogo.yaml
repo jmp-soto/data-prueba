@@ -144,13 +144,7 @@ Resources:
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
-                Resource:
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"      # 👈 Este es clave
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*"
-                Condition:
-                  StringEquals:
-                    aws:ResourceAccount: "${pAWSAccountId}"
+                Resource: "*"
               - Sid: GlueS3Access
                 Effect: Allow
                 Action:
