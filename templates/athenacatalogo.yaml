@@ -237,8 +237,7 @@ Resources:
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
-                Resource: 
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:*"
+                Resource: "*"
 
               - Sid: GlueS3Access
                 Effect: Allow
