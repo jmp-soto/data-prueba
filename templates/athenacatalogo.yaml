@@ -185,7 +185,7 @@ Resources:
                   - dynamodb:Query
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
 
-              # Permissions to trigger Glue stats task
+              # Permissions to trigger Glue stats task#
               - Sid: TriggerGlueStatsTask
                 Effect: Allow
                 Action:
