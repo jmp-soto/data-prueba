@@ -284,7 +284,10 @@ Resources:
               - Sid: LakeFormationDataAccess
                 Effect: Allow
                 Action: lakeformation:GetDataAccess
-                Resource: "*"
+                Resource: 
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:lakeformation:${pAWSRegion}:${pAWSAccountId}:table/*/*"
                 Condition:
                   StringEquals:
                     aws:ResourceAccount: ${pAWSAccountId}
