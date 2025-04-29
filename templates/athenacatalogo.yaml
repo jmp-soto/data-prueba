@@ -160,13 +160,14 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
-                
+
               # Permissions to trigger Glue stats task#
               - Sid: TriggerGlueStatsTask
                 Effect: Allow
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
+                  -
                 Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
   
   LambdaStatisticsExecutionRole:
@@ -193,6 +194,14 @@ Resources:
                   - dynamodb:Query
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
 
+              # Permissions to trigger Glue stats task#
+              - Sid: TriggerGlueStatsTask
+                Effect: Allow
+                Action:
+                  - glue:StartColumnStatisticsTaskRun
+                  - glue:GetTable
+                  -
+                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
               # Basic Lambda execution permissions
               - Sid: LambdaBasicExecution
                 Effect: Allow
