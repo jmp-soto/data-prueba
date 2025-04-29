@@ -142,13 +142,6 @@ Resources:
                   - glue:GetJobRun
                   - glue:GetJob
                   - glue:BatchGetJobs
-                  - s3:GetBucketLocation
-                  - s3:ListBucket
-                  - s3:ListAllMyBuckets
-                  - s3:GetBucketAcl
-                  - iam:ListRolePolicies
-                  - iam:GetRole
-                  - iam:GetRolePolicy
                   - cloudwatch:PutMetricData
                 Resource: 
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
@@ -161,7 +154,9 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:DeleteObject
+                  - s3:GetBucketLocation
                   - s3:ListBucket
+                  - s3:GetBucketAcl
                 Resource:
                   - arn:aws:s3:::aws-glue-*
                   - arn:aws:s3:::aws-glue-*/*
@@ -184,7 +179,11 @@ Resources:
                     aws:ResourceAccount: ${pAWSAccountId}
               - Sid: IAMPassExecutionRole
                 Effect: Allow
-                Action: iam:PassRole
+                Action: 
+                  - iam:PassRole
+                  - iam:ListRolePolicies
+                  - iam:GetRole
+                  - iam:GetRolePolicy
                 Resource:
                   - !Sub "arn:aws:iam::${pAWSAccountId}:role/Role-${pTeamName}-statistics-db-Analytics"
                 Condition:
