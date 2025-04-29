@@ -172,7 +172,7 @@ Resources:
       FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.11
+      Runtime: python3.12
       Timeout: 900
       MemorySize: 2048
       Code:
