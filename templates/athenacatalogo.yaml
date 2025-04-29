@@ -263,7 +263,6 @@ Resources:
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
                 Resource: 
-                Resource: 
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/*/*"
