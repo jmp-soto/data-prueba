@@ -143,6 +143,7 @@ Resources:
                   - glue:GetJob
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
+                  - glue:StartColumnStatisticsTaskRun
                 Resource: 
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
                   - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/*"
