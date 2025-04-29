@@ -161,13 +161,18 @@ Resources:
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
-              # Permissions to trigger Glue stats task#
-              - Sid: TriggerGlueStatsTask
+              - Sid: GluePermissions
                 Effect: Allow
                 Action:
                   - glue:StartColumnStatisticsTaskRun
                   - glue:GetTable
-                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
+                  - glue:GetDatabase
+                  - glue:GetTables
+                  - glue:GetPartitions
+                Resource: 
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:database/*"
+                  - !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:table/*/*"
   
   LambdaStatisticsExecutionRole:
     Type: AWS::IAM::Role
