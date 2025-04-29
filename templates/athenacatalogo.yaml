@@ -109,6 +109,99 @@ Resources:
         ScheduleExpression: "cron(0 10 ? * * *)"
       Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
   
+  GlueColumnStatisticsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "Role-${pTeamName}-Glue-ColumnStats"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: GlueColumnStatisticsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # S3 access for reading data
+              - Sid: S3DataAccess
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}"
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}/*"
+
+              # Glue catalog access
+              - Sid: GlueCatalogAccess
+                Effect: Allow
+                Action:
+                  - glue:GetTable
+                  - glue:GetDatabase
+                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
+
+              # Lake Formation permissions (if using)
+              - Sid: LakeFormationAccess
+                Effect: Allow
+                Action:
+                  - lakeformation:GetDataAccess
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref pAWSAccountId
+
+              # Logging permissions
+              - Sid: GlueLogging
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+  
+  LambdaStatisticsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "Role-${pTeamName}-Lambda-ColumnStats"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaColumnStatisticsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Permissions to read DynamoDB config
+              - Sid: ReadDynamoDBConfig
+                Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${pAWSAccountId}:table/table-prueba-statistics-db-Analytics"
+
+              # Permissions to trigger Glue stats task
+              - Sid: TriggerGlueStatsTask
+                Effect: Allow
+                Action:
+                  - glue:StartColumnStatisticsTaskRun
+                  - glue:GetTable
+                Resource: !Sub "arn:aws:glue:${AWS::Region}:${pAWSAccountId}:*"
+
+              # Basic Lambda execution permissions
+              - Sid: LambdaBasicExecution
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+  
   statisticsDbAnalitycsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -144,8 +237,7 @@ Resources:
                   - glue:BatchGetJobs
                   - cloudwatch:PutMetricData
                   - glue:StartColumnStatisticsTaskRun
-                Resource: 
-                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:*"
+                Resource: "*"
 
               - Sid: GlueS3Access
                 Effect: Allow
