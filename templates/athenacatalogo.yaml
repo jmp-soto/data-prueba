@@ -129,10 +129,19 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Sid: GlueFullAccess
+              - Sid: GlueaccessCatalog
                 Effect: Allow
                 Action:
-                  - glue:*
+                  - glue:GetTable
+                  - glue:GetTables
+                  - glue:GetDatabase
+                  - glue:GetDatabases
+                  - glue:UpdateTable
+                  - glue:GetTableVersions
+                  - glue:StartJobRun
+                  - glue:GetJobRun
+                  - glue:GetJob
+                  - glue:BatchGetJobs
                   - s3:GetBucketLocation
                   - s3:ListBucket
                   - s3:ListAllMyBuckets
@@ -141,7 +150,10 @@ Resources:
                   - iam:GetRole
                   - iam:GetRolePolicy
                   - cloudwatch:PutMetricData
-                Resource: "*"
+                Resource: 
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:catalog"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:database/${pdbAnalyticsName}"
+                  - !Sub "arn:aws:glue:${pAWSRegion}:${pAWSAccountId}:table/${pdbAnalyticsName}/*
               - Sid: GlueS3Access
                 Effect: Allow
                 Action:
