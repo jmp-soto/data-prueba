@@ -127,7 +127,7 @@ Resources:
       TableName: !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: Truck
+        - AttributeName: truck
           AttributeType: S
       KeySchema:
         - AttributeName: truck
