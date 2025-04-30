@@ -101,8 +101,8 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  - !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}"
-                  - !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}/index/*"
+                  - !Sub "arn:aws:dynamodb:${pAWSRegion}:${pAWSAccountId}:table/table-${pTeamName}-nps-feedback-${pCountryCl}"
+                  - !Sub "arn:aws:dynamodb:${pAWSRegion}:${pAWSAccountId}:table/table-${pTeamName}-nps-feedback-${pCountryCl}/index/"
         - PolicyName: S3AccessPolicy
           PolicyDocument:
             Version: "2012-10-17"
