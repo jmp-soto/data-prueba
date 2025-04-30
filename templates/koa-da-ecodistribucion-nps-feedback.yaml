@@ -67,7 +67,13 @@ Parameters:
     Description: "Country code for Regional"
     Type: String
     Default: "rg"
-  # Required for referenced resources
+  # Id account layer for AWS Wrangler 
+  pAccountAwsLayer:
+    Description: "Id account layer for AWS Wrangler"
+    Type: String
+    Default: 336392948345
+
+
 
 Resources:
   npsFeedbackRole:
@@ -121,20 +127,11 @@ Resources:
       TableName: !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: Truck
-          AttributeType: S
-        - AttributeName: Execution_date
+        - AttributeName: truck
           AttributeType: S
       KeySchema:
-        - AttributeName: Truck
+        - AttributeName: truck
           KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: Execution_date
-          KeySchema:
-            - AttributeName: Execution_date
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
@@ -145,9 +142,9 @@ Resources:
       FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-consolidado-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.12
-      Timeout: 900
-      MemorySize: 2048
+      Runtime: python3.11
+      Timeout: 360
+      MemorySize: 1024
       Code:
         ZipFile: |
           import os
@@ -162,6 +159,8 @@ Resources:
         Variables:
           DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
@@ -172,9 +171,9 @@ Resources:
       FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.12
-      Timeout: 900
-      MemorySize: 2048
+      Runtime: python3.11
+      Timeout: 180
+      MemorySize: 512
       Code:
         ZipFile: |
           import os
