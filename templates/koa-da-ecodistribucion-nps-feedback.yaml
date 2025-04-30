@@ -101,6 +101,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:DescribeTable
+                  - dynamodb:BatchWriteItem
                 Resource:
                   - !Sub "arn:aws:dynamodb:${pAWSRegion}:${pAWSAccountId}:table/table-${pTeamName}-nps-feedback-${pCountryCl}"
                   - !Sub "arn:aws:dynamodb:${pAWSRegion}:${pAWSAccountId}:table/table-${pTeamName}-nps-feedback-${pCountryCl}/index/"
