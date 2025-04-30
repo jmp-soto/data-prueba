@@ -101,8 +101,8 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  - !GetAtt npsFeedbackCLDynamo.Arn
-                  - !Sub "${npsFeedbackCLDynamo.Arn}/index/*"
+                  - !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}"
+                  - !Sub "table-${pTeamName}-nps-feedback-${pCountryCl}/index/*"
         - PolicyName: S3AccessPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -142,7 +142,7 @@ Resources:
       FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-consolidado-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.11
+      Runtime: python3.12
       Timeout: 360
       MemorySize: 1024
       Code:
@@ -171,7 +171,7 @@ Resources:
       FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.11
+      Runtime: python3.12
       Timeout: 180
       MemorySize: 512
       Code:
