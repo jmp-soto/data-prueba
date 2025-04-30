@@ -159,6 +159,7 @@ Resources:
         Variables:
           DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
+          BUCKET_STAGE: !Sub "prueba-josemaria-artifacts-${Stage}" 
       Layers:
         - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
