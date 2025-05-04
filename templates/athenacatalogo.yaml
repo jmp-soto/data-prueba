@@ -62,7 +62,6 @@ Resources:
         Description: !Sub "Base de datos en el catálogo de AWS Glue para el entorno ${Stage} (${pdbAnalyticsName})"
   
   
-  
   GlueColumnStatisticsRole:
     Type: AWS::IAM::Role
     Properties:
