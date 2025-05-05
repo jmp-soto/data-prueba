@@ -73,7 +73,7 @@ Resources:
   crawlerRoleAnalytics:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "role-${pTeamName}-crawler-${Stage}"
+      RoleName: !Sub "role-${pTeamName}-crawler-${Stage}-prod"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
