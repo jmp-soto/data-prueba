@@ -96,7 +96,7 @@ Resources:
                 Action:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
-                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
+                Resource: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
                 Action:
@@ -107,7 +107,7 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
-                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}/*"
+                Resource: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev/*"
 
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
@@ -120,7 +120,7 @@ Resources:
   S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
+      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
       S3Config:
         BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
       Subdirectory: "/regional/externa/rg_in_optimizador/"
