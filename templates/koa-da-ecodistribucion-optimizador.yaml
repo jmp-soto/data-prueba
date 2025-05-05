@@ -96,7 +96,9 @@ Resources:
                 Action:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
-                Resource: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+                Resource: 
+                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+                  - !Sub "arn:aws:s3:::stage-yvoone-dev"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
                 Action:
@@ -107,7 +109,9 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
-                Resource: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev/*"
+                Resource: 
+                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+                  - !Sub "arn:aws:s3:::stage-yvoone-dev"
 
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
