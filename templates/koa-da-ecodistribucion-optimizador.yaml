@@ -245,15 +245,32 @@ Resources:
                   - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}/*"
                   - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}"
   
-  analyticsDbCrawler:
+  # analyticsDbCrawler:
+  #   Type: AWS::Glue::Crawler
+  #   Properties:
+  #     Name: !Sub "Glue-${pTeamName}-crawler-db-Analytics"
+  #     Role: !GetAtt crawlerRoleAnalytics.Arn
+  #     DatabaseName: !Ref pdbAnalyticsName
+  #     Targets:
+  #       S3Targets:
+  #         - Path: !Sub "s3://${pbucketAnalytics}"
+  #     SchemaChangePolicy:
+  #       UpdateBehavior: "UPDATE_IN_DATABASE"
+  #       DeleteBehavior: "LOG"
+  #     Tags:
+  #       develop: !Ref pdeveloper
+  #     Schedule:
+  #       ScheduleExpression: "cron(0 10 ? * * *)"
+  #     Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
+  analyticsDbCrawlerRgInOptimizador:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: !Sub "Glue-${pTeamName}-crawler-db-Analytics"
+      Name: !Sub "Glue-${pTeamName}-crawler-rg-in-optimizador-analitycs"
       Role: !GetAtt crawlerRoleAnalytics.Arn
       DatabaseName: !Ref pdbAnalyticsName
       Targets:
         S3Targets:
-          - Path: !Sub "s3://${pbucketAnalytics}"
+          - Path: !Sub "s3://${pbucketAnalytics}/regional/externa/rg_in_optimizador/"
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
         DeleteBehavior: "LOG"
@@ -261,4 +278,4 @@ Resources:
         develop: !Ref pdeveloper
       Schedule:
         ScheduleExpression: "cron(0 10 ? * * *)"
-      Description: !Sub "Crawler to analyze data in ${pbucketAnalytics} bucket for ${Stage} environment"
+      Description: !Sub "Crawler for rg_in_optimizador_analitycs in ${pbucketAnalytics} bucket for ${Stage} environment"
