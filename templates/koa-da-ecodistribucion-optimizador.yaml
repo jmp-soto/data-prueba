@@ -112,7 +112,7 @@ Resources:
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::stage-maria-dev"
+      S3BucketArn: !Sub "arn:aws:s3:::stage-yvoone-dev"
       S3Config:
         BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
       Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
