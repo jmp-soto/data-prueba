@@ -158,6 +158,10 @@ jobs:
           if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
             deploy_stack "koa-da-ecodistribucion-optimizador.yaml" "koa-da-ecodistribucion-optimizador"
           fi
+          
+          if [[ "${{ contains(github.event.pull_request.title, '-crawler') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+            deploy_stack "crawler.yaml" "koa-da-ecodistribucion-crawler"
+          fi
 
 
 
