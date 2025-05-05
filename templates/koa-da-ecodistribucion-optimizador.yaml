@@ -70,80 +70,80 @@ Parameters:
   # Required for referenced resources
 
 Resources:
-  dataSyncOptimizadorRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "role-${pTeamName}-optimizador-${pCountryRg}"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: "datasync.amazonaws.com"
-            Action: "sts:AssumeRole"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
-      MaxSessionDuration: 3600
-      Path: "/"
-      Policies:
-        - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketStage"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AccessToS3Bucket
-                Effect: "Allow"
-                Action:
-                  - "s3:GetBucketLocation"
-                  - "s3:ListBucket"
-                Resource: 
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
-                  - !Sub "arn:aws:s3:::stage-yvoone-dev"
-              - Sid: AccessToS3Objects
-                Effect: "Allow"
-                Action:
-                  - "s3:AbortMultipartUpload"
-                  - "s3:GetObject"
-                  - "s3:ListMultipartUploadParts"
-                  - "s3:PutObject"
-                  - "s3:GetObjectTagging"
-                  - "s3:ListBucket"
-                  - "s3:PutObjectTagging"
-                Resource: 
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
-                  - !Sub "arn:aws:s3:::stage-yvoone-dev"
+  # dataSyncOptimizadorRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: !Sub "role-${pTeamName}-optimizador-${pCountryRg}"
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: "Allow"
+  #           Principal:
+  #             Service: "datasync.amazonaws.com"
+  #           Action: "sts:AssumeRole"
+  #     ManagedPolicyArns:
+  #       - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+  #       - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+  #     MaxSessionDuration: 3600
+  #     Path: "/"
+  #     Policies:
+  #       - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketStage"
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AccessToS3Bucket
+  #               Effect: "Allow"
+  #               Action:
+  #                 - "s3:GetBucketLocation"
+  #                 - "s3:ListBucket"
+  #               Resource: 
+  #                 - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+  #                 - !Sub "arn:aws:s3:::stage-yvoone-dev"
+  #             - Sid: AccessToS3Objects
+  #               Effect: "Allow"
+  #               Action:
+  #                 - "s3:AbortMultipartUpload"
+  #                 - "s3:GetObject"
+  #                 - "s3:ListMultipartUploadParts"
+  #                 - "s3:PutObject"
+  #                 - "s3:GetObjectTagging"
+  #                 - "s3:ListBucket"
+  #                 - "s3:PutObjectTagging"
+  #               Resource: 
+  #                 - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+  #                 - !Sub "arn:aws:s3:::stage-yvoone-dev"
 
-  S3LocationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
-    Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::stage-yvoone-dev"
-      S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
-      Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
+  # S3LocationOptimizadorRg:
+  #   Type: AWS::DataSync::LocationS3
+  #   Properties:
+  #     S3BucketArn: !Sub "arn:aws:s3:::stage-yvoone-dev"
+  #     S3Config:
+  #       BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
+  #     Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
 
-  S3DestinationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
-    Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
-      S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
-      Subdirectory: "/regional/externa/rg_in_optimizador/"
+  # S3DestinationOptimizadorRg:
+  #   Type: AWS::DataSync::LocationS3
+  #   Properties:
+  #     S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+  #     S3Config:
+  #       BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
+  #     Subdirectory: "/regional/externa/rg_in_optimizador/"
 
-  TaskEjecOptimizadorRg:
-    Type: AWS::DataSync::Task
-    Properties:
-      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
-      SourceLocationArn: !Ref S3LocationOptimizadorRg
-      DestinationLocationArn: !Ref S3DestinationOptimizadorRg
-      Options:
-        VerifyMode: "ONLY_FILES_TRANSFERRED"
-        OverwriteMode: "ALWAYS"
-        TransferMode: "CHANGED"
-      Includes:
-        - FilterType: "SIMPLE_PATTERN"
-          Value: "/year=*"
-      Schedule:
-        ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
+  # TaskEjecOptimizadorRg:
+  #   Type: AWS::DataSync::Task
+  #   Properties:
+  #     Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
+  #     SourceLocationArn: !Ref S3LocationOptimizadorRg
+  #     DestinationLocationArn: !Ref S3DestinationOptimizadorRg
+  #     Options:
+  #       VerifyMode: "ONLY_FILES_TRANSFERRED"
+  #       OverwriteMode: "ALWAYS"
+  #       TransferMode: "CHANGED"
+  #     Includes:
+  #       - FilterType: "SIMPLE_PATTERN"
+  #         Value: "/year=*"
+  #     Schedule:
+  #       ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
 
   OptimizadorTableAnalyticsRg:
     Type: AWS::Glue::Table
