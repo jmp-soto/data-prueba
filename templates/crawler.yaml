@@ -123,6 +123,7 @@ Resources:
       Name: !Sub "Glue-${pTeamName}-crawler-rg-in-optimizador-analitycs"
       Role: !GetAtt crawlerRoleAnalytics.Arn
       DatabaseName: !Ref pdbAnalyticsName
+      TablePrefix: -analytics
       Targets:
         S3Targets:
           - Path: !Sub "s3://${pbucketAnalytics}/regional/externa/rg_in_optimizador/"
