@@ -120,7 +120,7 @@ Resources:
   analyticsDbCrawlerRgInOptimizador:
     Type: AWS::Glue::Crawler
     Properties:
-      Name: !Sub "Glue-${pTeamName}-crawler-rg-in-optimizador-analitycs"
+      Name: !Sub "Glue-${pTeamName}-crawler-rg-in-optimizador-analitycs-prueba"
       Role: !GetAtt crawlerRoleAnalytics.Arn
       DatabaseName: !Ref pdbAnalyticsName
       TablePrefix: -analytics
