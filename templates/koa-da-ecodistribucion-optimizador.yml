@@ -77,7 +77,32 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName: "josemaria-s3-prueba-dev"
-
+  
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AccessAccountDatalakeObjectDataSync"
+            Effect: "Allow"
+            Principal:
+              AWS: "arn:aws:iam::160885287080:root"
+            Action:
+              - "s3:GetBucketLocation"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:DeleteObject"
+              - "s3:GetObject"
+              - "s3:ListMultipartUploadParts"
+              - "s3:PutObjectTagging"
+              - "s3:GetObjectTagging"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}"
+              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}/*"""
   dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
@@ -222,7 +247,7 @@ Resources:
             - {Name: sap_rpmowa, Type: string}
             - {Name: sap_stdis, Type: string}
           InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/regional/externa/rg_in_optimizador
+          Location: !Sub s3://josemaria-s3-prueba-${Stage}/regional/externa/rg_in_optimizador
           Compressed: True
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
