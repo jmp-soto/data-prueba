@@ -125,12 +125,12 @@ Resources:
       DatabaseName: !Ref pdbAnalyticsName
       Targets:
         CatalogTargets:
-          - DatabaseName: !Ref pdbAnalyticsName
+          - DatabaseName: pdbAnalyticsName
             Tables:
-              - rg_in_optimizador_analitycs
+              - tabla_origen
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
-        DeleteBehavior: DEPRECATE_IN_DATABASE
+        DeleteBehavior: "LOG"
       Tags:
         develop: !Ref pdeveloper
       Schedule:
