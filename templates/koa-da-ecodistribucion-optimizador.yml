@@ -142,7 +142,6 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
-                  - ""
                 Resource:
                   - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs/*"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria/*"
