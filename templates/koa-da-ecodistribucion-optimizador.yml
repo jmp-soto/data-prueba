@@ -76,7 +76,7 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       AccessControl: Private
-      BucketName: "josemaria-s3-prueba-dev"
+      BucketName: "josemaria-s3-prueba-devs"
   
   S3BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
@@ -130,7 +130,7 @@ Resources:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
@@ -144,7 +144,7 @@ Resources:
                   - "s3:PutObjectTagging"
                   - ""
                 Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev/*"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs/*"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria/*"
 
   S3LocationOptimizadorRg:
@@ -158,7 +158,7 @@ Resources:
   S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
+      S3BucketArn: !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
       S3Config:
         BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
       Subdirectory: "/regional/externa/rg_in_optimizador/"
