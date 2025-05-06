@@ -147,37 +147,7 @@ Resources:
                   - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
 
-  S3LocationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
-    Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::stage-datalake-josemaria"
-      S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
-      Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
 
-  S3DestinationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
-    Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
-      S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
-      Subdirectory: "/regional/externa/rg_in_optimizador/"
-
-  TaskEjecOptimizadorRg:
-    Type: AWS::DataSync::Task
-    Properties:
-      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diarios"
-      SourceLocationArn: !Ref S3LocationOptimizadorRg
-      DestinationLocationArn: !Ref S3DestinationOptimizadorRg
-      Options:
-        VerifyMode: "ONLY_FILES_TRANSFERRED"
-        OverwriteMode: "ALWAYS"
-        TransferMode: "CHANGED"
-      Includes:
-        - FilterType: "SIMPLE_PATTERN"
-          Value: "/year=*"
-      Schedule:
-        ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
 
   OptimizadorTableAnalyticsRg:
     Type: AWS::Glue::Table
