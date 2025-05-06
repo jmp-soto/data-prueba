@@ -111,11 +111,11 @@ jobs:
       # Deploy resources based on PR titl
       - name: Deploy IAM
         if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
-        run: deploy_stack "iam.yaml" "da-josemaria-iam" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+        run: deploy_stack "iam.yml" "da-josemaria-iam" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
 
       - name: Deploy S3
         if: contains(github.event.pull_request.title, '-s3')
-        run: deploy_stack "s3.yaml" "da-josemaria-s3" "ArtifactsBucket=$ARTIFACTORY_BUCKET"
+        run: deploy_stack "s3.yml" "da-josemaria-s3" "ArtifactsBucket=$ARTIFACTORY_BUCKET"
 
       # Layer upload section
       - name: Upload layers to S3
@@ -127,41 +127,63 @@ jobs:
       # Other resources#
       - name: Deploy Layers
         if: contains(github.event.pull_request.title, '-layers') || contains(github.event.pull_request.title, '-all')
-        run: deploy_stack "layers.yaml" "da-josemaria-layers" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+        run: deploy_stack "layers.yml" "da-josemaria-layers" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
 
       - name: Deploy CATALOGO ATHENA DB
         if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
-          deploy_stack "athenacatalogo.yaml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+          deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
       #- name: Deploy CATALOGO ATHENA DB
       #  if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
-      #  run: source ./deploy_stack.sh deploy_stack "athenacatalogo.yaml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+      #  run: source ./deploy_stack.sh deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
       # Remaining stack deployments#
       - name: Deploy remaining stacks
         run: |
           source ./deploy_stack.sh
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-eta.yaml" "koa-da-ecodistribucion-eta" 
+
+          title="${{ github.event.pull_request.title }}"
+
+          if [[ "$title" == *"-koa-da-ecodistribucion-eta"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta"
           fi
 
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-misupply.yaml" "koa-da-ecodistribucion-misupply"
+          if [[ "$title" == *"-koa-da-ecodistribucion-misupply"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-misupply.yml" "koa-da-ecodistribucion-misupply"
           fi
 
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-nps-feedback.yaml" "da-josemaria-nps-feedback" 
+          if [[ "$title" == *"-koa-da-ecodistribucion-nps-feedback"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-nps-feedback.yml" "koa-da-ecodistribucion-nps-feedback"
           fi
 
-          if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "koa-da-ecodistribucion-optimizador.yaml" "koa-da-ecodistribucion-optimizador"
+          if [[ "$title" == *"-koa-da-ecodistribucion-optimizador"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-optimizador.yml" "koa-da-ecodistribucion-optimizador"
           fi
+      
+      # - name: Deploy remaining stacks
+      #   run: |
+      #     source ./deploy_stack.sh
+      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+      #       deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta" 
+      #     fi
+
+      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+      #       deploy_stack "koa-da-ecodistribucion-misupply.yml" "koa-da-ecodistribucion-misupply"
+      #     fi
+
+      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+      #       deploy_stack "koa-da-ecodistribucion-nps-feedback.yml" "da-josemaria-nps-feedback" 
+      #     fi
+
+      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+      #       deploy_stack "koa-da-ecodistribucion-optimizador.yml" "koa-da-ecodistribucion-optimizador"
+      #     fi
           
-          if [[ "${{ contains(github.event.pull_request.title, '-crawler') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-            deploy_stack "crawler.yaml" "koa-da-ecodistribucion-crawler"
-          fi
+      #     if [[ "${{ contains(github.event.pull_request.title, '-crawler') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
+      #       deploy_stack "crawler.yml" "koa-da-ecodistribucion-crawler"
+      #     fi
 
 
 

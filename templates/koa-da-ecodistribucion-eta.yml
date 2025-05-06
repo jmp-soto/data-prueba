@@ -180,6 +180,8 @@ Resources:
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
+        - Key: develop_
+          Value: "hola"
 
   etaSrCLLambda:
     Type: AWS::Lambda::Function
