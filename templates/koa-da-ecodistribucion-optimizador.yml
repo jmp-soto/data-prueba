@@ -116,7 +116,6 @@ Resources:
             Action: "sts:AssumeRole"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
       MaxSessionDuration: 3600
       Path: "/"
       Policies:
@@ -142,9 +141,10 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
-                Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs/*"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria/*"
+                  - "s3:DeleteObject"
+                Resource: 
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
+                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
 
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
