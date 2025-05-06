@@ -70,6 +70,14 @@ Parameters:
   # Required for referenced resources
 
 Resources:
+
+  pruebaArtifactsBucketlib:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: Private
+      BucketName: "josemaria-s3-prueba-dev"
+
   dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
@@ -97,7 +105,7 @@ Resources:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
@@ -110,7 +118,7 @@ Resources:
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
                 Resource:
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
 
   S3LocationOptimizadorRg:
@@ -124,7 +132,7 @@ Resources:
   S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
+      S3BucketArn: !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
       S3Config:
         BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
       Subdirectory: "/regional/externa/rg_in_optimizador/"
