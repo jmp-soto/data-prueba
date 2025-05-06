@@ -123,13 +123,14 @@ Resources:
       Name: !Sub "Glue-${pTeamName}-crawler-rg-in-optimizador-analitycs-prueba"
       Role: !GetAtt crawlerRoleAnalytics.Arn
       DatabaseName: !Ref pdbAnalyticsName
-      TablePrefix: -analytics
       Targets:
-        S3Targets:
-          - Path: !Sub "s3://${pbucketAnalytics}/regional/externa/rg_in_optimizador/"
+        CatalogTargets:
+          - DatabaseName: !Ref pdbAnalyticsName
+            Tables:
+              - rg_in_optimizador_analitycs
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
-        DeleteBehavior: "LOG"
+        DeleteBehavior: DEPRECATE_IN_DATABASE
       Tags:
         develop: !Ref pdeveloper
       Schedule:
