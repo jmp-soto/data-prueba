@@ -81,7 +81,7 @@ Resources:
   S3BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
-      Bucket: !Ref S3Bucket
+      Bucket: !Ref pruebaArtifactsBucketlib
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
