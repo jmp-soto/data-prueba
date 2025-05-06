@@ -70,13 +70,12 @@ Parameters:
   # Required for referenced resources
 
 Resources:
-
   pruebaArtifactsBucketlib:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
       AccessControl: Private
-      BucketName: "josemaria-s3-prueba-devs"
+      BucketName: "josemaria-s3-prueba-dev"
   
   S3BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
@@ -88,12 +87,12 @@ Resources:
           - Sid: "AccessAccountDatalakeObjectDataSync"
             Effect: "Allow"
             Principal:
-              - !Sub "arn:aws:iam::${pAWSAccountId}:root"
-              - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
+              AWS:
+                - !Sub "arn:aws:iam::${pAWSAccountId}:root"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
-              - "s3:ListBucketMultipartUploads"
               - "s3:AbortMultipartUpload"
               - "s3:DeleteObject"
               - "s3:GetObject"
@@ -104,6 +103,7 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}"
               - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}/*"
+
   dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
@@ -130,7 +130,7 @@ Resources:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
@@ -144,7 +144,7 @@ Resources:
                   - "s3:PutObjectTagging"
                   - "s3:DeleteObject"
                 Resource: 
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-devs"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria"
 
 
@@ -218,7 +218,7 @@ Resources:
             - {Name: sap_rpmowa, Type: string}
             - {Name: sap_stdis, Type: string}
           InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://josemaria-s3-prueba-devs/regional/externa/rg_in_optimizador
+          Location: !Sub s3://josemaria-s3-prueba-dev/regional/externa/rg_in_optimizador
           Compressed: True
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
