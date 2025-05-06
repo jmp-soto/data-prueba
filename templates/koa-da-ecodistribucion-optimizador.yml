@@ -247,7 +247,7 @@ Resources:
             - {Name: sap_rpmowa, Type: string}
             - {Name: sap_stdis, Type: string}
           InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://josemaria-s3-prueba-${Stage}/regional/externa/rg_in_optimizador
+          Location: !Sub s3://josemaria-s3-prueba-devs/regional/externa/rg_in_optimizador
           Compressed: True
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
