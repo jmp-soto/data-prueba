@@ -102,7 +102,7 @@ Resources:
               - "s3:PutObject"
             Resource:
               - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}"
-              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}/*"""
+              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}/*"
   dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
