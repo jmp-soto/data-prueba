@@ -88,8 +88,8 @@ Resources:
           - Sid: "AccessAccountDatalakeObjectDataSync"
             Effect: "Allow"
             Principal:
-              - !Sub "arn:aws:iam::${AWSAccountId}:root"
-              - !Sub "arn:aws:iam::${AWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
+              - !Sub "arn:aws:iam::${pAWSAccountId}:root"
+              - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
