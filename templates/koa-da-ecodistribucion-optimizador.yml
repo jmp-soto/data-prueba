@@ -143,8 +143,8 @@ Resources:
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
                 Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
+                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev/*"
+                  - !Sub "arn:aws:s3:::stage-datalake-josemaria/*"
 
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
