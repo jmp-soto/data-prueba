@@ -166,7 +166,7 @@ Resources:
   TaskEjecOptimizadorRg:
     Type: AWS::DataSync::Task
     Properties:
-      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
+      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diarios"
       SourceLocationArn: !Ref S3LocationOptimizadorRg
       DestinationLocationArn: !Ref S3DestinationOptimizadorRg
       Options:
@@ -185,7 +185,7 @@ Resources:
       CatalogId: !Ref pAWSAccountId
       DatabaseName: !Ref pdbAnalyticsName
       TableInput:
-        Name: rg_in_optimizador_analitycs
+        Name: rg_in_optimizador_analitycsss
         TableType: EXTERNAL_TABLE
         Parameters:
           "classification": "json"
