@@ -153,7 +153,7 @@ Resources:
       S3BucketArn: !Sub "arn:aws:s3:::stage-datalake-josemaria"
       S3Config:
         BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
-      Subdirectory: "/regional/optimizador/rg_in_optimizador_stage/"
+      Subdirectory: "/regional/externa/rg_in_optimizador_stage/"
 
   S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
