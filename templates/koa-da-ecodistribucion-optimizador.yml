@@ -88,7 +88,7 @@ Resources:
           - Sid: "AccessAccountDatalakeObjectDataSync"
             Effect: "Allow"
             Principal:
-              AWS: "arn:aws:iam::160885287080:root"
+              AWS: "arn:aws:iam::682033497219:root"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
@@ -142,6 +142,7 @@ Resources:
                   - "s3:GetObjectTagging"
                   - "s3:ListBucket"
                   - "s3:PutObjectTagging"
+                  - ""
                 Resource:
                   - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev/*"
                   - !Sub "arn:aws:s3:::stage-datalake-josemaria/*"
@@ -165,7 +166,7 @@ Resources:
   TaskEjecOptimizadorRg:
     Type: AWS::DataSync::Task
     Properties:
-      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diario"
+      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diarios"
       SourceLocationArn: !Ref S3LocationOptimizadorRg
       DestinationLocationArn: !Ref S3DestinationOptimizadorRg
       Options:
@@ -184,7 +185,7 @@ Resources:
       CatalogId: !Ref pAWSAccountId
       DatabaseName: !Ref pdbAnalyticsName
       TableInput:
-        Name: rg_in_optimizador_analitycs
+        Name: rg_in_optimizador_analitycsss
         TableType: EXTERNAL_TABLE
         Parameters:
           "classification": "json"
