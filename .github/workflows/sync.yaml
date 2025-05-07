@@ -55,14 +55,15 @@ jobs:
       - name: Set common parameters
         run: |
           echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME "pdbAnalyticsName=$DB_ANALYTICS" pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
-
+          echo $COMMON_PARAMS
+          
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
            role-session-name: awssyncsession
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
            aws-region: ${{ secrets.AWS_REGION }}
-           
+
       # Create a reusable deployment function
       - name: Define deployment function
         env:
