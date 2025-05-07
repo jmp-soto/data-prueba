@@ -1,40 +1,132 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template para crear un único bucket S3 con subdirectorios específicos
+Description: Template para crear buckets S3 para el proyecto Ecodistribucion
 
 Parameters:
   Stage:
     Type: String
     Description: Environment name (dev/qa/prod)
+    AllowedValues:
+      - dev
+      - qa
+      - prod
     Default: dev
-  pBranchName:
-    Description: "Branch Name(all lowercase, no symbols or spaces)"
-    Type: String
-  pArtifactsBucket:
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSRegion:
-    Description: "Aws region (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSAccountId:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
-    Type: String
-  pAWSAccountOptId:
-    Description: "Aws account optimizador Id(all lowercase, no symbols or spaces)"
-    Type: String
-  pAccountName:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
-    Type: String
   pTeamName:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
+  pBranchName:
+    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Type: String
+    AllowedValues:
+      - develop
+      - qa
+      - prod
+  pcuenta:
+    Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
+    Type: String
+  ArtifactsBucket:
+    Type: String
+    Description: Artifacts bucket name
+  AWSRegion:
+    Type: String
+    Description: AWS Region
+    Default: "us-east-1"
+  AWSAccountId:
+    Type: String
+    Description: AWS Account ID
   pdeploymentDate:
-    Description: "Aws account (all lowercase, no symbols or spaces)"
+    Description: "Deployment Date"
     Type: String
-
+  pAWSAccountOpt:
+    Description: "AWS account optimizer ID"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: "Josemaria_Paucar"
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+    
 Resources:
   ArtifactsBucketlib:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
+    DeletionPolicy: Retain
     Properties:
       AccessControl: Private
-      BucketName: !Ref pArtifactsBucket
+      BucketName: !Ref ArtifactsBucket
+      # VersioningConfiguration:
+      #   Status: Enabled
+      # ServerSideEncryptionConfiguration:
+      #   ServerSideEncryptionByDefault:
+      #     SSEAlgorithm: AES256
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Ref ArtifactsBucket
+      #   LogFilePrefix: "access-logs/"
+
+  daEcodistribucionBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "stage", !Ref Stage]]
+      AccessControl: Private
+      # VersioningConfiguration:
+      #   Status: Enabled
+      # ServerSideEncryptionConfiguration:
+      #   ServerSideEncryptionByDefault:
+      #     SSEAlgorithm: AES256
+
+  daEcodistribucionAnalyticsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "analytics", !Ref Stage]]
+      AccessControl: Private
+
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref daEcodistribucionAnalyticsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AccessAccountDatalakeObjectDataSyncs"
+            Effect: "Allow"
+            Principal:
+              AWS: 
+                - !Sub "arn:aws:iam::${AWSAccountId}:root"
+                - !Sub "arn:aws:iam::${AWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
+            Action:
+              - "s3:GetBucketLocation"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:DeleteObject"
+              - "s3:GetObject"
+              - "s3:ListMultipartUploadParts"
+              - "s3:PutObjectTagging"
+              - "s3:GetObjectTagging"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
