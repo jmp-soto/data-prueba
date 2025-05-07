@@ -28,17 +28,6 @@ jobs:
 
       - name: Checkout Repo
         uses: actions/checkout@v2
-
-      - name: Set environment
-        run: |
-          # Determinar ENVIRONMENT
-          if [[ "${GITHUB_BASE_REF}" == "develop" || "${GITHUB_REF_NAME}" == "develop" ]]; then
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-            ENVIRONMENT=dev
-          else
-            echo "ENVIRONMENT=${GITHUB_BASE_REF:-$GITHUB_REF_NAME}" >> $GITHUB_ENV
-            ENVIRONMENT="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
-          fi
       
       - name: Set parameters and tags files
         run: |
@@ -60,19 +49,20 @@ jobs:
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-           role-session-name: awssyncsession
-           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: ${{ secrets.AWS_REGION }}
+      
       
       # Define common CloudFormation parameters
       - name: Set common parameters
         run: |
           echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME "pdbAnalyticsName=$DB_ANALYTICS" pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
-      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
+           
       # Create a reusable deployment function
       - name: Define deployment function
         env:
