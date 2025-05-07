@@ -48,9 +48,7 @@ jobs:
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
-
-      
-      
+          
       # Define common CloudFormation parameters
       - name: Set common parameters
         run: |
@@ -62,7 +60,7 @@ jobs:
            role-session-name: awssyncsession
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
            aws-region: ${{ secrets.AWS_REGION }}
-           
+
       # Create a reusable deployment function
       - name: Define deployment function
         env:
@@ -118,7 +116,7 @@ jobs:
         if: contains(github.event.pull_request.title, '-s3')
         run: |
           source ./deploy_stack.sh 
-          deploy_stack "s3.yml" "da-josemaria-s3" "ArtifactsBucket=$ARTIFACTORY_BUCKET"
+          deploy_stack "s3.yml" "da-josemaria-s3" "pcuenta=$AWS_ACCOUNT ArtifactsBucket=$ARTIFACTORY_BUCKET AWSAccountId=$AWS_ACCOUNT_ID"
 
       # Layer upload section
       - name: Upload layers to S3
