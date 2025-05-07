@@ -29,6 +29,17 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
+      - name: Set environment
+        run: |
+          # Determinar ENVIRONMENT
+          if [[ "${GITHUB_BASE_REF}" == "develop" || "${GITHUB_REF_NAME}" == "develop" ]]; then
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            ENVIRONMENT=dev
+          else
+            echo "ENVIRONMENT=${GITHUB_BASE_REF:-$GITHUB_REF_NAME}" >> $GITHUB_ENV
+            ENVIRONMENT="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+          fi
+      
       - name: Set parameters and tags files
         run: |
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
