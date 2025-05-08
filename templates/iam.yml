@@ -97,8 +97,8 @@ Resources:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-dev"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
+                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
+                  - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
               - Sid: AccessToS3Objects
                 Effect: "Allow"
                 Action:
@@ -111,5 +111,5 @@ Resources:
                   - "s3:PutObjectTagging"
                   - "s3:DeleteObject"
                 Resource: 
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
+                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
+                  - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
