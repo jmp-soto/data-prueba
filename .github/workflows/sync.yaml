@@ -108,9 +108,11 @@ jobs:
 
 
       # Deploy resources based on PR titl
-      - name: Deploy IAM
+      - name: Deploy Iam
         if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
-        run: deploy_stack "iam.yml" "da-josemaria-iam" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "iam.yml" "da-josemaria-iam"
 
       - name: Deploy S3
         if: contains(github.event.pull_request.title, '-s3')

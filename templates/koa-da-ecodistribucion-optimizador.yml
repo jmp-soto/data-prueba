@@ -70,97 +70,23 @@ Parameters:
   # Required for referenced resources
 
 Resources:
-  pruebaArtifactsBucketlib:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    Properties:
-      AccessControl: Private
-      BucketName: "josemaria-s3-prueba-dev"
-  
-  S3BucketPolicy:
-    Type: "AWS::S3::BucketPolicy"
-    Properties:
-      Bucket: !Ref pruebaArtifactsBucketlib
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: "AccessAccountDatalakeObjectDataSync"
-            Effect: "Allow"
-            Principal:
-              AWS:
-                - !Sub "arn:aws:iam::${pAWSAccountId}:root"
-                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
-            Action:
-              - "s3:GetBucketLocation"
-              - "s3:ListBucket"
-              - "s3:AbortMultipartUpload"
-              - "s3:DeleteObject"
-              - "s3:GetObject"
-              - "s3:ListMultipartUploadParts"
-              - "s3:PutObjectTagging"
-              - "s3:GetObjectTagging"
-              - "s3:PutObject"
-            Resource:
-              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}"
-              - !Sub "arn:aws:s3:::${pruebaArtifactsBucketlib}/*"
 
-  dataSyncOptimizadorRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "role-${pTeamName}-optimizador-${pCountryRg}"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: "datasync.amazonaws.com"
-            Action: "sts:AssumeRole"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-      MaxSessionDuration: 3600
-      Path: "/"
-      Policies:
-        - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketStage"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AccessToS3Bucket
-                Effect: "Allow"
-                Action:
-                  - "s3:GetBucketLocation"
-                  - "s3:ListBucket"
-                Resource:
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
-              - Sid: AccessToS3Objects
-                Effect: "Allow"
-                Action:
-                  - "s3:AbortMultipartUpload"
-                  - "s3:GetObject"
-                  - "s3:ListMultipartUploadParts"
-                  - "s3:PutObject"
-                  - "s3:GetObjectTagging"
-                  - "s3:ListBucket"
-                  - "s3:PutObjectTagging"
-                  - "s3:DeleteObject"
-                Resource: 
-                  - !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
-                  - !Sub "arn:aws:s3:::stage-datalake-josemaria"
+
 
   S3LocationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::stage-datalake-josemaria"
+      S3BucketArn: !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
       S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
       Subdirectory: "/regional/externa/rg_in_optimizador_stage/"
 
   S3DestinationOptimizadorRg:
     Type: AWS::DataSync::LocationS3
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::josemaria-s3-prueba-dev"
+      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
       S3Config:
-        BucketAccessRoleArn: !GetAtt dataSyncOptimizadorRole.Arn
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
       Subdirectory: "/regional/externa/rg_in_optimizador/"
 
   TaskEjecOptimizadorRg:

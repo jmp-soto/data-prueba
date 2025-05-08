@@ -90,11 +90,6 @@ Resources:
     Properties:
       BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "stage", !Ref Stage]]
       AccessControl: Private
-      # VersioningConfiguration:
-      #   Status: Enabled
-      # ServerSideEncryptionConfiguration:
-      #   ServerSideEncryptionByDefault:
-      #     SSEAlgorithm: AES256
 
   daEcodistribucionAnalyticsBucket:
     Type: AWS::S3::Bucket
@@ -115,7 +110,7 @@ Resources:
             Principal:
               AWS: 
                 - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/role-${pTeamName}-optimizador-${pCountryRg}"
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
@@ -128,5 +123,5 @@ Resources:
               - "s3:GetObjectTagging"
               - "s3:PutObject"
             Resource:
-              - !Join ["", ["arn:aws:s3:::", !Ref daEcodistribucionAnalyticsBucket]]
-              - !Join ["", ["arn:aws:s3:::", !Ref daEcodistribucionAnalyticsBucket, "/*"]]
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
