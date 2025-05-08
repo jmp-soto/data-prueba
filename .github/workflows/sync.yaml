@@ -118,7 +118,7 @@ jobs:
         if: contains(github.event.pull_request.title, '-s3')
         run: |
           source ./deploy_stack.sh 
-          deploy_stack "s3.yml" "da-josemaria-s3" "pcuenta=$AWS_ACCOUNT ArtifactsBucket=$ARTIFACTORY_BUCKET AWSAccountId=$AWS_ACCOUNT_ID"
+          deploy_stack "s3.yml" "da-josemaria-s3"
 
       # Layer upload section
       - name: Upload layers to S3
