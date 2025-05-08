@@ -20,17 +20,17 @@ Parameters:
       - develop
       - qa
       - prod
-  pcuenta:
+  pAccountName:
     Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
+    Type: String  
+  pArtifactsBucket:
     Type: String
-  ArtifactsBucket:
-    Type: String
-    Description: Artifacts bucket name
+    Description: Artifacts bucket name  
   AWSRegion:
     Type: String
     Description: AWS Region
     Default: "us-east-1"
-  AWSAccountId:
+  pAWSAccountId:
     Type: String
     Description: AWS Account ID
   pdeploymentDate:
@@ -74,7 +74,7 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       AccessControl: Private
-      BucketName: !Ref ArtifactsBucket
+      BucketName: !Ref pArtifactsBucket
       # VersioningConfiguration:
       #   Status: Enabled
       # ServerSideEncryptionConfiguration:
@@ -88,14 +88,14 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "stage", !Ref Stage]]
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "stage", !Ref Stage]]
       AccessControl: Private
 
   daEcodistribucionAnalyticsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', [!Ref pTeamName, !Ref pcuenta, "analytics", !Ref Stage]]
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics", !Ref Stage]]
       AccessControl: Private
 
   S3BucketPolicy:

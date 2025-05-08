@@ -111,5 +111,5 @@ Resources:
                   - "s3:PutObjectTagging"
                   - "s3:DeleteObject"
                 Resource: 
-                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
-                  - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
+                  - !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}/*"
+                  - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev/*"
