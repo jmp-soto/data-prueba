@@ -136,7 +136,55 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*:*"
 
+  etaCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: Planned_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Planned_date
+          KeySchema:
+            - AttributeName: Planned_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
 
+  etaDetailCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-detail-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: Planned_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Planned_date
+          KeySchema:
+            - AttributeName: Planned_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+        - Key: develop_
+          Value: "hola"
 
   etaSrCLLambda:
     Type: AWS::Lambda::Function
@@ -158,6 +206,8 @@ Resources:
               }
       Environment:
         Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
@@ -192,6 +242,8 @@ Resources:
               }
       Environment:
         Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
       Tags:
         - Key: develop
@@ -243,6 +295,8 @@ Resources:
               }
       Environment:
         Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pRDAWSAccountId
           BUCKET_STAGE: !Sub "prueba-josemaria-artifacts-${Stage}" 
       Layers:
