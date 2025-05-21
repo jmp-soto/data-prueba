@@ -142,12 +142,12 @@ Resources:
       TableName: !Sub "table-${pTeamName}-eta-${pCountryCl}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: Route_id
+        - AttributeName: route_id
           AttributeType: S
         - AttributeName: Planned_date
           AttributeType: S
       KeySchema:
-        - AttributeName: Route_id
+        - AttributeName: route_id
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: Planned_date
@@ -166,12 +166,12 @@ Resources:
       TableName: !Sub "table-${pTeamName}-eta-detail-${pCountryCl}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: Route_id
+        - AttributeName: route_id
           AttributeType: S
         - AttributeName: Planned_date
           AttributeType: S
       KeySchema:
-        - AttributeName: Route_id
+        - AttributeName: route_id
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: Planned_date
