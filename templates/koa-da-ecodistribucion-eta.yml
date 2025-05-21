@@ -270,5 +270,44 @@ Resources:
       FunctionName: !GetAtt etaMlCLLambda.Arn
       BatchSize: 1               
       Enabled: true
-      
-  
+
+  consolidadoetaCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-eta-consolidado-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.12
+      Timeout: 360
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          ACCOUNT_ID: !Ref pRDAWSAccountId
+          BUCKET_STAGE: !Sub "prueba-josemaria-artifacts-${Stage}" 
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper      
+
+  etaConsolidadoClEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: "cron(0 7 * * ? *)" 
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-eta-consolidado"
+            Arn: !GetAtt consolidadoetaCLLambda.Arn
+
