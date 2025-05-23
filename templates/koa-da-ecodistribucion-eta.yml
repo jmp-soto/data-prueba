@@ -319,12 +319,12 @@ Resources:
       SourceAccount: !Ref pRDAWSAccountId
 
   LambdaInvokePermissionSaveSNSMiRuta:
-  Type: AWS::Lambda::Permission
-  Properties:
-    FunctionName: !GetAtt etaSrCLLambda.Arn
-    Action: lambda:InvokeFunction
-    Principal: sns.amazonaws.com
-    SourceArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:sns-event-save-order-cl"
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt etaSrCLLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:sns-event-save-order-cl"
 
   SaveSNSMiRutaSubscription:
     Type: AWS::SNS::Subscription
