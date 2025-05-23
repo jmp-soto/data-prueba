@@ -231,57 +231,7 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  # Recurso para almacenar los tokens de API en Secrets Manager
-  etaCredentialsSecret:
-    Type: AWS::SecretsManager::Secret
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      Name: "eta-credentialss"
-      Description: "Credenciales para APIs utilizadas en ETA (SimpleRoute)"
-      SecretString: !Sub |
-        {
-          "carlos-valdovinos": {
-            "simpliroute_token": "${pEtaCarlosValdovinosSr}"
-          },
-          "puente-alto": {
-            "simpliroute_token": "${pPuenteAltoSr}"
-          }
-        }
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-        - Key: Name
-          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Account
-          Value: !Ref pAccountName
-  
-  etaCredentialsSecretApiHereMaps:
-    Type: AWS::SecretsManager::Secret
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      Name: "api-heremaps-credentialss"
-      Description: "Credenciales para APIs Here maps"
-      SecretString: !Sub |
-        {
-          "heremaps-api-key": "${pEtaheremapskey}"
-        }
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-        - Key: Name
-          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Account
-          Value: !Ref pAccountName
+
 
   etaSrCLLambda:
     Type: AWS::Lambda::Function
@@ -304,7 +254,6 @@ Resources:
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-          ETA_SECRETS_NAME: !Ref etaCredentialsSecret
           CENTRO: !FindInMap [center, !Ref Stage, default]
       Tags:
         - Key: develop
@@ -369,7 +318,6 @@ Resources:
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-          ETA_SECRETS_NAME: !Ref etaCredentialsSecretApiHereMaps
       Layers:
         - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
