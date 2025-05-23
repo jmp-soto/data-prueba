@@ -42,11 +42,11 @@ Parameters:
   pdeveloper:
     Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
-    Default: Josemaria_Paucar
+    Default: "Josemaria_Paucar"
   pRDAWSAccountId:
     Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
     Type: String
-  # Country parameters
+  # País parameters
   pCountryCl:
     Description: "Country code for Chile"
     Type: String
@@ -72,9 +72,56 @@ Parameters:
     Description: "Id account layer for AWS Wrangler"
     Type: String
     Default: 336392948345
+  # Nuevos parámetros para configuración dinámica
+  pEtaCronExpression:
+    Description: "Expresión cron para la programación del consolidado ETA"
+    Type: String
+    Default: "cron(0 7 * * ? *)"
+  pEtaMemorySizeMl:
+    Description: "Tamaño de memoria para la función Lambda ML de ETA"
+    Type: Number
+    Default: 2048
+  pEtaMemorySizeSr:
+    Description: "Tamaño de memoria para la función Lambda SR de ETA"
+    Type: Number
+    Default: 2048
+  pEtaMemorySizeConsolidado:
+    Description: "Tamaño de memoria para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 1024
+  pEtaTimeoutMl:
+    Description: "Timeout para la función Lambda ML de ETA"
+    Type: Number
+    Default: 900
+  pEtaTimeoutSr:
+    Description: "Timeout para la función Lambda SR de ETA"
+    Type: Number
+    Default: 900
+  pEtaTimeoutConsolidado:
+    Description: "Timeout para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 360
+  pEtaheremapskey:
+    Description: "Token Api Heremaps"
+    Type: String
+  pEtaCarlosValdovinosSr:
+    Description: "Token Centro de distribucion Carlos Valdovino SR"
+    Type: String
+  pPuenteAltoSr:
+    Description: "Token Centro de distribucion Puenta Alto SR"
+    Type: String
+
+Mappings:
+  center:
+    dev:
+      default: "puente-alto"
+    qa:
+      default: "carlos-valdovinos"
+    prod:
+      default: "puente-alto"
+
 #Conditions:
 #  IsDev: !Equals [!Ref Stage, "dev"]
-
 Resources:
   projectEtaClRole:
     Type: AWS::IAM::Role
@@ -144,15 +191,15 @@ Resources:
       AttributeDefinitions:
         - AttributeName: route_id
           AttributeType: S
-        - AttributeName: Planned_date
+        - AttributeName: process_date
           AttributeType: S
       KeySchema:
         - AttributeName: route_id
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: Planned_date
+        - IndexName: process_date
           KeySchema:
-            - AttributeName: Planned_date
+            - AttributeName: process_date
               KeyType: HASH
           Projection:
             ProjectionType: ALL
@@ -168,23 +215,73 @@ Resources:
       AttributeDefinitions:
         - AttributeName: route_id
           AttributeType: S
-        - AttributeName: Planned_date
+        - AttributeName: process_date
           AttributeType: S
       KeySchema:
         - AttributeName: route_id
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: Planned_date
+        - IndexName: process_date
           KeySchema:
-            - AttributeName: Planned_date
+            - AttributeName: process_date
               KeyType: HASH
           Projection:
             ProjectionType: ALL
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
-        - Key: develop_
-          Value: "hola"
+
+  # Recurso para almacenar los tokens de API en Secrets Manager
+  etaCredentialsSecret:
+    Type: AWS::SecretsManager::Secret
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      Name: "eta-credentials"
+      Description: "Credenciales para APIs utilizadas en ETA (SimpleRoute)"
+      SecretString: !Sub |
+        {
+          "carlos-valdovinos": {
+            "simpliroute_token": "${pEtaCarlosValdovinosSr}"
+          },
+          "puente-alto": {
+            "simpliroute_token": "${pPuenteAltoSr}"
+          }
+        }
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+        - Key: Name
+          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
+        - Key: Environment
+          Value: !Ref Stage
+        - Key: Team
+          Value: !Ref pTeamName
+        - Key: Account
+          Value: !Ref pAccountName
+  
+  etaCredentialsSecretApiHereMaps:
+    Type: AWS::SecretsManager::Secret
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      Name: "api-heremaps-credentials"
+      Description: "Credenciales para APIs Here maps"
+      SecretString: !Sub |
+        {
+          "heremaps-api-key": "${pEtaheremapskey}"
+        }
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+        - Key: Name
+          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
+        - Key: Environment
+          Value: !Ref Stage
+        - Key: Team
+          Value: !Ref pTeamName
+        - Key: Account
+          Value: !Ref pAccountName
 
   etaSrCLLambda:
     Type: AWS::Lambda::Function
@@ -193,26 +290,26 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: !GetAtt projectEtaClRole.Arn
       Runtime: python3.12
-      Timeout: 900
-      MemorySize: 2048
+      Timeout: !Ref pEtaTimeoutSr
+      MemorySize: !Ref pEtaMemorySizeSr
       Code:
         ZipFile: |
-          import os
-
-          def handler(event, context):
+          def lambda_handler(event, context):
               return {
                   "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
+                  "body": "hola koandina"
               }
       Environment:
         Variables:
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
+          ETA_SECRETS_NAME: !Ref etaCredentialsSecret
+          CENTRO: !FindInMap [center, !Ref Stage, default]
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
-  
+
   etaSrCLLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -221,6 +318,36 @@ Resources:
       Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
       SourceAccount: !Ref pRDAWSAccountId
 
+  LambdaInvokePermissionSaveSNSMiRuta:
+  Type: AWS::Lambda::Permission
+  Properties:
+    FunctionName: !GetAtt etaSrCLLambda.Arn
+    Action: lambda:InvokeFunction
+    Principal: sns.amazonaws.com
+    SourceArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:sns-event-save-order-cl"
+
+  SaveSNSMiRutaSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: lambda
+      Endpoint: !GetAtt etaSrCLLambda.Arn
+      TopicArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:sns-event-save-order-cl"
+
+  LambdaInvokePermissionRegisterSNSMiRuta:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt etaSrCLLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:mi-ruta-sns-event-register-event-route-cl"
+
+  RegisterSNSMiRutaSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: lambda
+      Endpoint: !GetAtt etaSrCLLambda.Arn
+      TopicArn: !Sub "arn:aws:sns:us-east-1:${pRDAWSAccountId}:mi-ruta-sns-event-register-event-route-cl"
+
   etaMlCLLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -228,23 +355,23 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: !GetAtt projectEtaClRole.Arn
       Runtime: python3.12
-      Timeout: 900
-      MemorySize: 2048
+      Timeout: !Ref pEtaTimeoutMl
+      MemorySize: !Ref pEtaMemorySizeMl
       Code:
         ZipFile: |
-          import os
-
-          def handler(event, context):
-              
+          def lambda_handler(event, context):
               return {
                   "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
+                  "body": "hola koandina"
               }
       Environment:
         Variables:
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
+          ETA_SECRETS_NAME: !Ref etaCredentialsSecretApiHereMaps
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
@@ -261,17 +388,17 @@ Resources:
       VisibilityTimeout: 900
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
-        maxReceiveCount: 3 
+        maxReceiveCount: 3
       Tags:
         - Key: develop
-          Value: !Ref pdeveloper      
+          Value: !Ref pdeveloper
 
   taMlCLSqsMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       EventSourceArn: !GetAtt taMlCLSqs.Arn
       FunctionName: !GetAtt etaMlCLLambda.Arn
-      BatchSize: 1               
+      BatchSize: 1
       Enabled: true
 
   consolidadoetaCLLambda:
@@ -281,36 +408,41 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: !GetAtt projectEtaClRole.Arn
       Runtime: python3.12
-      Timeout: 360
-      MemorySize: 1024
+      Timeout: !Ref pEtaTimeoutConsolidado
+      MemorySize: !Ref pEtaMemorySizeConsolidado
       Code:
         ZipFile: |
-          import os
-
-          def handler(event, context):
-              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+          def lambda_handler(event, context):
               return {
                   "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
+                  "body": "hola koandina"
               }
       Environment:
         Variables:
+          ACCOUNT_ID: !Ref pRDAWSAccountId
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
-          ACCOUNT_ID: !Ref pRDAWSAccountId
-          BUCKET_STAGE: !Sub "prueba-josemaria-artifacts-${Stage}" 
+          BUCKET_STAGE: !Sub "da-ecodistribucion-analytics-${Stage}"
       Layers:
         - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
-          Value: !Ref pdeveloper      
+          Value: !Ref pdeveloper
 
   etaConsolidadoClEventRule:
       Type: AWS::Events::Rule
       Properties:
-        ScheduleExpression: "cron(0 7 * * ? *)" 
+        ScheduleExpression: !Ref pEtaCronExpression
         State: "ENABLED"
         Targets:
           - Id: !Sub "Eventrule-${pTeamName}-eta-consolidado"
             Arn: !GetAtt consolidadoetaCLLambda.Arn
+
+  etaConsolidadoClLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt consolidadoetaCLLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt etaConsolidadoClEventRule.Arn
 
