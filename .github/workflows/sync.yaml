@@ -21,6 +21,9 @@ jobs:
     env:
       ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
       REGION: "us-east-1"
+      HOLA_1: "us-east-1"
+      HOLA_2: "us-east-1"
+      HOLA_3: "us-east-1"
       
     steps:
       - name: Set timestamp
@@ -150,7 +153,7 @@ jobs:
           title="${{ github.event.pull_request.title }}"
 
           if [[ "$title" == *"-koa-da-ecodistribucion-eta"* || "$title" == *"-all"* ]]; then
-            deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta"
+            deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta" "pEtaheremapskey=$HOLA_1 pEtaCarlosValdovinosSr$HOLA_2 pPuenteAltoSr=HOLA_1"
           fi
 
           if [[ "$title" == *"-koa-da-ecodistribucion-misupply"* || "$title" == *"-all"* ]]; then
