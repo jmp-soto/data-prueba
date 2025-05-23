@@ -237,7 +237,7 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      Name: "eta-credentials"
+      Name: "eta-credentialss"
       Description: "Credenciales para APIs utilizadas en ETA (SimpleRoute)"
       SecretString: !Sub |
         {
@@ -265,7 +265,7 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      Name: "api-heremaps-credentials"
+      Name: "api-heremaps-credentialss"
       Description: "Credenciales para APIs Here maps"
       SecretString: !Sub |
         {
