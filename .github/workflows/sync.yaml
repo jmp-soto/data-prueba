@@ -162,9 +162,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           role-session-name: awssyncsession
-          aws-region: ${{ env.REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Set parameters file
         run: |
