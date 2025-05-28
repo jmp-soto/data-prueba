@@ -50,7 +50,7 @@ jobs:
 
       - name: Process Tags
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
 
       - name: Set common parameters
@@ -110,9 +110,6 @@ jobs:
   deploy-core-stacks:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        stack: [iam, s3, athenacatalogo]
     needs: build
     steps:
       - name: Checkout Repo
@@ -142,10 +139,23 @@ jobs:
           EOF
           chmod +x deploy_stack.sh
 
-      - name: Deploy Core Stack
+      - name: Deploy IAM Stack
         run: |
           source ./deploy_stack.sh
-          case "${{ matrix.stack }}" in
+          deploy_stack "iam.yml" "da-josemaria-iam"
+
+      - name: Deploy S3 Stack
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "s3.yml" "da-josemaria-s3"
+
+      - name: Deploy AthenaCatalogo Stack
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+
+      # Removed matrix switch block
+      #
             iam)
               deploy_stack "iam.yml" "da-josemaria-iam"
               ;;
