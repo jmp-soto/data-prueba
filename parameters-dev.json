@@ -37,23 +37,5 @@
   },
   {
       "DEVELOPER": "Josemaria_Paucar"
-  },
-  {
-      "ETA_CONFIG": {
-          "CRON_EXPRESSION": "cron(0 7 * * ? *)",
-          "MEMORY_SIZE_ML": 2048,
-          "MEMORY_SIZE_SR": 2048,
-          "MEMORY_SIZE_CONSOLIDADO": 1024,
-          "TIMEOUT_ML": 900,
-          "TIMEOUT_SR": 900,
-          "TIMEOUT_CONSOLIDADO": 360
-      }
-  },
-  {
-      "ETA_TOKENS": {
-          "HEREMAPS_KEY": "your-heremaps-api-key-here",
-          "CARLOS_VALDOVINOS_SR": "your-carlos-valdovinos-token-here",
-          "PUENTE_ALTO_SR": "your-puente-alto-token-here"
-      }
   }
 ]
