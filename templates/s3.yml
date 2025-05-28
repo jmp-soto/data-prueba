@@ -83,7 +83,20 @@ Resources:
       # LoggingConfiguration:
       #   DestinationBucketName: !Ref ArtifactsBucket
       #   LogFilePrefix: "access-logs/"
-
+  ArtifactsBucketlibs:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: Private
+      BucketName: prueba-caso-cero
+      # VersioningConfiguration:
+      #   Status: Enabled
+      # ServerSideEncryptionConfiguration:
+      #   ServerSideEncryptionByDefault:
+      #     SSEAlgorithm: AES256
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Ref ArtifactsBucket
+      #   LogFilePrefix: "access-logs/"
   daEcodistribucionBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
