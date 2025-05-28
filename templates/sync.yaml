@@ -167,29 +167,6 @@ jobs:
           if [[ "$title" == *"-koa-da-ecodistribucion-optimizador"* || "$title" == *"-all"* ]]; then
             deploy_stack "koa-da-ecodistribucion-optimizador.yml" "koa-da-ecodistribucion-optimizador"
           fi
-      
-      # - name: Deploy remaining stacks
-      #   run: |
-      #     source ./deploy_stack.sh
-      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-eta') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-      #       deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta" 
-      #     fi
-
-      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-misupply') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-      #       deploy_stack "koa-da-ecodistribucion-misupply.yml" "koa-da-ecodistribucion-misupply"
-      #     fi
-
-      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-josemaria-nps-feedback') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-      #       deploy_stack "koa-da-ecodistribucion-nps-feedback.yml" "da-josemaria-nps-feedback" 
-      #     fi
-
-      #     if [[ "${{ contains(github.event.pull_request.title, '-koa-da-ecodistribucion-optimizador') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-      #       deploy_stack "koa-da-ecodistribucion-optimizador.yml" "koa-da-ecodistribucion-optimizador"
-      #     fi
-          
-      #     if [[ "${{ contains(github.event.pull_request.title, '-crawler') || contains(github.event.pull_request.title, '-all') }}" == "true" ]]; then
-      #       deploy_stack "crawler.yml" "koa-da-ecodistribucion-crawler"
-      #     fi
 
 
 
