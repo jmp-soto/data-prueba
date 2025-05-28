@@ -4,7 +4,7 @@
       "Value": "DIV. Data & Analitica"
     },
     {
-      "Key": "Squad",
+      "Key": "Project",
       "Value": "Manufactura & Distribución"
     },
     {
@@ -24,7 +24,7 @@
       "Value": "development"
     },
     {
-      "Key": "padre1",
+      "Key": "Owner",
       "Value": "ecodistribucion"
     }
   ]
