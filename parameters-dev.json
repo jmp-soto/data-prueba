@@ -1,6 +1,6 @@
 [
   {
-      "TEAM": "prueba"
+      "TEAM": "da"
   },
   {
       "ENVIRONMENT": "dev"
@@ -9,19 +9,19 @@
       "BRANCH_NAME": "develop"
   },
   {
-      "REPOSITORY_NAME":"prueba-koa-iac-josemaria"
-  },    
+      "REPOSITORY_NAME":"da-koa-iac-josemaria"
+  },
   {
-      "ARTIFACTORY_BUCKET":"prueba-josemaria-artifacts-dev"
-  },    
+      "ARTIFACTORY_BUCKET":"da-josemaria-artifacts-dev"
+  },
   {
-      "ANALYTICS_BUCKET":"prueba-josemaria-analytics-dev"
+      "ANALYTICS_BUCKET":"da-josemaria-analytics-dev"
   },
   {
       "AWS_ACCOUNT_ID":"682033497219"
   },
   {
-      "AWS_ACCOUNT_ID_OPT":"853519595090"
+      "AWS_ACCOUNT_ID_OPT":"632352041483"
   },
   {
       "DB_STAGE":"db_josemaria_regional_stage"
@@ -34,6 +34,26 @@
   },
   {
       "AWS_RUTADIGITAL_ID":"681689809494"
+  },
+  {
+      "DEVELOPER": "Josemaria_Paucar"
+  },
+  {
+      "ETA_CONFIG": {
+          "CRON_EXPRESSION": "cron(0 7 * * ? *)",
+          "MEMORY_SIZE_ML": 2048,
+          "MEMORY_SIZE_SR": 2048,
+          "MEMORY_SIZE_CONSOLIDADO": 1024,
+          "TIMEOUT_ML": 900,
+          "TIMEOUT_SR": 900,
+          "TIMEOUT_CONSOLIDADO": 360
+      }
+  },
+  {
+      "ETA_TOKENS": {
+          "HEREMAPS_KEY": "your-heremaps-api-key-here",
+          "CARLOS_VALDOVINOS_SR": "your-carlos-valdovinos-token-here",
+          "PUENTE_ALTO_SR": "your-puente-alto-token-here"
+      }
   }
 ]
-
