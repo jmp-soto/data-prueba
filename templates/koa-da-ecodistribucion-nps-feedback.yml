@@ -139,35 +139,7 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  consolidadoNpsFeedbackCLLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-consolidado-${pCountryCl}"
-      Handler: lambda_function.lambda_handler
-      Role: !GetAtt npsFeedbackRole.Arn
-      Runtime: python3.12
-      Timeout: 360
-      MemorySize: 1024
-      Code:
-        ZipFile: |
-          import os
 
-          def handler(event, context):
-              desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {
-                  "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
-              }
-      Environment:
-        Variables:
-          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
-          ACCOUNT_ID: !Ref pAWSAccountId
-          BUCKET_STAGE: !Sub "prueba-josemaria-artifacts-${Stage}" 
-      Layers:
-        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
   
   rtNpsFeedbackCLLambda:
     Type: AWS::Lambda::Function

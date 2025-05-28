@@ -304,8 +304,7 @@ jobs:
             --region us-east-1 \
             --stack-name da-ecodistribucion-iam \
             --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides $COMMON_PARAMS
+            --no-fail-on-empty-changeset
 
   deploy-s3:
     if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
@@ -321,8 +320,7 @@ jobs:
             --region us-east-1 \
             --stack-name da-ecodistribucion-s3 \
             --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides $COMMON_PARAMS 
+            --no-fail-on-empty-changeset
 
   deploy-athenacatalogo:
     if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
@@ -338,8 +336,7 @@ jobs:
             --region us-east-1 \
             --stack-name da-ecodistribucion-athenacatalogo \
             --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides $COMMON_PARAMS
+            --no-fail-on-empty-changeset
 
 
      # Deploy stack based on matrix value
