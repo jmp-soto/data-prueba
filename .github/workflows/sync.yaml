@@ -35,8 +35,8 @@ jobs:
 
       - name: Process Tags
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
-          echo "TAGS=${TAGS}" >> $GITHUB_ENV
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" ", "_")|gsub("&", "and"))") | join(" ")' $PARAMETERS_TAG)
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
 
       - name: Set common parameters
         run: |
@@ -56,7 +56,7 @@ jobs:
           #!/bin/bash
           set -e
 
-          REGION=${REGION:-us-east-1}  # fallback default
+          REGION=${REGION:-us-east-1}
 
           function deploy_stack() {
             local template=$1
@@ -71,13 +71,19 @@ jobs:
               exit 1
             fi
 
+            if [ -n "$TAGS" ]; then
+              TAGS_PARAM="--tags $TAGS"
+            else
+              TAGS_PARAM=""
+            fi
+
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
               --stack-name "$stack_name" \
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
-              --tags $TAGS \
+              $TAGS_PARAM \
               --parameter-overrides \
                 $COMMON_PARAMS \
                 $extra_params
@@ -135,13 +141,19 @@ jobs:
             local stack_name=$2
             local extra_params="${3:-}"
 
+            if [ -n "$TAGS" ]; then
+              TAGS_PARAM="--tags $TAGS"
+            else
+              TAGS_PARAM=""
+            fi
+
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
               --stack-name "$stack_name" \
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
-              --tags $TAGS \
+              $TAGS_PARAM \
               --parameter-overrides $COMMON_PARAMS $extra_params
           }
           EOF
