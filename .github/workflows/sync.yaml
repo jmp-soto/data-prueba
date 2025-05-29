@@ -57,7 +57,7 @@ jobs:
       region: ${{ steps.export-env.outputs.region }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Export ENV variables
         id: export-env
