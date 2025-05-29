@@ -81,12 +81,22 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
+    outputs:
+      tags: ${{ steps.export-env.outputs.tags }}
+      common_params: ${{ steps.export-env.outputs.common_params }}
+      region: ${{ steps.export-env.outputs.region }}
+      matrix: ${{ needs.prepare.outputs.matrix }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Export ENV variables
+        id: export-env
         run: |
+          echo "tags=${{ needs.prepare.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "common_params=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_OUTPUT
+          echo "region=${{ needs.prepare.outputs.region }}" >> $GITHUB_OUTPUT
+
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
@@ -151,24 +161,25 @@ jobs:
           source ./deploy_stack.sh
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
+
   deploy-projects:
-    if: ${{ needs.prepare.outputs.matrix != '{}' }}
-    needs: prepare
+    if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
+    needs: deploy-core
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     strategy:
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.deploy-core.outputs.matrix) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Set ENV from previous job
         run: |
-          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
-          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
+          echo "TAGS=${{ needs.deploy-core.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -217,3 +228,4 @@ jobs:
               ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
+
