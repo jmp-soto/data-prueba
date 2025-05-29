@@ -80,7 +80,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
            role-session-name: awssyncsession
-           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
            aws-region: "us-east-1"
 
       - name: Load Deployment Script
@@ -163,7 +163,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
            role-session-name: awssyncsession
-           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
            aws-region: "us-east-1"
 
       - name: Load Deployment Script
