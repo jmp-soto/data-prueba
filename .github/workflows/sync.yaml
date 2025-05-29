@@ -217,16 +217,16 @@ jobs:
           source ./deploy_stack.sh
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
-              ./deploy_stack.sh koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=HOLA_1 pEtaCarlosValdovinosSr=HOLA_2 pPuenteAltoSr=HOLA_1"
+              deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=HOLA_1 pEtaCarlosValdovinosSr=HOLA_2 pPuenteAltoSr=HOLA_1"
               ;;
             koa-da-ecodistribucion-misupply)
-              ./deploy_stack.sh koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
+              deploy_stack koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
               ;;
             koa-da-ecodistribucion-nps-feedback)
-              ./deploy_stack.sh koa-da-ecodistribucion-nps-feedback.yml koa-da-ecodistribucion-nps-feedback
+              deploy_stack koa-da-ecodistribucion-nps-feedback.yml koa-da-ecodistribucion-nps-feedback
               ;;
             koa-da-ecodistribucion-optimizador)
-              ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
+              deploy_stack koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
 
