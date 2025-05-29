@@ -13,7 +13,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.base_ref }}    
+      name: ${{ github.base_ref }}
     permissions:
       id-token: write
       contents: read
@@ -23,8 +23,8 @@ jobs:
       tags: ${{ steps.set-env.outputs.tags }}
       common_params: ${{ steps.set-env.outputs.common_params }}
       region: ${{ steps.set-env.outputs.region }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -51,13 +51,28 @@ jobs:
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
-      
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-           role-session-name: awssyncsession
-           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: "us-east-1"
+
+      - name: Determine matrix for deploy-projects
+        id: set-matrix
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          MATRIX='{"include":['
+
+          if [[ "$TITLE" == *"koa-da-ecodistribucion-eta"* || "$TITLE" == *"-all"* ]]; then
+            MATRIX+='{"stack":"koa-da-ecodistribucion-eta"},'
+          fi
+          if [[ "$TITLE" == *"koa-da-ecodistribucion-misupply"* || "$TITLE" == *"-all"* ]]; then
+            MATRIX+='{"stack":"koa-da-ecodistribucion-misupply"},'
+          fi
+          if [[ "$TITLE" == *"koa-da-ecodistribucion-nps-feedback"* || "$TITLE" == *"-all"* ]]; then
+            MATRIX+='{"stack":"koa-da-ecodistribucion-nps-feedback"},'
+          fi
+          if [[ "$TITLE" == *"koa-da-ecodistribucion-optimizador"* || "$TITLE" == *"-all"* ]]; then
+            MATRIX+='{"stack":"koa-da-ecodistribucion-optimizador"},'
+          fi
+
+          MATRIX="${MATRIX%,}]}"  # elimina coma final
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   deploy-core:
     needs: prepare
@@ -79,9 +94,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-           role-session-name: awssyncsession
-           role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
-           aws-region: "us-east-1"
+          role-session-name: awssyncsession
+          role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
+          aws-region: "us-east-1"
 
       - name: Load Deployment Script
         run: |
@@ -137,33 +152,23 @@ jobs:
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
   deploy-projects:
-    if: |
-      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-eta') ||
-      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-misupply') ||
-      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-nps-feedback') ||
-      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-optimizador') ||
-      contains(github.event.pull_request.title, '-all')
-    needs: deploy-core
+    if: ${{ needs.prepare.outputs.matrix != '{}' }}
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     strategy:
-      matrix:
-        stack:
-          - koa-da-ecodistribucion-eta
-          - koa-da-ecodistribucion-misupply
-          - koa-da-ecodistribucion-nps-feedback
-          - koa-da-ecodistribucion-optimizador
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Set ENV from previous job
         run: |
-          echo "TAGS=${{ needs.deploy-core.outputs.tags }}" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}" >> $GITHUB_ENV
-          echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
+          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -197,7 +202,6 @@ jobs:
           chmod +x deploy_stack.sh
 
       - name: Deploy Stack ${{ matrix.stack }}
-        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
         run: |
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
