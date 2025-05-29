@@ -77,6 +77,12 @@ jobs:
               TAGS_PARAM=""
             fi
 
+            if [ -n "$COMMON_PARAMS" ]; then
+              PARAMS="--parameter-overrides $COMMON_PARAMS $extra_params"
+            else
+              PARAMS=""
+            fi
+
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
@@ -84,9 +90,7 @@ jobs:
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
               $TAGS_PARAM \
-              --parameter-overrides \
-                $COMMON_PARAMS \
-                $extra_params
+              $PARAMS
 
             aws cloudformation describe-stack-events \
               --region "$REGION" \
@@ -147,6 +151,12 @@ jobs:
               TAGS_PARAM=""
             fi
 
+            if [ -n "$COMMON_PARAMS" ]; then
+              PARAMS="--parameter-overrides $COMMON_PARAMS $extra_params"
+            else
+              PARAMS=""
+            fi
+
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
@@ -154,7 +164,7 @@ jobs:
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
               $TAGS_PARAM \
-              --parameter-overrides $COMMON_PARAMS $extra_params
+              $PARAMS
           }
           EOF
           chmod +x deploy_stack.sh
