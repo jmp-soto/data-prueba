@@ -3,16 +3,25 @@ name: CloudFormation deploy
 on:
   pull_request:
     types: [closed]
-    branches: [develop, qa, prod]
+    branches:
+      - develop
+      - qa
+      - prod
 
 jobs:
   prepare:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-      
-      steps:
+    outputs:
+      timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
+      tags: ${{ steps.set-env.outputs.tags }}
+      common_params: ${{ steps.set-env.outputs.common_params }}
+      region: ${{ steps.set-env.outputs.region }}
+    steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -36,28 +45,22 @@ jobs:
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" ", "_")|gsub("&", "and"))) | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
-
           echo "region=us-east-1" >> $GITHUB_OUTPUT
 
   deploy-core:
+    needs: prepare
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-     
-      steps:
+    steps:
       - uses: actions/checkout@v2
 
       - name: Export ENV variables
-        id: export-env
         run: |
-          echo "tags=${{ needs.prepare.outputs.tags }}" >> $GITHUB_OUTPUT
-          echo "common_params=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_OUTPUT
-          echo "region=${{ needs.prepare.outputs.region }}" >> $GITHUB_OUTPUT
-
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
@@ -74,25 +77,19 @@ jobs:
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
           set -euxo pipefail
-
           REGION=${REGION:-us-east-1}
-
           function deploy_stack() {
             local template=$1
             local stack_name=$2
             local extra_params="${3:-}"
-
             echo "Deploying $stack_name using template: templates/$template"
             echo "With extra params: $extra_params"
-
             if [ -z "$template" ] || [ -z "$stack_name" ]; then
               echo "ERROR: template and stack_name are required"
               exit 1
             fi
-
             TAGS_PARAM="${TAGS:+--tags $TAGS}"
             PARAMS="${COMMON_PARAMS:+--parameter-overrides $COMMON_PARAMS $extra_params}"
-
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
@@ -101,7 +98,6 @@ jobs:
               --no-fail-on-empty-changeset \
               $TAGS_PARAM \
               $PARAMS
-
             aws cloudformation describe-stack-events \
               --region "$REGION" \
               --stack-name "$stack_name" \
@@ -130,11 +126,19 @@ jobs:
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
   deploy-projects:
+    needs: deploy-core
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-      
-      steps:
+    strategy:
+      matrix:
+        stack:
+          - koa-da-ecodistribucion-eta
+          - koa-da-ecodistribucion-misupply
+          - koa-da-ecodistribucion-nps-feedback
+          - koa-da-ecodistribucion-optimizador
+    steps:
       - uses: actions/checkout@v2
 
       - name: Set ENV from previous job
@@ -155,17 +159,13 @@ jobs:
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
           set -euxo pipefail
-
           REGION=${REGION:-us-east-1}
-
           function deploy_stack() {
             local template=$1
             local stack_name=$2
             local extra_params="${3:-}"
-
             TAGS_PARAM="${TAGS:+--tags $TAGS}"
             PARAMS="${COMMON_PARAMS:+--parameter-overrides $COMMON_PARAMS $extra_params}"
-
             aws cloudformation deploy \
               --template-file templates/$template \
               --region "$REGION" \
@@ -178,8 +178,7 @@ jobs:
           EOF
           chmod +x deploy_stack.sh
 
-      - name: Deploy Matrix Stack
-        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
+      - name: Deploy Project Stack
         run: |
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
