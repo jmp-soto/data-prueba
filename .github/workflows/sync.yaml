@@ -119,6 +119,34 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
+      - name: Set environment variables
+        run: |
+          ENVIRONMENT=${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
+          echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
+
+      - name: Set timestamp
+        run: echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: Load JSON into Environment Variables
+        run: |
+          for row in $(jq -c '.[]' $PARAMETERS_FILE); do
+            key=$(echo $row | jq -r 'keys[0]')
+            value=$(echo $row | jq -r '.[]')
+            echo "${key}=${value}" >> $GITHUB_ENV
+          done
+
+      - name: Process Tags
+        run: |
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
+          echo "TAGS=${TAGS}" >> $GITHUB_ENV
+
+      - name: Set common parameters
+        run: |
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
+
+      
       - name: Load environment variables
         run: |
           echo "REGION=us-east-1" >> $GITHUB_ENV
