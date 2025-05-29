@@ -13,6 +13,9 @@ jobs:
       name: ${{ github.base_ref }}
     outputs:
       timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
+      tags: ${{ steps.set-env.outputs.tags }}
+      common_params: ${{ steps.set-env.outputs.common_params }}
+      region: ${{ steps.set-env.outputs.region }}
 
     steps:
       - name: Checkout Repo
@@ -33,38 +36,37 @@ jobs:
         id: set-timestamp
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Process Tags
+      - name: Set ENV
+        id: set-env
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" ", "_")|gsub("&", "and"))") | join(" ")' "$PARAMETERS_TAG")
-          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-      - name: Set common parameters
-        run: |
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
+          COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+          echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
+
+          echo "region=us-east-1" >> $GITHUB_OUTPUT
 
   deploy-core:
     needs: prepare
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
 
-    outputs:
-      tags: ${{ steps.export-env.outputs.tags }}
-      common_params: ${{ steps.export-env.outputs.common_params }}
-      region: ${{ steps.export-env.outputs.region }}
-
     steps:
+      - uses: actions/checkout@v2
+
       - name: Echo TAGS, COMMON_PARAMS and REGION (debug)
         run: |
-          echo "TAGS=$TAGS"
-          echo "COMMON_PARAMS=$COMMON_PARAMS"
-          echo "REGION=$REGION"
+          echo "TAGS=${{ needs.prepare.outputs.tags }}"
+          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}"
+          echo "REGION=${{ needs.prepare.outputs.region }}"
 
-            - name: Export ENV variables
+      - name: Export ENV variables
         id: export-env
         run: |
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
-          echo "region=$REGION" >> $GITHUB_OUTPUT
+          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -145,25 +147,6 @@ jobs:
   deploy-projects:
     needs: deploy-core
     runs-on: ubuntu-latest
-    steps:
-      - name: Echo TAGS, COMMON_PARAMS and REGION (debug)
-        run: |
-          echo "TAGS=$TAGS"
-          echo "COMMON_PARAMS=$COMMON_PARAMS"
-          echo "REGION=$REGION"
-
-      - name: Set ENV from previous job
-        run: |
-          echo "TAGS=${{ needs.deploy-core.outputs.tags }}" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}" >> $GITHUB_ENV
-          echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: us-east-1
-          role-session-name: github-actions
-
     strategy:
       matrix:
         stack:
@@ -173,6 +156,25 @@ jobs:
           - koa-da-ecodistribucion-optimizador
     steps:
       - uses: actions/checkout@v2
+
+      - name: Echo TAGS, COMMON_PARAMS and REGION (debug)
+        run: |
+          echo "TAGS=${{ needs.deploy-core.outputs.tags }}"
+          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}"
+          echo "REGION=${{ needs.deploy-core.outputs.region }}"
+
+      - name: Set ENV from previous job
+        run: |
+          echo "TAGS=${{ needs.deploy-core.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: us-east-1
+          role-session-name: github-actions
 
       - name: Load Deployment Script
         run: |
