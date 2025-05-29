@@ -43,7 +43,7 @@ jobs:
       - name: Set ENV
         id: set-env
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" ", "_")|gsub("&", "and"))) | join(" ")' $PARAMETERS_TAG)
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
