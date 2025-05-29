@@ -38,6 +38,7 @@ jobs:
           echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
+          echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
 
       - name: Set timestamp
         id: set-timestamp
@@ -51,7 +52,8 @@ jobs:
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
-
+          AWS_IAM_ROLE= ${{ secrets.AWS_IAM_ROLE }}
+          
       - name: Determine matrix for deploy-projects
         id: set-matrix
         run: |
@@ -93,13 +95,10 @@ jobs:
       - name: Export ENV variables
         id: export-env
         run: |
-          echo "tags=${{ needs.prepare.outputs.tags }}" >> $GITHUB_OUTPUT
-          echo "common_params=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_OUTPUT
-          echo "region=${{ needs.prepare.outputs.region }}" >> $GITHUB_OUTPUT
-
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
