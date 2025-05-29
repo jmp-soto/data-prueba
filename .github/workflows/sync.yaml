@@ -25,6 +25,7 @@ jobs:
         run: |
           ENVIRONMENT=${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
 
