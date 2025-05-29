@@ -18,7 +18,11 @@ jobs:
       pull-requests: write
 
     env:
+      ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
       REGION: "us-east-1"
+      HOLA_1: "us-east-1"
+      HOLA_2: "us-east-1"
+      HOLA_3: "us-east-1"
 
     steps:
       - name: Checkout Repo
