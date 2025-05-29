@@ -50,6 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Load Deployment Script
         run: |
           cat << 'EOF' > deploy_stack.sh
@@ -131,7 +138,13 @@ jobs:
           - koa-da-ecodistribucion-optimizador
     steps:
       - uses: actions/checkout@v2
-
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
       - name: Load Deployment Script
         run: |
           cat << 'EOF' > deploy_stack.sh
