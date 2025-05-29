@@ -32,21 +32,24 @@ jobs:
         id: set-timestamp
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Load deployment helpers
+      - name: Process Tags
         run: |
-          cat << 'EOF' > set_tags.sh
-          #!/bin/bash
-          FILE=$1
-          if [[ ! -f "$FILE" ]]; then echo "Tag file not found"; exit 1; fi
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value | gsub(" "; "_") | gsub("&"; "and"))") | join(" ")' "$FILE")
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value | gsub(\" \", \"_\") | gsub(\"&\", \"and\"))) | join(\" \" )' "$PARAMETERS_TAG")
           echo "TAGS=$TAGS" >> $GITHUB_ENV
-          EOF
 
-          cat << 'EOF' > set_common_params.sh
-          #!/bin/bash
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
-          EOF
+      - name: Set common parameters
+        run: |
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
+  deploy-core:
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load Deployment Script
+        run: |
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
           set -e
@@ -62,24 +65,7 @@ jobs:
             --tags $TAGS \
             --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
           EOF
-
-          chmod +x *.sh
-
-      - name: Process Tags and Params
-        run: |
-          ./set_tags.sh "$PARAMETERS_TAG"
-          echo "TIMESTAMP=${{ steps.set-timestamp.outputs.timestamp }}" >> $GITHUB_ENV
-          ./set_common_params.sh
-
-  deploy-core:
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Load deployment script
-        run: cp ../prepare/deploy_stack.sh .
+          chmod +x deploy_stack.sh
 
       - name: Deploy IAM Stack
         if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
@@ -106,8 +92,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Load deployment script
-        run: cp ../prepare/deploy_stack.sh .
+      - name: Load Deployment Script
+        run: |
+          cat << 'EOF' > deploy_stack.sh
+          #!/bin/bash
+          set -e
+          TEMPLATE=$1
+          STACK_NAME=$2
+          EXTRA_PARAMS=${3:-}
+          aws cloudformation deploy \
+            --template-file templates/$TEMPLATE \
+            --region $REGION \
+            --stack-name $STACK_NAME \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --tags $TAGS \
+            --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
+          EOF
+          chmod +x deploy_stack.sh
 
       - name: Deploy Matrix Stack
         if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
