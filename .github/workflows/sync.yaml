@@ -70,7 +70,6 @@ jobs:
             --stack-name "$STACK_NAME" \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset \
-            --tags $TAGS \
             --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
           EOF
           chmod +x deploy_stack.sh
