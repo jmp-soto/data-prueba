@@ -59,7 +59,7 @@ jobs:
           echo "COMMON_PARAMS=$COMMON_PARAMS"
           echo "REGION=$REGION"
 
-      - name: Export ENV variables
+            - name: Export ENV variables
         id: export-env
         run: |
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
