@@ -34,7 +34,7 @@ jobs:
 
       - name: Process Tags
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value | gsub(\" \", \"_\") | gsub("&", "and"))") | join(" ")' "$PARAMETERS_TAG")
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value | gsub(" ", "_") | gsub("&", "and"))") | join(" ")' "$PARAMETERS_TAG")
           echo "TAGS=$TAGS" >> $GITHUB_ENV
 
       - name: Set common parameters
