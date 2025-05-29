@@ -140,32 +140,22 @@ jobs:
           chmod +x deploy_stack.sh
 
       - name: Deploy IAM Stack
+        if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           deploy_stack "iam.yml" "da-josemaria-iam"
 
       - name: Deploy S3 Stack
+        if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           deploy_stack "s3.yml" "da-josemaria-s3"
 
       - name: Deploy AthenaCatalogo Stack
+        if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
-
-      # Removed matrix switch block
-      #
-            iam)
-              deploy_stack "iam.yml" "da-josemaria-iam"
-              ;;
-            s3)
-              deploy_stack "s3.yml" "da-josemaria-s3"
-              ;;
-            athenacatalogo)
-              deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
-              ;;
-          esac
 
   deploy-remaining-stacks:
     if: github.event.pull_request.merged == true
@@ -207,6 +197,7 @@ jobs:
           chmod +x deploy_stack.sh
 
       - name: Deploy Remaining Stack
+        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           case "${{ matrix.stack }}" in
