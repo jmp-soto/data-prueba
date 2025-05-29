@@ -137,6 +137,12 @@ jobs:
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
   deploy-projects:
+    if: |
+      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-eta') ||
+      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-misupply') ||
+      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-nps-feedback') ||
+      contains(github.event.pull_request.title, 'koa-da-ecodistribucion-optimizador') ||
+      contains(github.event.pull_request.title, '-all')
     needs: deploy-core
     runs-on: ubuntu-latest
     permissions:
@@ -162,9 +168,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-           role-session-name: awssyncsession
-           role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
-           aws-region: "us-east-1"
+          role-session-name: awssyncsession
+          role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
+          aws-region: "us-east-1"
 
       - name: Load Deployment Script
         run: |
@@ -207,4 +213,3 @@ jobs:
               ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
-
