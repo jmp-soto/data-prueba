@@ -56,22 +56,47 @@ jobs:
           echo "TAGS=$TAGS" >> $GITHUB_ENV
           echo "COMMON_PARAMS=$COMMON_PARAMS" >> $GITHUB_ENV
 
-      - name: Load Deployment Script
+      - name: Define deployment function
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
-          cat << 'EOF' > deploy_stack.sh
+          cat << EOF > deploy_stack.sh
           #!/bin/bash
           set -e
-          TEMPLATE=$1
-          STACK_NAME=$2
-          EXTRA_PARAMS=${3:-}
-          aws cloudformation deploy \
-            --template-file templates/$TEMPLATE \
-            --region "$REGION" \
-            --stack-name "$STACK_NAME" \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
+
+          function deploy_stack() {
+            local template=\$1
+            local stack_name=\$2
+            local extra_params="\${3:-}"
+
+            echo "Deploying \$stack_name using template: templates/\$template"
+            echo "With extra params: \$extra_params"
+
+            if [ -z "\$template" ] || [ -z "\$stack_name" ]; then
+              echo "ERROR: template and stack_name are required"
+              exit 1
+            fi
+
+            aws cloudformation deploy \
+              --template-file templates/\$template \
+              --region $REGION \
+              --stack-name \$stack_name \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --no-fail-on-empty-changeset \
+              --tags $TAGS \
+              --parameter-overrides \
+                $COMMON_PARAMS \
+                \$extra_params
+
+            aws cloudformation describe-stack-events \
+              --stack-name \$stack_name \
+              --max-items 5 \
+              --output table
+          }
           EOF
+
           chmod +x deploy_stack.sh
 
       - name: Deploy IAM Stack
@@ -105,23 +130,47 @@ jobs:
           echo "TAGS=$TAGS" >> $GITHUB_ENV
           echo "COMMON_PARAMS=$COMMON_PARAMS" >> $GITHUB_ENV
 
-      - name: Load Deployment Script
+      - name: Define deployment function
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
-          cat << 'EOF' > deploy_stack.sh
+          cat << EOF > deploy_stack.sh
           #!/bin/bash
           set -e
-          TEMPLATE=$1
-          STACK_NAME=$2
-          EXTRA_PARAMS=${3:-}
-          aws cloudformation deploy \
-            --template-file templates/$TEMPLATE \
-            --region "$REGION" \
-            --stack-name "$STACK_NAME" \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --tags $TAGS \
-            --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
+
+          function deploy_stack() {
+            local template=\$1
+            local stack_name=\$2
+            local extra_params="\${3:-}"
+
+            echo "Deploying \$stack_name using template: templates/\$template"
+            echo "With extra params: \$extra_params"
+
+            if [ -z "\$template" ] || [ -z "\$stack_name" ]; then
+              echo "ERROR: template and stack_name are required"
+              exit 1
+            fi
+
+            aws cloudformation deploy \
+              --template-file templates/\$template \
+              --region $REGION \
+              --stack-name \$stack_name \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --no-fail-on-empty-changeset \
+              --tags $TAGS \
+              --parameter-overrides \
+                $COMMON_PARAMS \
+                \$extra_params
+
+            aws cloudformation describe-stack-events \
+              --stack-name \$stack_name \
+              --max-items 5 \
+              --output table
+          }
           EOF
+
           chmod +x deploy_stack.sh
 
       - name: Deploy Matrix Stack
