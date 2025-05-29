@@ -57,6 +57,11 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    
     outputs:
       tags: ${{ steps.export-env.outputs.tags }}
       common_params: ${{ steps.export-env.outputs.common_params }}
@@ -153,6 +158,10 @@ jobs:
           - koa-da-ecodistribucion-misupply
           - koa-da-ecodistribucion-nps-feedback
           - koa-da-ecodistribucion-optimizador
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v2
