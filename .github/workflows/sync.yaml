@@ -33,15 +33,14 @@ jobs:
         id: set-timestamp
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      
       - name: Process Tags
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
-          echo "TAGS=${TAGS}" >> $GITHUB_ENV
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' "$PARAMETERS_TAG")
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
 
       - name: Set common parameters
         run: |
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
   deploy-core:
     needs: prepare
@@ -51,11 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Export ENV values
+        run: |
+          echo "REGION=$REGION" >> $GITHUB_ENV
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=$COMMON_PARAMS" >> $GITHUB_ENV
+
       - name: Load Deployment Script
-        env:
-          REGION: ${{ env.REGION }}
-          TAGS: ${{ env.TAGS }}
-          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
@@ -65,8 +66,8 @@ jobs:
           EXTRA_PARAMS=${3:-}
           aws cloudformation deploy \
             --template-file templates/$TEMPLATE \
-            --region $REGION \
-            --stack-name $STACK_NAME \
+            --region "$REGION" \
+            --stack-name "$STACK_NAME" \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset \
             --tags $TAGS \
@@ -99,11 +100,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Export ENV values
+        run: |
+          echo "REGION=$REGION" >> $GITHUB_ENV
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=$COMMON_PARAMS" >> $GITHUB_ENV
+
       - name: Load Deployment Script
-        env:
-          REGION: ${{ env.REGION }}
-          TAGS: ${{ env.TAGS }}
-          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
@@ -113,8 +116,8 @@ jobs:
           EXTRA_PARAMS=${3:-}
           aws cloudformation deploy \
             --template-file templates/$TEMPLATE \
-            --region $REGION \
-            --stack-name $STACK_NAME \
+            --region "$REGION" \
+            --stack-name "$STACK_NAME" \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset \
             --tags $TAGS \
