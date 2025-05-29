@@ -214,6 +214,7 @@ jobs:
 
       - name: Deploy Stack ${{ matrix.stack }}
         run: |
+          source ./deploy_stack.sh
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
               ./deploy_stack.sh koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=$HOLA_1 pEtaCarlosValdovinosSr=$HOLA_2 pPuenteAltoSr=$HOLA_1"
