@@ -52,10 +52,13 @@ jobs:
             echo "${key}=${value}" >> $GITHUB_ENV
           done
 
-      - name: Process Tags
+      - name: Load JSON into Environment Variables
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
-          echo "TAGS=${TAGS}" >> $GITHUB_ENV
+          for row in $(jq -c '.[]' $PARAMETERS_FILE); do
+            key=$(echo $row | jq -r 'keys[0]')
+            value=$(echo $row | jq -r '.[]')
+            echo "$key=$value" >> $GITHUB_ENV
+          done
 
       - name: Set common parameters
         run: |
@@ -137,10 +140,13 @@ jobs:
             echo "${key}=${value}" >> $GITHUB_ENV
           done
 
-      - name: Process Tags
+      - name: Load JSON into Environment Variables
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
-          echo "TAGS=${TAGS}" >> $GITHUB_ENV
+          for row in $(jq -c '.[]' $PARAMETERS_FILE); do
+            key=$(echo $row | jq -r 'keys[0]')
+            value=$(echo $row | jq -r '.[]')
+            echo "$key=$value" >> $GITHUB_ENV
+          done
 
       - name: Set common parameters
         run: |
