@@ -50,7 +50,7 @@ jobs:
 
       - name: Process Tags
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
 
       - name: Set common parameters
@@ -115,6 +115,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
+      - name: Load environment variables
+        run: |
+          echo "REGION=us-east-1" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
+          echo "TAGS=$(jq -r 'map(\"\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))\") | join(\" \" )' tags-${ENVIRONMENT}.json)" >> $GITHUB_ENV
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
       - name: Load Deployment Script
         run: |
           cat << 'EOF' > deploy_stack.sh
@@ -169,6 +177,14 @@ jobs:
           - koa-da-ecodistribucion-optimizador
     needs: deploy-core-stacks
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Load environment variables
+        run: |
+          echo "REGION=us-east-1" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
+          echo "TAGS=$(jq -r 'map(\"\(.Key)=\(.Value|gsub(\" \", \"_\")|gsub(\"&\", \"and\"))\") | join(\" \" )' tags-${ENVIRONMENT}.json)" >> $GITHUB_ENV
       - name: Checkout Repo
         uses: actions/checkout@v2
 
