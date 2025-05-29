@@ -12,6 +12,8 @@ jobs:
   prepare:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.base_ref }}    
     permissions:
       id-token: write
       contents: read
@@ -55,7 +57,7 @@ jobs:
         with:
            role-session-name: awssyncsession
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: ${{ secrets.AWS_REGION }}
+           aws-region: "us-east-1"
 
   deploy-core:
     needs: prepare
@@ -65,7 +67,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
       - name: Export ENV variables
         run: |
@@ -78,7 +81,7 @@ jobs:
         with:
            role-session-name: awssyncsession
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: ${{ secrets.AWS_REGION }}
+           aws-region: "us-east-1"
 
       - name: Load Deployment Script
         run: |
@@ -147,7 +150,8 @@ jobs:
           - koa-da-ecodistribucion-nps-feedback
           - koa-da-ecodistribucion-optimizador
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
       - name: Set ENV from previous job
         run: |
@@ -160,7 +164,7 @@ jobs:
         with:
            role-session-name: awssyncsession
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: ${{ secrets.AWS_REGION }}
+           aws-region: "us-east-1"
 
       - name: Load Deployment Script
         run: |
