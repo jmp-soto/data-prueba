@@ -190,7 +190,8 @@ jobs:
           EOF
           chmod +x deploy_stack.sh
 
-      - name: Deploy Project Stack
+      - name: Deploy Stack ${{ matrix.stack }}
+        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
         run: |
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
@@ -206,3 +207,4 @@ jobs:
               ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
+
