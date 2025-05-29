@@ -7,23 +7,12 @@ on:
 
 jobs:
   prepare:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.base_ref }}
-    
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-
-    outputs:
-      timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
-      tags: ${{ steps.set-env.outputs.tags }}
-      common_params: ${{ steps.set-env.outputs.common_params }}
-      region: ${{ steps.set-env.outputs.region }}
-
-    steps:
+      
+      steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -45,7 +34,7 @@ jobs:
       - name: Set ENV
         id: set-env
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" ", "_")|gsub("&", "and"))) | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
@@ -54,20 +43,12 @@ jobs:
           echo "region=us-east-1" >> $GITHUB_OUTPUT
 
   deploy-core:
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-    
-    outputs:
-      tags: ${{ steps.export-env.outputs.tags }}
-      common_params: ${{ steps.export-env.outputs.common_params }}
-      region: ${{ steps.export-env.outputs.region }}
-
-    steps:
+     
+      steps:
       - uses: actions/checkout@v2
 
       - name: Export ENV variables
@@ -149,21 +130,11 @@ jobs:
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
   deploy-projects:
-    needs: deploy-core
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        stack:
-          - koa-da-ecodistribucion-eta
-          - koa-da-ecodistribucion-misupply
-          - koa-da-ecodistribucion-nps-feedback
-          - koa-da-ecodistribucion-optimizador
-
     permissions:
       id-token: write
       contents: read
-
-    steps:
+      
+      steps:
       - uses: actions/checkout@v2
 
       - name: Set ENV from previous job
