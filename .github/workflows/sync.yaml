@@ -46,10 +46,15 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Load Deployment Script
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
@@ -94,6 +99,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load Deployment Script
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
           cat << 'EOF' > deploy_stack.sh
           #!/bin/bash
