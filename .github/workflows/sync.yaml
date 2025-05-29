@@ -101,15 +101,21 @@ jobs:
 
       - name: Deploy IAM Stack
         if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
-        run: ./deploy_stack.sh iam.yml da-josemaria-iam
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "iam.yml" "da-josemaria-iam"
 
       - name: Deploy S3 Stack
         if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
-        run: ./deploy_stack.sh s3.yml da-josemaria-s3
+        run: |
+          source ./deploy_stack.sh 
+          deploy_stack "s3.yml" "da-josemaria-s3"
 
       - name: Deploy Athena Stack
         if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
-        run: ./deploy_stack.sh athenacatalogo.yml da-josemaria-athenacatalogo "pdbAnalyticsName=$DB_ANALYTICS"
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
   deploy-projects:
     needs: deploy-core
