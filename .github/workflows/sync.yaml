@@ -22,6 +22,7 @@ jobs:
       common_params: ${{ steps.set-env.outputs.common_params }}
       region: ${{ steps.set-env.outputs.region }}
     steps:
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -50,11 +51,11 @@ jobs:
           echo "region=us-east-1" >> $GITHUB_OUTPUT
       
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: us-east-1
-          role-session-name: github-actions
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
 
   deploy-core:
     needs: prepare
@@ -73,11 +74,11 @@ jobs:
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: us-east-1
-          role-session-name: github-actions
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Load Deployment Script
         run: |
@@ -155,11 +156,11 @@ jobs:
           echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: us-east-1
-          role-session-name: github-actions
+           role-session-name: awssyncsession
+           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Load Deployment Script
         run: |
