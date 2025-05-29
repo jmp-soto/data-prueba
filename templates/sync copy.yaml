@@ -6,424 +6,136 @@ on:
     branches: [develop, qa, prod]
 
 jobs:
-  prepare-stacks:
+  prepare:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
     outputs:
-      environment: ${{ steps.set-env.outputs.environment }}
       timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
-      stacks-to-deploy: ${{ steps.determine-stacks.outputs.stacks }}
-      deploy-layers: ${{ steps.determine-stacks.outputs.deploy-layers }}
-
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
-      - name: Set environment variables
-        id: set-env
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Set environment and parameters
         run: |
           ENVIRONMENT=${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
-          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
-
-      - name: Set timestamp
-        id: set-timestamp
-        run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-
-      - name: Determine stacks to deploy
-        id: determine-stacks
-        run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          echo "Título del PR: '$PR_TITLE'"
-          
-          # Convertir a minúsculas para hacer la comparación insensible a mayúsculas/minúsculas
-          PR_TITLE_LOWER=$(echo "$PR_TITLE" | tr '[:upper:]' '[:lower:]')
-          echo "Título en minúsculas: '$PR_TITLE_LOWER'"
-
-          # Array para almacenar los stacks a desplegar
-          declare -a STACKS_ARRAY
-
-          # Flag para capas
-          DEPLOY_LAYERS="false"
-
-          # Verificar si se desea desplegar todo
-          if [[ "$PR_TITLE_LOWER" == *"-all"* ]]; then
-            echo "Detectado patrón '-all', desplegando todos los stacks"
-            STACKS_ARRAY=("iam" "s3" "athenacatalogo" "koa-da-ecodistribucion-eta" "koa-da-ecodistribucion-misupply" "koa-da-ecodistribucion-nps-feedback" "koa-da-ecodistribucion-optimizador")
-          else
-            # Verificar cada stack individual
-            
-            # ETA stack - múltiples patrones
-            if [[ "$PR_TITLE_LOWER" == *"deploy-koa-da-ecodistribucion-eta"* || 
-                  "$PR_TITLE_LOWER" == *"deploy koa-da-ecodistribucion-eta"* || 
-                  "$PR_TITLE_LOWER" == *"deploy-eta"* || 
-                  "$PR_TITLE_LOWER" == *"deploy eta"* ||
-                  "$PR_TITLE_LOWER" == *"-koa-da-ecodistribucion-eta"* || 
-                  "$PR_TITLE_LOWER" == *"- koa-da-ecodistribucion-eta"* ]]; then
-              STACKS_ARRAY+=("koa-da-ecodistribucion-eta")
-              echo "Detectado patrón para ETA, añadiendo 'koa-da-ecodistribucion-eta'"
-            fi
-            
-            # IAM stack
-            if [[ "$PR_TITLE_LOWER" == *"-iam"* || "$PR_TITLE_LOWER" == *"- iam"* ]]; then 
-              STACKS_ARRAY+=("iam")
-              echo "Detectado patrón para IAM, añadiendo 'iam'" 
-            fi
-            
-            # S3 stack
-            if [[ "$PR_TITLE_LOWER" == *"-s3"* || "$PR_TITLE_LOWER" == *"- s3"* ]]; then 
-              STACKS_ARRAY+=("s3")
-              echo "Detectado patrón para S3, añadiendo 's3'" 
-            fi
-            
-            # Athena catalogo
-            if [[ "$PR_TITLE_LOWER" == *"-athenacatalogo"* || "$PR_TITLE_LOWER" == *"- athenacatalogo"* ]]; then 
-              STACKS_ARRAY+=("athenacatalogo")
-              echo "Detectado patrón para Athena Catalogo, añadiendo 'athenacatalogo'" 
-            fi
-            
-            # Misupply
-            if [[ "$PR_TITLE_LOWER" == *"-koa-da-ecodistribucion-misupply"* || "$PR_TITLE_LOWER" == *"- koa-da-ecodistribucion-misupply"* ]]; then 
-              STACKS_ARRAY+=("koa-da-ecodistribucion-misupply")
-              echo "Detectado patrón para Misupply, añadiendo 'koa-da-ecodistribucion-misupply'" 
-            fi
-            
-            # NPS Feedback
-            if [[ "$PR_TITLE_LOWER" == *"-koa-da-ecodistribucion-nps-feedback"* || "$PR_TITLE_LOWER" == *"- koa-da-ecodistribucion-nps-feedback"* ]]; then 
-              STACKS_ARRAY+=("koa-da-ecodistribucion-nps-feedback")
-              echo "Detectado patrón para NPS Feedback, añadiendo 'koa-da-ecodistribucion-nps-feedback'" 
-            fi
-            
-            # Optimizador
-            if [[ "$PR_TITLE_LOWER" == *"-koa-da-ecodistribucion-optimizador"* || "$PR_TITLE_LOWER" == *"- koa-da-ecodistribucion-optimizador"* ]]; then 
-              STACKS_ARRAY+=("koa-da-ecodistribucion-optimizador")
-              echo "Detectado patrón para Optimizador, añadiendo 'koa-da-ecodistribucion-optimizador'" 
-            fi
-          fi
-          
-          # Verificar si se desea desplegar capas (layers)
-          if [[ "$PR_TITLE_LOWER" == *"-layer"* || "$PR_TITLE_LOWER" == *"- layer"* ]]; then
-            DEPLOY_LAYERS="true"
-            echo "Se detectó patrón para desplegar capas (layers)"
-          fi
-          
-          # Crear un JSON adecuado para la matriz - CORREGIDO PARA ELIMINAR Caracteres de nueva línea
-          # y espacios en blanco
-          if [ ${#STACKS_ARRAY[@]} -eq 0 ]; then
-            STACKS_JSON="[]"
-          else
-            # Método 1: Crear JSON directamente sin usar printf/echo que añada nuevas líneas
-            STACKS_JSON="["
-            for ((i=0; i<${#STACKS_ARRAY[@]}; i++)); do
-              STACKS_JSON+="\"${STACKS_ARRAY[$i]}\""
-              if [ $i -lt $((${#STACKS_ARRAY[@]}-1)) ]; then
-                STACKS_JSON+=","
-              fi
-            done
-            STACKS_JSON+="]"
-          fi
-
-          echo "stacks=$STACKS_JSON" >> $GITHUB_OUTPUT
-          echo "deploy-layers=$DEPLOY_LAYERS" >> $GITHUB_OUTPUT
-
-          # Imprimir un resumen final para diagnóstico
-          echo "-------- RESUMEN DE DESPLIEGUE --------"
-          echo "Stacks a desplegar: ${STACKS_JSON}"
-          echo "Desplegar Layers: ${DEPLOY_LAYERS}"
-          echo "--------------------------------------"
-
-  upload-layers:
-    needs: prepare-stacks
-    if: needs.prepare-stacks.outputs.deploy-layers == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.base_ref }}
-
-    permissions:
-      id-token: write
-      contents: read
-
-    env:
-      ENVIRONMENT: ${{ needs.prepare-stacks.outputs.environment }}
-      REGION: "us-east-1"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          role-session-name: awssyncsession
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Set parameters file
-        run: |
-          echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
-
-      - name: Load JSON into Environment Variables
-        run: |
-          # Validar que el archivo JSON sea válido
-          jq . "$PARAMETERS_FILE" > /dev/null
-
-          # Extraer valores simples y objetos anidados por separado
-          JSON_CONTENT=$(cat "$PARAMETERS_FILE")
-          ARTIFACTORY_BUCKET=$(echo "$JSON_CONTENT" | jq -r '.[] | select(has("ARTIFACTORY_BUCKET")) | .ARTIFACTORY_BUCKET')
-          echo "ARTIFACTORY_BUCKET=${ARTIFACTORY_BUCKET}" >> $GITHUB_ENV
-
-      - name: Upload layers to S3
-        run: |
-          aws s3 cp ./layers/awswrangler-layer-py3-9.zip s3://$ARTIFACTORY_BUCKET/layers/
-          aws s3 cp ./layers/request-layer-py3-12.zip s3://$ARTIFACTORY_BUCKET/layers/
-          echo "Layers uploaded successfully"
-
-  deploy-stacks:
-    needs: [prepare-stacks]
-    if: needs.prepare-stacks.outputs.stacks-to-deploy != '[]'
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.base_ref }}
-
-    strategy:
-      matrix:
-        stack: ${{ fromJson(needs.prepare-stacks.outputs.stacks-to-deploy) }}
-      # Para esperar a que todos los trabajos terminen antes de continuar, incluso si alguno falla
-      fail-fast: false
-
-    permissions:
-      id-token: write
-      contents: read
-
-    env:
-      ENVIRONMENT: ${{ needs.prepare-stacks.outputs.environment }}
-      REGION: "us-east-1"
-      TIMESTAMP: ${{ needs.prepare-stacks.outputs.timestamp }}
-      STACK_NAME: ${{ matrix.stack }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          role-session-name: awssyncsession
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Set parameters and tags files
-        run: |
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
 
-      - name: Check JSON file integrity
-        run: |
-          echo "Verificando archivo de parámetros: $PARAMETERS_FILE"
-          # Validar explícitamente el JSON y mostrar errores si existen
-          if ! jq . "$PARAMETERS_FILE" > /dev/null 2>&1; then
-            echo "Error en el formato JSON. Intentando reparar..."
-            # Crear una versión simplificada del JSON para diagnóstico
-            cp "$PARAMETERS_FILE" "${PARAMETERS_FILE}.bak"
-            # Eliminar posibles caracteres invisibles
-            tr -cd '\11\12\15\40-\176' < "${PARAMETERS_FILE}.bak" > "$PARAMETERS_FILE"
-            # Verificar de nuevo
-            if ! jq . "$PARAMETERS_FILE" > /dev/null 2>&1; then
-              echo "No se pudo reparar el archivo JSON."
-              exit 1
-            else
-              echo "Archivo JSON reparado exitosamente."
-            fi
-          else
-            echo "Archivo JSON válido."
-          fi
+      - name: Set timestamp
+        id: set-timestamp
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Load JSON into Environment Variables
-        run: |
-          # Leer el archivo completo en una variable para evitar problemas de procesamiento
-          JSON_CONTENT=$(cat "$PARAMETERS_FILE")
-
-          # Procesar objetos simples
-          for key in $(echo "$JSON_CONTENT" | jq -r '.[] | select(has("TEAM") or has("ENVIRONMENT") or has("BRANCH_NAME") or has("REPOSITORY_NAME") or has("ARTIFACTORY_BUCKET") or has("ANALYTICS_BUCKET") or has("AWS_ACCOUNT_ID") or has("AWS_ACCOUNT_ID_OPT") or has("DB_STAGE") or has("DB_ANALYTICS") or has("AWS_ACCOUNT") or has("AWS_RUTADIGITAL_ID") or has("DEVELOPER")) | keys[0]'); do
-            value=$(echo "$JSON_CONTENT" | jq -r ".[] | select(has(\"$key\")) | .\"$key\"")
-            echo "${key}=${value}" >> $GITHUB_ENV
-            echo "Cargado: ${key}=${value}"
-          done
-
-          # Procesar ETA_CONFIG separadamente
-          echo "$JSON_CONTENT" | jq -c '.[] | select(has("ETA_CONFIG"))' > /tmp/eta_config.json
-          if [ -s /tmp/eta_config.json ]; then
-            for key in $(cat /tmp/eta_config.json | jq -r '.ETA_CONFIG | keys[]'); do
-              value=$(cat /tmp/eta_config.json | jq -r ".ETA_CONFIG.\"$key\"")
-              echo "ETA_CONFIG_${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ETA_CONFIG_${key}=${value}"
-            done
-          fi
-          
-          # Procesar ETA_TOKENS separadamente
-          echo "$JSON_CONTENT" | jq -c '.[] | select(has("ETA_TOKENS"))' > /tmp/eta_tokens.json
-          if [ -s /tmp/eta_tokens.json ]; then
-            for key in $(cat /tmp/eta_tokens.json | jq -r '.ETA_TOKENS | keys[]'); do
-              value=$(cat /tmp/eta_tokens.json | jq -r ".ETA_TOKENS.\"$key\"")
-              echo "ETA_TOKENS_${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ETA_TOKENS_${key}=${value}"
-            done
-          fi
-
-          echo "Loaded variables from $PARAMETERS_FILE."
-
+      
       - name: Process Tags
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
 
-      # Define common CloudFormation parameters
       - name: Set common parameters
         run: |
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID pdeveloper=$DEVELOPER" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
-  deploy-iam:
-    if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
-    needs: prepare-stacks
+  deploy-core:
+    needs: prepare
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+
+      - name: Load Deployment Script
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
+        run: |
+          cat << 'EOF' > deploy_stack.sh
+          #!/bin/bash
+          set -e
+          TEMPLATE=$1
+          STACK_NAME=$2
+          EXTRA_PARAMS=${3:-}
+          aws cloudformation deploy \
+            --template-file templates/$TEMPLATE \
+            --region $REGION \
+            --stack-name $STACK_NAME \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --tags $TAGS \
+            --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
+          EOF
+          chmod +x deploy_stack.sh
+
       - name: Deploy IAM Stack
-        run: |
-          aws cloudformation deploy \
-            --template-file templates/iam.yml \
-            --region us-east-1 \
-            --stack-name da-ecodistribucion-iam \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset
+        if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
+        run: ./deploy_stack.sh iam.yml da-josemaria-iam
 
-  deploy-s3:
-    if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
-    needs: deploy-iam
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
       - name: Deploy S3 Stack
-        run: |
-          aws cloudformation deploy \
-            --template-file templates/s3.yml \
-            --region us-east-1 \
-            --stack-name da-ecodistribucion-s3 \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset
+        if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
+        run: ./deploy_stack.sh s3.yml da-josemaria-s3
 
-  deploy-athenacatalogo:
-    if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
-    needs: deploy-s3
+      - name: Deploy Athena Stack
+        if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
+        run: ./deploy_stack.sh athenacatalogo.yml da-josemaria-athenacatalogo "pdbAnalyticsName=$DB_ANALYTICS"
+
+  deploy-projects:
+    needs: deploy-core
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack:
+          - koa-da-ecodistribucion-eta
+          - koa-da-ecodistribucion-misupply
+          - koa-da-ecodistribucion-nps-feedback
+          - koa-da-ecodistribucion-optimizador
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Deploy Athena Catalogo Stack
+      - uses: actions/checkout@v2
+
+      - name: Load Deployment Script
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
+          cat << 'EOF' > deploy_stack.sh
+          #!/bin/bash
+          set -e
+          TEMPLATE=$1
+          STACK_NAME=$2
+          EXTRA_PARAMS=${3:-}
           aws cloudformation deploy \
-            --template-file templates/athenacatalogo.yml \
-            --region us-east-1 \
-            --stack-name da-ecodistribucion-athenacatalogo \
+            --template-file templates/$TEMPLATE \
+            --region $REGION \
+            --stack-name $STACK_NAME \
             --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset \
+            --tags $TAGS \
+            --parameter-overrides $COMMON_PARAMS $EXTRA_PARAMS
+          EOF
+          chmod +x deploy_stack.sh
 
-
-     # Deploy stack based on matrix value
-      - name: Deploy ${{ matrix.stack }} Stack
+      - name: Deploy Matrix Stack
+        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
         run: |
-          echo "Desplegando stack ${{ matrix.stack }}"
-          
-          # Variables específicas según el stack
-          STACK_TEMPLATE=""
-          STACK_NAME=""
-          
           case "${{ matrix.stack }}" in
-            "koa-da-ecodistribucion-eta")
-              STACK_TEMPLATE="templates/koa-da-ecodistribucion-eta.yml"
-              STACK_NAME="koa-da-ecodistribucion-eta"
-              
-              # Desplegar el stack ETA con parámetros específicos
-              aws cloudformation deploy \
-                --template-file $STACK_TEMPLATE \
-                --region $REGION \
-                --stack-name $STACK_NAME \
-                --capabilities CAPABILITY_NAMED_IAM \
-                --no-fail-on-empty-changeset \
-                --tags $TAGS \
-                --parameter-overrides \
-                  $COMMON_PARAMS \
-                  pEtaCronExpression="$ETA_CONFIG_CRON_EXPRESSION" \
-                  pEtaMemorySizeMl="$ETA_CONFIG_MEMORY_SIZE_ML" \
-                  pEtaMemorySizeSr="$ETA_CONFIG_MEMORY_SIZE_SR" \
-                  pEtaMemorySizeConsolidado="$ETA_CONFIG_MEMORY_SIZE_CONSOLIDADO" \
-                  pEtaTimeoutMl="$ETA_CONFIG_TIMEOUT_ML" \
-                  pEtaTimeoutSr="$ETA_CONFIG_TIMEOUT_SR" \
-                  pEtaTimeoutConsolidado="$ETA_CONFIG_TIMEOUT_CONSOLIDADO" \
-                  pEtaheremapskey="$ETA_TOKENS_HEREMAPS_KEY" \
-                  pEtaCarlosValdovinosSr="$ETA_TOKENS_CARLOS_VALDOVINOS_SR" \
-                  pPuenteAltoSr="$ETA_TOKENS_PUENTE_ALTO_SR"
+            koa-da-ecodistribucion-eta)
+              ./deploy_stack.sh koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=$HOLA_1 pEtaCarlosValdovinosSr=$HOLA_2 pPuenteAltoSr=$HOLA_1"
               ;;
-            "koa-da-ecodistribucion-misupply")
-              STACK_TEMPLATE="templates/koa-da-ecodistribucion-misupply.yml"
-              STACK_NAME="koa-da-ecodistribucion-misupply"
-              
-              # Desplegar el stack Misupply
-              aws cloudformation deploy \
-                --template-file $STACK_TEMPLATE \
-                --region $REGION \
-                --stack-name $STACK_NAME \
-                --capabilities CAPABILITY_NAMED_IAM \
-                --no-fail-on-empty-changeset \
-                --tags $TAGS \
-                --parameter-overrides $COMMON_PARAMS
+            koa-da-ecodistribucion-misupply)
+              ./deploy_stack.sh koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
               ;;
-            "koa-da-ecodistribucion-nps-feedback")
-              STACK_TEMPLATE="templates/koa-da-ecodistribucion-nps-feedback.yml"
-              STACK_NAME="koa-da-ecodistribucion-nps-feedback"
-              
-              # Desplegar el stack NPS Feedback
-              aws cloudformation deploy \
-                --template-file $STACK_TEMPLATE \
-                --region $REGION \
-                --stack-name $STACK_NAME \
-                --capabilities CAPABILITY_NAMED_IAM \
-                --no-fail-on-empty-changeset \
-                --tags $TAGS \
-                --parameter-overrides $COMMON_PARAMS
+            koa-da-ecodistribucion-nps-feedback)
+              ./deploy_stack.sh koa-da-ecodistribucion-nps-feedback.yml koa-da-ecodistribucion-nps-feedback
               ;;
-            "koa-da-ecodistribucion-optimizador")
-              STACK_TEMPLATE="templates/koa-da-ecodistribucion-optimizador.yml"
-              STACK_NAME="koa-da-ecodistribucion-optimizador"
-              
-              # Desplegar el stack Optimizador
-              aws cloudformation deploy \
-                --template-file $STACK_TEMPLATE \
-                --region $REGION \
-                --stack-name $STACK_NAME \
-                --capabilities CAPABILITY_NAMED_IAM \
-                --no-fail-on-empty-changeset \
-                --tags $TAGS \
-                --parameter-overrides $COMMON_PARAMS
-              ;;
-            *)
-              echo "Stack no reconocido: ${{ matrix.stack }}"
-              exit 1
+            koa-da-ecodistribucion-optimizador)
+              ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
-          
-          # Mostrar eventos recientes del stack
-          aws cloudformation describe-stack-events \
-            --stack-name $STACK_NAME \
-            --max-items 5 \
-            --output table
