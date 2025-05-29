@@ -5,50 +5,57 @@ on:
     types: [closed]
     branches: [develop, qa, prod]
 
+
 jobs:
-  prepare:
+  build:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
-    outputs:
-      timestamp: ${{ steps.set-timestamp.outputs.timestamp }}
+    
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
 
+    env:
+      ENVIRONMENT: ${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
+      REGION: "us-east-1"
+      HOLA_1: "us-east-1"
+      HOLA_2: "us-east-1"
+      HOLA_3: "us-east-1"
+      
     steps:
+      - name: Set timestamp
+        run: echo "TIMESTAMP=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
       - name: Checkout Repo
         uses: actions/checkout@v2
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Set environment and parameters
+      
+      - name: Set parameters and tags files
         run: |
-          ENVIRONMENT=${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
-          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
-          echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
+      
 
-      - name: Set timestamp
-        id: set-timestamp
-        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
-
+      - name: Load JSON into Environment Variables
+        run: |
+          for row in $(jq -c '.[]' $PARAMETERS_FILE); do
+            key=$(echo $row | jq -r 'keys[0]')
+            value=$(echo $row | jq -r '.[]')
+            echo "${key}=${value}" >> $GITHUB_ENV
+          done
+          echo "Loaded variables from $PARAMETERS_FILE."
+      
       - name: Process Tags
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "TAGS=${TAGS}" >> $GITHUB_ENV
-
+          
+      # Define common CloudFormation parameters
       - name: Set common parameters
         run: |
-          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
-
-  deploy-core:
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
-
-    steps:
-      - uses: actions/checkout@v2
+          echo "COMMON_PARAMS=pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME "pdbAnalyticsName=$DB_ANALYTICS" pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=$REGION pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=$TIMESTAMP pRDAWSAccountId=$AWS_RUTADIGITAL_ID" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -57,145 +64,110 @@ jobs:
            role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
            aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Load Deployment Script
+      # Create a reusable deployment function
+      - name: Define deployment function
+        env:
+          REGION: ${{ env.REGION }}
+          TAGS: ${{ env.TAGS }}
+          COMMON_PARAMS: ${{ env.COMMON_PARAMS }}
         run: |
-          cat << 'EOF' > deploy_stack.sh
+          cat << EOF > deploy_stack.sh
           #!/bin/bash
           set -e
 
-          REGION=${REGION:-us-east-1}
-
           function deploy_stack() {
-            local template=$1
-            local stack_name=$2
-            local extra_params="${3:-}"
+            local template=\$1
+            local stack_name=\$2
+            local extra_params="\${3:-}"
 
-            echo "Deploying $stack_name using template: templates/$template"
-            echo "With extra params: $extra_params"
+            echo "Deploying \$stack_name using template: templates/\$template"
+            echo "With extra params: \$extra_params"
 
-            if [ -z "$template" ] || [ -z "$stack_name" ]; then
+            if [ -z "\$template" ] || [ -z "\$stack_name" ]; then
               echo "ERROR: template and stack_name are required"
               exit 1
             fi
 
-            if [ -n "$TAGS" ]; then
-              TAGS_PARAM="--tags $TAGS"
-            else
-              TAGS_PARAM=""
-            fi
-
-            if [ -n "$COMMON_PARAMS" ]; then
-              PARAMS="--parameter-overrides $COMMON_PARAMS $extra_params"
-            else
-              PARAMS=""
-            fi
-
             aws cloudformation deploy \
-              --template-file templates/$template \
-              --region "$REGION" \
-              --stack-name "$stack_name" \
+              --template-file templates/\$template \
+              --region $REGION \
+              --stack-name \$stack_name \
               --capabilities CAPABILITY_NAMED_IAM \
               --no-fail-on-empty-changeset \
-              $TAGS_PARAM \
-              $PARAMS
+              --tags $TAGS \
+              --parameter-overrides \
+                $COMMON_PARAMS \
+                \$extra_params
 
             aws cloudformation describe-stack-events \
-              --region "$REGION" \
-              --stack-name "$stack_name" \
+              --stack-name \$stack_name \
               --max-items 5 \
               --output table
           }
           EOF
+
           chmod +x deploy_stack.sh
 
-      - name: Deploy IAM Stack
+
+
+      # Deploy resources based on PR titl
+      - name: Deploy Iam
         if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           deploy_stack "iam.yml" "da-josemaria-iam"
 
-      - name: Deploy S3 Stack
-        if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
+      - name: Deploy S3
+        if: contains(github.event.pull_request.title, '-s3')
         run: |
-          source ./deploy_stack.sh
+          source ./deploy_stack.sh 
           deploy_stack "s3.yml" "da-josemaria-s3"
 
-      - name: Deploy Athena Stack
+      # Layer upload section
+      - name: Upload layers to S3
+        if: contains(github.event.pull_request.title, '-layer')
+        run: |
+          aws s3 cp ./layers/awswrangler-layer-py3-9.zip s3://$ARTIFACTORY_BUCKET/layers/
+          aws s3 cp ./layers/request-layer-py3-12.zip s3://$ARTIFACTORY_BUCKET/layers/
+
+      # Other resources#
+      - name: Deploy Layers
+        if: contains(github.event.pull_request.title, '-layers') || contains(github.event.pull_request.title, '-all')
+        run: deploy_stack "layers.yml" "da-josemaria-layers" "pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+
+      - name: Deploy CATALOGO ATHENA DB
         if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
         run: |
           source ./deploy_stack.sh
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
-  deploy-projects:
-    needs: deploy-core
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        stack:
-          - koa-da-ecodistribucion-eta
-          - koa-da-ecodistribucion-misupply
-          - koa-da-ecodistribucion-nps-feedback
-          - koa-da-ecodistribucion-optimizador
-    steps:
-      - uses: actions/checkout@v2
+      #- name: Deploy CATALOGO ATHENA DB
+      #  if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
+      #  run: source ./deploy_stack.sh deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+
+      # Remaining stack deployments#
+      - name: Deploy remaining stacks
+        run: |
+          source ./deploy_stack.sh
+
+          title="${{ github.event.pull_request.title }}"
+
+          if [[ "$title" == *"-koa-da-ecodistribucion-eta"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-eta.yml" "koa-da-ecodistribucion-eta" "pEtaheremapskey=$HOLA_1 pEtaCarlosValdovinosSr=$HOLA_2 pPuenteAltoSr=HOLA_1"
+          fi
+
+          if [[ "$title" == *"-koa-da-ecodistribucion-misupply"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-misupply.yml" "koa-da-ecodistribucion-misupply"
+          fi
+
+          if [[ "$title" == *"-koa-da-ecodistribucion-nps-feedback"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-nps-feedback.yml" "koa-da-ecodistribucion-nps-feedback"
+          fi
+
+          if [[ "$title" == *"-koa-da-ecodistribucion-optimizador"* || "$title" == *"-all"* ]]; then
+            deploy_stack "koa-da-ecodistribucion-optimizador.yml" "koa-da-ecodistribucion-optimizador"
+          fi
+
+
+
       
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-           role-session-name: awssyncsession
-           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Load Deployment Script
-        run: |
-          cat << 'EOF' > deploy_stack.sh
-          #!/bin/bash
-          set -e
-
-          REGION=${REGION:-us-east-1}
-
-          function deploy_stack() {
-            local template=$1
-            local stack_name=$2
-            local extra_params="${3:-}"
-
-            if [ -n "$TAGS" ]; then
-              TAGS_PARAM="--tags $TAGS"
-            else
-              TAGS_PARAM=""
-            fi
-
-            if [ -n "$COMMON_PARAMS" ]; then
-              PARAMS="--parameter-overrides $COMMON_PARAMS $extra_params"
-            else
-              PARAMS=""
-            fi
-
-            aws cloudformation deploy \
-              --template-file templates/$template \
-              --region "$REGION" \
-              --stack-name "$stack_name" \
-              --capabilities CAPABILITY_NAMED_IAM \
-              --no-fail-on-empty-changeset \
-              $TAGS_PARAM \
-              $PARAMS
-          }
-          EOF
-          chmod +x deploy_stack.sh
-
-      - name: Deploy Matrix Stack
-        if: contains(github.event.pull_request.title, matrix.stack) || contains(github.event.pull_request.title, '-all')
-        run: |
-          case "${{ matrix.stack }}" in
-            koa-da-ecodistribucion-eta)
-              ./deploy_stack.sh koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=$HOLA_1 pEtaCarlosValdovinosSr=$HOLA_2 pPuenteAltoSr=$HOLA_1"
-              ;;
-            koa-da-ecodistribucion-misupply)
-              ./deploy_stack.sh koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
-              ;;
-            koa-da-ecodistribucion-nps-feedback)
-              ./deploy_stack.sh koa-da-ecodistribucion-nps-feedback.yml koa-da-ecodistribucion-nps-feedback
-              ;;
-            koa-da-ecodistribucion-optimizador)
-              ./deploy_stack.sh koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
-              ;;
-          esac
