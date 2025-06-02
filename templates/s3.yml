@@ -1,72 +1,72 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Template para crear buckets S3 para el proyecto Ecodistribucion
 
-# Parameters:
-#   Stage:
-#     Type: String
-#     Description: Environment name (dev/qa/prod)
-#     AllowedValues:
-#       - dev
-#       - qa
-#       - prod
-#     Default: dev
-#   pTeamName:
-#     Description: "Team Name (all lowercase, no symbols or spaces)"
-#     Type: String
-#   pBranchName:
-#     Description: "Branch Name (all lowercase, no symbols or spaces)"
-#     Type: String
-#     AllowedValues:
-#       - develop
-#       - qa
-#       - prod
-#   pAccountName:
-#     Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
-#     Type: String  
-#   pArtifactsBucket:
-#     Type: String
-#     Description: Artifacts bucket name  
-#   AWSRegion:
-#     Type: String
-#     Description: AWS Region
-#     Default: "us-east-1"
-#   pAWSAccountId:
-#     Type: String
-#     Description: AWS Account ID
-#   pdeploymentDate:
-#     Description: "Deployment Date"
-#     Type: String
-#   pAWSAccountOpt:
-#     Description: "AWS account optimizer ID"
-#     Type: String
-#   pdeveloper:
-#     Description: "Database analytics name (all lowercase, no symbols or spaces)"
-#     Type: String
-#     Default: "Josemaria_Paucar"
-#   pRDAWSAccountId:
-#     Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
-#     Type: String
-#   # Country parameters
-#   pCountryCl:
-#     Description: "Country code for Chile"
-#     Type: String
-#     Default: "cl"
-#   pCountryPy:
-#     Description: "Country code for Paraguay"
-#     Type: String
-#     Default: "py"
-#   pCountryAr:
-#     Description: "Country code for Argentina"
-#     Type: String
-#     Default: "ar"
-#   pCountryBr:
-#     Description: "Country code for Brazil"
-#     Type: String
-#     Default: "br"
-#   pCountryRg:
-#     Description: "Country code for Regional"
-#     Type: String
-#     Default: "rg"
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues:
+      - dev
+      - qa
+      - prod
+    Default: dev
+  pTeamName:
+    Description: "Team Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pBranchName:
+    Description: "Branch Name (all lowercase, no symbols or spaces)"
+    Type: String
+    AllowedValues:
+      - develop
+      - qa
+      - prod
+  pAccountName:
+    Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
+    Type: String  
+  pArtifactsBucket:
+    Type: String
+    Description: Artifacts bucket name  
+  AWSRegion:
+    Type: String
+    Description: AWS Region
+    Default: "us-east-1"
+  pAWSAccountId:
+    Type: String
+    Description: AWS Account ID
+  pdeploymentDate:
+    Description: "Deployment Date"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizer ID"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: "Josemaria_Paucar"
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
     
 Resources:
   ArtifactsBucketlib:
