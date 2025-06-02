@@ -26,6 +26,7 @@ Parameters:
   pAWSAccountId:
     Type: String
     Description: AWS Account ID
+    Default: 682033497219
   pdeploymentDate:
     Description: "Deployment Date"
     Type: String
