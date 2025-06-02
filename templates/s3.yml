@@ -22,10 +22,10 @@ Parameters:
       - prod
   pAccountName:
     Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
-    Type: String  
+    Type: String
   pArtifactsBucket:
     Type: String
-    Description: Artifacts bucket name  
+    Description: Artifacts bucket name
   AWSRegion:
     Type: String
     Description: AWS Region
@@ -69,46 +69,12 @@ Parameters:
     Default: "rg"
     
 Resources:
-  ArtifactsBucketlib:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    Properties:
-      AccessControl: Private
-      BucketName: "bucket-de-prueba-josemaria"
-  #     # VersioningConfiguration:
-  #     #   Status: Enabled
-  #     # ServerSideEncryptionConfiguration:
-  #     #   ServerSideEncryptionByDefault:
-  #     #     SSEAlgorithm: AES256
-  #     # LoggingConfiguration:
-  #     #   DestinationBucketName: !Ref ArtifactsBucket
-  #     #   LogFilePrefix: "access-logs/"
-  # ArtifactsBucketlibs:
-  #   Type: AWS::S3::Bucket
-  #   DeletionPolicy: Retain
-  #   Properties:
-  #     AccessControl: Private
-  #     BucketName: prueba-caso-cero
-  #     # VersioningConfiguration:
-  #     #   Status: Enabled
-  #     # ServerSideEncryptionConfiguration:
-  #     #   ServerSideEncryptionByDefault:
-  #     #     SSEAlgorithm: AES256
-  #     # LoggingConfiguration:
-  #     #   DestinationBucketName: !Ref ArtifactsBucket
-  #     #   LogFilePrefix: "access-logs/"
-  # daEcodistribucionBucket:
-  #   Type: AWS::S3::Bucket
-  #   DeletionPolicy: Retain
-  #   Properties:
-  #     BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "stage", !Ref Stage]]
-  #     AccessControl: Private
 
   daEcodistribucionAnalyticsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analyticss", !Ref Stage]]
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics", !Ref Stage]]
       AccessControl: Private
 
   S3BucketPolicy:
@@ -122,8 +88,8 @@ Resources:
             Effect: "Allow"
             Principal:
               AWS: 
-                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:root"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
@@ -138,3 +104,5 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
+
+
