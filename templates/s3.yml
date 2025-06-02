@@ -104,37 +104,37 @@ Resources:
   #     BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "stage", !Ref Stage]]
   #     AccessControl: Private
 
-  # daEcodistribucionAnalyticsBucket:
-  #   Type: AWS::S3::Bucket
-  #   DeletionPolicy: Retain
-  #   Properties:
-  #     BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics", !Ref Stage]]
-  #     AccessControl: Private
+  daEcodistribucionAnalyticsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analyticss", !Ref Stage]]
+      AccessControl: Private
 
-  # S3BucketPolicy:
-  #   Type: "AWS::S3::BucketPolicy"
-  #   Properties:
-  #     Bucket: !Ref daEcodistribucionAnalyticsBucket
-  #     PolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Sid: "AccessAccountDatalakeObjectDataSyncs"
-  #           Effect: "Allow"
-  #           Principal:
-  #             AWS: 
-  #               - !Sub "arn:aws:iam::${AWS::AccountId}:root"
-  #               - !Sub "arn:aws:iam::${AWS::AccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
-  #           Action:
-  #             - "s3:GetBucketLocation"
-  #             - "s3:ListBucket"
-  #             - "s3:ListBucketMultipartUploads"
-  #             - "s3:AbortMultipartUpload"
-  #             - "s3:DeleteObject"
-  #             - "s3:GetObject"
-  #             - "s3:ListMultipartUploadParts"
-  #             - "s3:PutObjectTagging"
-  #             - "s3:GetObjectTagging"
-  #             - "s3:PutObject"
-  #           Resource:
-  #             - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
-  #             - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref daEcodistribucionAnalyticsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AccessAccountDatalakeObjectDataSyncs"
+            Effect: "Allow"
+            Principal:
+              AWS: 
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
+            Action:
+              - "s3:GetBucketLocation"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:DeleteObject"
+              - "s3:GetObject"
+              - "s3:ListMultipartUploadParts"
+              - "s3:PutObjectTagging"
+              - "s3:GetObjectTagging"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
