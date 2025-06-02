@@ -67,7 +67,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics", !Ref Stage]]
+      BucketName: !Join ['-', ["da", "josemaria-prueba", "analytics", !Ref Stage]]
       AccessControl: Private
 
   S3BucketPolicy:
