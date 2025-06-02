@@ -13,13 +13,6 @@ Parameters:
   pTeamName:
     Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
-  pBranchName:
-    Description: "Branch Name (all lowercase, no symbols or spaces)"
-    Type: String
-    AllowedValues:
-      - develop
-      - qa
-      - prod
   pAccountName:
     Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
     Type: String
