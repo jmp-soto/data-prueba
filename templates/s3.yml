@@ -67,7 +67,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', ["da", "josemaria-prueba", "analytics", !Ref Stage]]
+      BucketName: !Join ['-', ["da", "josemaria-pruebas", "analytics", !Ref Stage]]
       AccessControl: Private
 
   S3BucketPolicy:
@@ -82,7 +82,7 @@ Resources:
             Principal:
               AWS: 
                 - !Sub "arn:aws:iam::${pAWSAccountId}:root"
-                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-da-datasync-rg"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
