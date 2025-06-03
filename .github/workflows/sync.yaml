@@ -84,7 +84,7 @@ jobs:
 
           MATRIX="${MATRIX%,}]}"  # elimina coma final
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-  lint:
+  cfn-lint:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
@@ -128,8 +128,8 @@ jobs:
             fi
           done
 
-  deploy-core:
-    needs: [prepare, lint]
+  deploy-resources-cross:
+    needs: [prepare, cfn-lint]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -214,9 +214,9 @@ jobs:
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
 
-  deploy-projects:
+  deploy-projects-ecodistribucion:
     if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
-    needs: deploy-core
+    needs: deploy-resources-cross
     runs-on: ubuntu-latest
     permissions:
       id-token: write
