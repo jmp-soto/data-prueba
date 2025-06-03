@@ -40,6 +40,15 @@ jobs:
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
 
+      - name: Load JSON into Environment Variables
+        run: |
+          for row in $(jq -c '.[]' $PARAMETERS_FILE); do
+            key=$(echo $row | jq -r 'keys[0]')
+            value=$(echo $row | jq -r '.[]')
+            echo "${key}=${value}" >> $GITHUB_ENV
+          done
+          echo "Loaded variables from $PARAMETERS_FILE."
+
       - name: Set timestamp
         id: set-timestamp
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
@@ -75,6 +84,49 @@ jobs:
 
           MATRIX="${MATRIX%,}]}"  # elimina coma final
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+  lint:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Install cfn-lint
+        run: pip install cfn-lint
+
+      - name: Lint core templates based on PR title
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          declare -a CORE_TEMPLATES=()
+          [[ "$TITLE" == *"-iam"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/iam.yml")
+          [[ "$TITLE" == *"-s3"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/s3.yml")
+          [[ "$TITLE" == *"-athenacatalogo"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/athenacatalogo.yml")
+          [[ "$TITLE" == *"-koa-da-ecodistribucion-eta"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-eta.yml")
+          [[ "$TITLE" == *"-koa-da-ecodistribucion-misupply"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-misupply.yml")
+          [[ "$TITLE" == *"-koa-da-ecodistribucion-nps-feedback"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-nps-feedback.yml")
+          [[ "$TITLE" == *"-koa-da-ecodistribucion-optimizador"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-optimizador.yml")
+          for file in "${CORE_TEMPLATES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "Linting $file"
+              cfn-lint "$file"
+            else
+              echo "File $file not found, skipping."
+            fi
+          done
+
+      - name: Lint project templates from matrix
+        run: |
+          MATRIX=${{ needs.prepare.outputs.matrix }}
+          echo "$MATRIX" | jq -c '.include[]' | while read -r item; do
+            STACK=$(echo "$item" | jq -r '.stack')
+            TEMPLATE="templates/$STACK.yml"
+            if [ -f "$TEMPLATE" ]; then
+              echo "Linting $TEMPLATE"
+              cfn-lint "$TEMPLATE"
+            else
+              echo "Template $TEMPLATE not found, skipping."
+            fi
+          done
 
   deploy-core:
     needs: prepare
@@ -91,6 +143,7 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
+      
 
       - name: Export ENV variables
         id: export-env
@@ -104,8 +157,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
-          aws-region: "us-east-1"
+          role-to-assume: $AWS_IAM_ROLE
+          aws-region: $REGION
 
       - name: Load Deployment Script
         run: |
@@ -174,18 +227,20 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: Set ENV from previous job
+      - name: Export ENV variables
+        id: export-env
         run: |
-          echo "TAGS=${{ needs.deploy-core.outputs.tags }}" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=${{ needs.deploy-core.outputs.common_params }}" >> $GITHUB_ENV
-          echo "REGION=${{ needs.deploy-core.outputs.region }}" >> $GITHUB_ENV
+          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: arn:aws:iam::682033497219:role/gitroldatasyc
-          aws-region: "us-east-1"
+          role-to-assume: $AWS_IAM_ROLE
+          aws-region: $REGION
 
       - name: Load Deployment Script
         run: |
