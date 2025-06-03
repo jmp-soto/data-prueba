@@ -129,7 +129,7 @@ jobs:
           done
 
   deploy-core:
-    needs: prepare
+    needs: [prepare, lint]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
