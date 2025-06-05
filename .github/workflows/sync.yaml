@@ -24,6 +24,7 @@ jobs:
       common_params: ${{ steps.set-env.outputs.common_params }}
       region: ${{ steps.set-env.outputs.region }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      aws_iam_role: ${{ steps.set-env.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -38,19 +39,14 @@ jobs:
           echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
-          echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
 
       - name: Check JSON file integrity
         run: |
           echo "Verificando archivo de parámetros: $PARAMETERS_FILE"
-          # Validar explícitamente el JSON y mostrar errores si existen
           if ! jq . "$PARAMETERS_FILE" > /dev/null 2>&1; then
             echo "Error en el formato JSON. Intentando reparar..."
-            # Crear una versión simplificada del JSON para diagnóstico
             cp "$PARAMETERS_FILE" "${PARAMETERS_FILE}.bak"
-            # Eliminar posibles caracteres invisibles
             tr -cd '\11\12\15\40-\176' < "${PARAMETERS_FILE}.bak" > "$PARAMETERS_FILE"
-            # Verificar de nuevo
             if ! jq . "$PARAMETERS_FILE" > /dev/null 2>&1; then
               echo "No se pudo reparar el archivo JSON."
               exit 1
@@ -63,37 +59,28 @@ jobs:
 
       - name: Load JSON into Environment Variables
         run: |
-          # Leer el archivo completo en una variable para evitar problemas de procesamiento
           JSON_CONTENT=$(cat "$PARAMETERS_FILE")
-
-          # Procesar objetos simples
-          for key in $(echo "$JSON_CONTENT" | jq -r '.[] | select(has("TEAM") or has("ENVIRONMENT") or has("BRANCH_NAME") or has("REPOSITORY_NAME") or has("ARTIFACTORY_BUCKET") or has("ANALYTICS_BUCKET") or has("AWS_ACCOUNT_ID") or has("AWS_ACCOUNT_ID_OPT") or has("DB_STAGE") or has("DB_ANALYTICS") or has("AWS_ACCOUNT") or has("AWS_RUTADIGITAL_ID") or has("DEVELOPER")) or has("AWS_DATALAKE_ID")) | keys[0]'); do
-            value=$(echo "$JSON_CONTENT" | jq -r ".[] | select(has(\"$key\")) | .\"$key\"")
+          for key in $(echo "$JSON_CONTENT" | jq -r '.[] | keys[]'); do
+            value=$(echo "$JSON_CONTENT" | jq -r ".[] | .\"$key\"?")
             echo "${key}=${value}" >> $GITHUB_ENV
             echo "Cargado: ${key}=${value}"
           done
 
-          # Procesar ETA_CONFIG separadamente
           echo "$JSON_CONTENT" | jq -c '.[] | select(has("ETA_CONFIG"))' > /tmp/eta_config.json
           if [ -s /tmp/eta_config.json ]; then
             for key in $(cat /tmp/eta_config.json | jq -r '.ETA_CONFIG | keys[]'); do
               value=$(cat /tmp/eta_config.json | jq -r ".ETA_CONFIG.\"$key\"")
               echo "ETA_CONFIG_${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ETA_CONFIG_${key}=${value}"
             done
           fi
-          
-          # Procesar ETA_TOKENS separadamente
+
           echo "$JSON_CONTENT" | jq -c '.[] | select(has("ETA_TOKENS"))' > /tmp/eta_tokens.json
           if [ -s /tmp/eta_tokens.json ]; then
             for key in $(cat /tmp/eta_tokens.json | jq -r '.ETA_TOKENS | keys[]'); do
               value=$(cat /tmp/eta_tokens.json | jq -r ".ETA_TOKENS.\"$key\"")
               echo "ETA_TOKENS_${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ETA_TOKENS_${key}=${value}"
             done
           fi
-
-          echo "Loaded variables from $PARAMETERS_FILE."
 
       - name: Set timestamp
         id: set-timestamp
@@ -104,33 +91,24 @@ jobs:
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+          COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
-          echo "AWS_IAM_ROLE= ${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_OUTPUT
+          echo "aws_iam_role=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_OUTPUT
 
       - name: Determine matrix for deploy-projects
         id: set-matrix
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           MATRIX='{"include":['
-
-          if [[ "$TITLE" == *"koa-da-ecodistribucion-eta"* || "$TITLE" == *"-all"* ]]; then
-            MATRIX+='{"stack":"koa-da-ecodistribucion-eta"},'
-          fi
-          if [[ "$TITLE" == *"koa-da-ecodistribucion-misupply"* || "$TITLE" == *"-all"* ]]; then
-            MATRIX+='{"stack":"koa-da-ecodistribucion-misupply"},'
-          fi
-          if [[ "$TITLE" == *"koa-da-ecodistribucion-nps-feedback"* || "$TITLE" == *"-all"* ]]; then
-            MATRIX+='{"stack":"koa-da-ecodistribucion-nps-feedback"},'
-          fi
-          if [[ "$TITLE" == *"koa-da-ecodistribucion-optimizador"* || "$TITLE" == *"-all"* ]]; then
-            MATRIX+='{"stack":"koa-da-ecodistribucion-optimizador"},'
-          fi
-
-          MATRIX="${MATRIX%,}]}"  # elimina coma final
+          for stack in eta misupply nps-feedback optimizador; do
+            if [[ "$TITLE" == *"koa-da-ecodistribucion-$stack"* || "$TITLE" == *"-all"* ]]; then
+              MATRIX+='{"stack":"koa-da-ecodistribucion-'$stack'"},'
+            fi
+          done
+          MATRIX="${MATRIX%,}]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-
+		  
   deploy-resources-cross:
     needs: [prepare]
     runs-on: ubuntu-latest
@@ -143,7 +121,6 @@ jobs:
       common_params: ${{ steps.export-env.outputs.common_params }}
       region: ${{ steps.export-env.outputs.region }}
       matrix: ${{ needs.prepare.outputs.matrix }}
-      aws_iam_role: ${{ needs.prepare.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -152,10 +129,10 @@ jobs:
       - name: Export ENV variables
         id: export-env
         run: |
-          echo "TAGS=$tags" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=$common_params" >> $GITHUB_ENV
-          echo "REGION=$region" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=$aws_iam_role" >> $GITHUB_ENV
+          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
