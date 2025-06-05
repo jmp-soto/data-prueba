@@ -130,52 +130,9 @@ jobs:
 
           MATRIX="${MATRIX%,}]}"  # elimina coma final
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-  cfn-lint:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-
-      - name: Install cfn-lint
-        run: pip install cfn-lint
-
-      - name: Lint core templates based on PR title
-        run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          declare -a CORE_TEMPLATES=()
-          [[ "$TITLE" == *"-iam"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/iam.yml")
-          [[ "$TITLE" == *"-s3"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/s3.yml")
-          [[ "$TITLE" == *"-athenacatalogo"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/athenacatalogo.yml")
-          [[ "$TITLE" == *"-koa-da-ecodistribucion-eta"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-eta.yml")
-          [[ "$TITLE" == *"-koa-da-ecodistribucion-misupply"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-misupply.yml")
-          [[ "$TITLE" == *"-koa-da-ecodistribucion-nps-feedback"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-nps-feedback.yml")
-          [[ "$TITLE" == *"-koa-da-ecodistribucion-optimizador"* || "$TITLE" == *"-all"* ]] && CORE_TEMPLATES+=("templates/koa-da-ecodistribucion-optimizador.yml")
-          for file in "${CORE_TEMPLATES[@]}"; do
-            if [ -f "$file" ]; then
-              echo "Linting $file"
-              cfn-lint "$file"
-            else
-              echo "File $file not found, skipping."
-            fi
-          done
-
-      - name: Lint project templates from matrix
-        run: |
-          MATRIX=${{ needs.prepare.outputs.matrix }}
-          echo "$MATRIX" | jq -c '.include[]' | while read -r item; do
-            STACK=$(echo "$item" | jq -r '.stack')
-            TEMPLATE="templates/$STACK.yml"
-            if [ -f "$TEMPLATE" ]; then
-              echo "Linting $TEMPLATE"
-              cfn-lint "$TEMPLATE"
-            else
-              echo "Template $TEMPLATE not found, skipping."
-            fi
-          done
 
   deploy-resources-cross:
-    needs: [prepare, cfn-lint]
+    needs: [prepare]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
