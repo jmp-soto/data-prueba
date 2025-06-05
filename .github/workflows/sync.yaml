@@ -108,7 +108,8 @@ jobs:
           done
           MATRIX="${MATRIX%,}]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-		  
+
+
   deploy-resources-cross:
     needs: [prepare]
     runs-on: ubuntu-latest
