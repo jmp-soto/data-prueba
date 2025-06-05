@@ -43,23 +43,27 @@ jobs:
       - name: Load JSON into Environment Variables
         run: |
           JSON_CONTENT=$(cat "$PARAMETERS_FILE")
-          
-          INDEX=0
+
           echo "$JSON_CONTENT" | jq -c '.[]' | while read -r item; do
-            # Detecta si es un objeto simple
             key=$(echo "$item" | jq -r 'keys[0]')
             value=$(echo "$item" | jq -r ".[\"$key\"]")
-            
+
             if [ "$key" = "ETA_CONFIG" ]; then
-              echo "$item" | jq -r '.ETA_CONFIG | to_entries[] | "ETA_CONFIG_\(.key)=\(.value)"' >> $GITHUB_ENV
+              echo "$item" | jq -r '.ETA_CONFIG | to_entries[] | "ETA_CONFIG_\(.key)=\(.value)"' | while read -r line; do
+                echo "$line" >> $GITHUB_ENV
+                echo "Cargado: $line"
+              done
             elif [ "$key" = "ETA_TOKENS" ]; then
-              echo "$item" | jq -r '.ETA_TOKENS | to_entries[] | "ETA_TOKENS_\(.key)=\(.value)"' >> $GITHUB_ENV
+              echo "$item" | jq -r '.ETA_TOKENS | to_entries[] | "ETA_TOKENS_\(.key)=\(.value)"' | while read -r line; do
+                echo "$line" >> $GITHUB_ENV
+                echo "Cargado: $line"
+              done
             else
               echo "${key}=${value}" >> $GITHUB_ENV
               echo "Cargado: ${key}=${value}"
             fi
-            INDEX=$((INDEX + 1))
           done
+
 
 
       - name: Set timestamp
