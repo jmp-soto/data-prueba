@@ -13,6 +13,9 @@ Parameters:
   pTeamName:
     Description: "Team Name (all lowercase, no symbols or spaces)"
     Type: String
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
   pAccountName:
     Description: "Name of the account owning the pipeline (all lowercase, no symbols or spaces)"
     Type: String
@@ -26,7 +29,6 @@ Parameters:
   pAWSAccountId:
     Type: String
     Description: AWS Account ID
-    Default: 682033497219
   pdeploymentDate:
     Description: "Deployment Date"
     Type: String
@@ -38,7 +40,10 @@ Parameters:
     Type: String
     Default: "Josemaria_Paucar"
   pRDAWSAccountId:
-    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Description: "Account id Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  pDLAWSAccountId:
+    Description: "Account id DataLake (all lowercase, no symbols or spaces)"
     Type: String
   # Country parameters
   pCountryCl:
@@ -63,12 +68,38 @@ Parameters:
     Default: "rg"
     
 Resources:
+  ArtifactsBucketlib:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref pArtifactsBucket
+      # VersioningConfiguration:
+      #   Status: Enabled
+      # ServerSideEncryptionConfiguration:
+      #   ServerSideEncryptionByDefault:
+      #     SSEAlgorithm: AES256
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Ref ArtifactsBucket
+      #   LogFilePrefix: "access-logs/"
+
+  daEcodistribucionBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "stage-b", !Ref Stage]]
+      AccessControl: Private
+      # VersioningConfiguration:
+      #   Status: Enabled
+      # ServerSideEncryptionConfiguration:
+      #   ServerSideEncryptionByDefault:
+      #     SSEAlgorithm: AES256
 
   daEcodistribucionAnalyticsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Join ['-', [!Ref pTeamName, "josemaria-pruebaitas", "analytics", !Ref Stage]]
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics-b", !Ref Stage]]
       AccessControl: Private
 
   S3BucketPolicy:
@@ -82,8 +113,8 @@ Resources:
             Effect: "Allow"
             Principal:
               AWS: 
-                - !Sub "arn:aws:iam::682033497219:root"
-                - !Sub "arn:aws:iam::682033497219:role/role-${pTeamName}-datasync-rg"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:root"
+                - !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
@@ -98,11 +129,11 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
+
           - Sid: "AccessAccountDatalakeObjects"
             Effect: "Allow"
             Principal:
-              AWS:
-                - !Sub "arn:aws:iam::${pAWSAccountId}:root"
+              AWS: !Sub "arn:aws:iam::${pDLAWSAccountId}:root"
             Action:
               - "s3:GetBucketLocation"
               - "s3:ListBucket"
@@ -116,4 +147,5 @@ Resources:
               - "s3:PutObject"
             Resource:
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
-              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/*"
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/cl/miruta/cl_nps_feedback/*"
+              - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/cl/miruta/eta/*"
