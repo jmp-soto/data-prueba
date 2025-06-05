@@ -104,7 +104,7 @@ jobs:
         run: |
           TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
+          COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
           echo "AWS_IAM_ROLE= ${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_OUTPUT
@@ -143,6 +143,7 @@ jobs:
       common_params: ${{ steps.export-env.outputs.common_params }}
       region: ${{ steps.export-env.outputs.region }}
       matrix: ${{ needs.prepare.outputs.matrix }}
+      aws_iam_role: ${{ needs.prepare.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -151,10 +152,10 @@ jobs:
       - name: Export ENV variables
         id: export-env
         run: |
-          echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
-          echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
-          echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
+          echo "TAGS=$tags" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=$common_params" >> $GITHUB_ENV
+          echo "REGION=$region" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=$aws_iam_role" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
