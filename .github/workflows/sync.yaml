@@ -24,7 +24,6 @@ jobs:
       common_params: ${{ steps.set-env.outputs.common_params }}
       region: ${{ steps.set-env.outputs.region }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      aws_iam_role: ${{ steps.set-env.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -39,6 +38,7 @@ jobs:
           echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_ENV
 
       - name: Load JSON into Environment Variables
         run: |
@@ -71,7 +71,6 @@ jobs:
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
-          echo "aws_iam_role=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_OUTPUT
 
       - name: Determine matrix for deploy-projects
         id: set-matrix
@@ -84,7 +83,6 @@ jobs:
             fi
           done
           MATRIX="${MATRIX%,}]}"
-
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
   deploy-resources-cross:
@@ -99,7 +97,6 @@ jobs:
       common_params: ${{ steps.export-env.outputs.common_params }}
       region: ${{ steps.export-env.outputs.region }}
       matrix: ${{ needs.prepare.outputs.matrix }}
-      aws_iam_role: ${{ steps.export-env.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -110,11 +107,10 @@ jobs:
           echo "tags=${{ needs.prepare.outputs.tags }}" >> $GITHUB_OUTPUT
           echo "common_params=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_OUTPUT
           echo "region=${{ needs.prepare.outputs.region }}" >> $GITHUB_OUTPUT
-          echo "aws_iam_role=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_OUTPUT
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ env.AWS_IAM_ROLE }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -188,7 +184,7 @@ jobs:
           echo "TAGS=${{ needs.deploy-resources-cross.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.deploy-resources-cross.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.deploy-resources-cross.outputs.region }}" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=${{ needs.deploy-resources-cross.outputs.aws_iam_role }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ env.AWS_IAM_ROLE }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
