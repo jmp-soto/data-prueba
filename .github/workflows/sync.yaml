@@ -106,6 +106,7 @@ jobs:
       common_params: ${{ steps.export-env.outputs.common_params }}
       region: ${{ steps.export-env.outputs.region }}
       matrix: ${{ needs.prepare.outputs.matrix }}
+      aws_iam_role: ${{ needs.prepare.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -248,7 +249,7 @@ jobs:
           source ./deploy_stack.sh
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
-              deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaheremapskey=HOLA_1 pEtaCarlosValdovinosSr=HOLA_2 pPuenteAltoSr=HOLA_1"
+              deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaCronExpression=$ETA_CONFIG_CRON_EXPRESSION pEtaMemorySizeMl=$ETA_CONFIG_MEMORY_SIZE_ML pEtaMemorySizeSr=$ETA_CONFIG_MEMORY_SIZE_SR pEtaMemorySizeConsolidado=$ETA_CONFIG_MEMORY_SIZE_CONSOLIDADO pEtaTimeoutMl=$ETA_CONFIG_TIMEOUT_ML pEtaTimeoutSr=$ETA_CONFIG_TIMEOUT_SR pEtaTimeoutConsolidado=$ETA_CONFIG_TIMEOUT_CONSOLIDADO pEtaheremapskey=$ETA_TOKENS_HEREMAPS_KEY pEtaCarlosValdovinosSr=$ETA_TOKENS_CARLOS_VALDOVINOS_SR pPuenteAltoSr=$ETA_TOKENS_PUENTE_ALTO_SR"
               ;;
             koa-da-ecodistribucion-misupply)
               deploy_stack koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
