@@ -24,7 +24,6 @@ jobs:
       common_params: ${{ steps.set-env.outputs.common_params }}
       region: ${{ steps.set-env.outputs.region }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      aws_iam_role: ${{ steps.set-env.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -39,7 +38,6 @@ jobs:
           echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
           echo "PARAMETERS_TAG=./tags-$ENVIRONMENT.json" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_ENV
 
       - name: Load JSON into Environment Variables
         run: |
@@ -98,6 +96,8 @@ jobs:
   deploy-resources-cross:
     needs: [prepare]
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.base_ref }}
     permissions:
       id-token: write
       contents: read
@@ -118,7 +118,6 @@ jobs:
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
-          echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
 
           echo "::set-output name=tags::${{ needs.prepare.outputs.tags }}"
           echo "::set-output name=common_params::${{ needs.prepare.outputs.common_params }}"
@@ -128,7 +127,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: ${{ needs.prepare.outputs.aws_iam_role }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: ${{ needs.prepare.outputs.region }}
 
       - name: Load Deployment Script
@@ -197,6 +196,8 @@ jobs:
     if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
     needs: deploy-resources-cross
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.base_ref }}
     permissions:
       id-token: write
       contents: read
@@ -218,7 +219,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: $AWS_IAM_ROLE
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: $REGION
 
       - name: Load Deployment Script
