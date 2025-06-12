@@ -64,8 +64,6 @@ jobs:
             fi
           done
 
-
-
       - name: Set timestamp
         id: set-timestamp
         run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
@@ -91,113 +89,22 @@ jobs:
             fi
           done
           MATRIX="${MATRIX%,}]}"
+
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
-
   deploy-resources-cross:
-      needs: [prepare]
-      runs-on: ubuntu-latest
-      permissions:
-        id-token: write
-        contents: read
-        pull-requests: write
-      outputs:
-        tags: ${{ steps.export-env.outputs.tags }}
-        common_params: ${{ steps.export-env.outputs.common_params }}
-        region: ${{ steps.export-env.outputs.region }}
-        matrix: ${{ needs.prepare.outputs.matrix }}
-        aws_iam_role: ${{ needs.prepare.outputs.aws_iam_role }}
-      steps:
-        - name: Checkout Repo
-          uses: actions/checkout@v2
-
-        - name: Export ENV variables
-          id: export-env
-          run: |
-            echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
-            echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
-            echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
-            echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
-
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v1
-          with:
-            role-session-name: awssyncsession
-            role-to-assume: ${{ env.AWS_IAM_ROLE }}
-            aws-region: ${{ env.REGION }}
-
-        - name: Load Deployment Script
-          run: |
-            cat << 'EOF' > deploy_stack.sh
-            #!/bin/bash
-            set -euxo pipefail
-            REGION=${REGION:-us-east-1}
-
-            function deploy_stack() {
-              local template=$1
-              local stack_name=$2
-              local extra_params="${3:-}"
-
-              echo "Deploying $stack_name using template: templates/$template"
-              echo "With extra params: $extra_params"
-
-              if [ -z "$template" ] || [ -z "$stack_name" ]; then
-                echo "ERROR: template and stack_name are required"
-                exit 1
-              fi
-
-              TAGS_PARAM="${TAGS:+--tags $TAGS}"
-              PARAMS="${COMMON_PARAMS:+--parameter-overrides $COMMON_PARAMS $extra_params}"
-
-              aws cloudformation deploy \
-                --template-file templates/$template \
-                --region "$REGION" \
-                --stack-name "$stack_name" \
-                --capabilities CAPABILITY_NAMED_IAM \
-                --no-fail-on-empty-changeset \
-                $TAGS_PARAM \
-                $PARAMS
-
-              aws cloudformation describe-stack-events \
-                --region "$REGION" \
-                --stack-name "$stack_name" \
-                --max-items 5 \
-                --output table
-            }
-            EOF
-
-            chmod +x deploy_stack.sh
-
-        - name: Deploy IAM Stack
-          if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
-          run: |
-            source ./deploy_stack.sh
-            deploy_stack "iam.yml" "da-josemaria-iam"
-
-        - name: Deploy S3 Stack
-          if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
-          run: |
-            source ./deploy_stack.sh
-            deploy_stack "s3.yml" "da-josemaria-s3"
-
-        - name: Deploy Athena Stack
-          if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
-          run: |
-            source ./deploy_stack.sh
-            deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
-
-
-
-
-  deploy-projects-ecodistribucion:
-    if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
-    needs: deploy-resources-cross
+    needs: [prepare]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-    strategy:
-      matrix: ${{ fromJson(needs.deploy-core.outputs.matrix) }}
+      pull-requests: write
+    outputs:
+      tags: ${{ steps.export-env.outputs.tags }}
+      common_params: ${{ steps.export-env.outputs.common_params }}
+      region: ${{ steps.export-env.outputs.region }}
+      matrix: ${{ needs.prepare.outputs.matrix }}
+      aws_iam_role: ${{ steps.export-env.outputs.aws_iam_role }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -205,10 +112,89 @@ jobs:
       - name: Export ENV variables
         id: export-env
         run: |
+          echo "tags=${{ needs.prepare.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "common_params=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_OUTPUT
+          echo "region=${{ needs.prepare.outputs.region }}" >> $GITHUB_OUTPUT
+          echo "aws_iam_role=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_OUTPUT
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
           echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-session-name: awssyncsession
+          role-to-assume: ${{ env.AWS_IAM_ROLE }}
+          aws-region: ${{ env.REGION }}
+
+      - name: Load Deployment Script
+        run: |
+          cat << 'EOF' > deploy_stack.sh
+          #!/bin/bash
+          set -euxo pipefail
+          REGION=${REGION:-us-east-1}
+          function deploy_stack() {
+            local template=$1
+            local stack_name=$2
+            local extra_params="${3:-}"
+            TAGS_PARAM="${TAGS:+--tags $TAGS}"
+            PARAMS="${COMMON_PARAMS:+--parameter-overrides $COMMON_PARAMS $extra_params}"
+            aws cloudformation deploy \
+              --template-file templates/$template \
+              --region "$REGION" \
+              --stack-name "$stack_name" \
+              --capabilities CAPABILITY_NAMED_IAM \
+              --no-fail-on-empty-changeset \
+              $TAGS_PARAM \
+              $PARAMS
+            aws cloudformation describe-stack-events \
+              --region "$REGION" \
+              --stack-name "$stack_name" \
+              --max-items 5 \
+              --output table
+          }
+          EOF
+          chmod +x deploy_stack.sh
+
+      - name: Deploy IAM Stack
+        if: contains(github.event.pull_request.title, '-iam') || contains(github.event.pull_request.title, '-all')
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "iam.yml" "da-josemaria-iam"
+
+      - name: Deploy S3 Stack
+        if: contains(github.event.pull_request.title, '-s3') || contains(github.event.pull_request.title, '-all')
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "s3.yml" "da-josemaria-s3"
+
+      - name: Deploy Athena Stack
+        if: contains(github.event.pull_request.title, '-athenacatalogo') || contains(github.event.pull_request.title, '-all')
+        run: |
+          source ./deploy_stack.sh
+          deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
+
+  deploy-projects-ecodistribucion:
+    if: ${{ needs.deploy-resources-cross.outputs.matrix != '{}' }}
+    needs: deploy-resources-cross
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix: ${{ fromJson(needs.deploy-resources-cross.outputs.matrix) }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Export ENV variables
+        id: export-env
+        run: |
+          echo "TAGS=${{ needs.deploy-resources-cross.outputs.tags }}" >> $GITHUB_ENV
+          echo "COMMON_PARAMS=${{ needs.deploy-resources-cross.outputs.common_params }}" >> $GITHUB_ENV
+          echo "REGION=${{ needs.deploy-resources-cross.outputs.region }}" >> $GITHUB_ENV
+          echo "AWS_IAM_ROLE=${{ needs.deploy-resources-cross.outputs.aws_iam_role }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -258,4 +244,3 @@ jobs:
               deploy_stack koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
-
