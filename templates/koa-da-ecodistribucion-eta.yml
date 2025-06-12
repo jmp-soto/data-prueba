@@ -224,56 +224,6 @@ Resources:
           Value: !Ref pdeveloper
 
   # Recurso para almacenar los tokens de API en Secrets Manager
-  etaCredentialsSecrets:
-    Type: AWS::SecretsManager::Secret
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      Name: "key-eta-sr-credential"
-      Description: "Credenciales para APIs utilizadas en ETA (SimpleRoute)"
-      SecretString: !Sub |
-        {
-          "carlos-valdovinos": {
-            "simpliroute_token": "${pEtaCarlosValdovinosSr}"
-          },
-          "puente-alto": {
-            "simpliroute_token": "${pPuenteAltoSr}"
-          }
-        }
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-        - Key: Name
-          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Account
-          Value: !Ref pAccountName
- 
-  etaCredentialSecretApiHereMaps:
-    Type: AWS::SecretsManager::Secret
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      Name: "key-api-heremaps-credential"
-      Description: "Credenciales para APIs Here maps"
-      SecretString: !Sub |
-        {
-          "heremaps-api-key": "${pEtaheremapskey}"
-        }
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-        - Key: Name
-          Value: !Sub "eta-credentials-${pTeamName}-${Stage}"
-        - Key: Environment
-          Value: !Ref Stage
-        - Key: Team
-          Value: !Ref pTeamName
-        - Key: Account
-          Value: !Ref pAccountName
 
   etaSrCLLambda:
     Type: AWS::Lambda::Function
