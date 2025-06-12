@@ -188,6 +188,7 @@ jobs:
 
 
 
+
   deploy-projects-ecodistribucion:
     if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
     needs: deploy-resources-cross
