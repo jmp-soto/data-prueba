@@ -127,8 +127,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: $AWS_IAM_ROLE
-          aws-region: $REGION
+          role-to-assume: ${{ env.AWS_IAM_ROLE }}
+          aws-region: ${{ env.REGION }}
 
       - name: Load Deployment Script
         run: |
