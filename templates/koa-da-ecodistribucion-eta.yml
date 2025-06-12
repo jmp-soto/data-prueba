@@ -451,3 +451,19 @@ Resources:
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
 
+  VisitasRutaTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VisitasRuta
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: nro_envio_order_id_visita
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route
+          KeyType: HASH  # Partition Key
+        - AttributeName: nro_envio_order_id_visita
+          KeyType: RANGE  # Sort Key
+      BillingMode: PAYPERREQUEST
+
