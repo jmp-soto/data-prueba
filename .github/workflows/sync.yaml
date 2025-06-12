@@ -199,7 +199,7 @@ jobs:
 
   deploy-projects-ecodistribucion:
     if: ${{ contains(needs.prepare.outputs.matrix, 'koa-da-ecodistribucion') }}
-    needs: prepare
+    needs: [prepare, deploy-resources-cross]
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
