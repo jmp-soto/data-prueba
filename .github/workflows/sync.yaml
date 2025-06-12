@@ -51,20 +51,15 @@ jobs:
             if [ "$key" = "ETA_CONFIG" ]; then
               echo "$item" | jq -r '.ETA_CONFIG | to_entries[] | "ETA_CONFIG_\(.key)=\(.value)"' | while read -r line; do
                 echo "$line" >> $GITHUB_ENV
-                echo "Cargado: $line"
               done
             elif [ "$key" = "ETA_TOKENS" ]; then
               echo "$item" | jq -r '.ETA_TOKENS | to_entries[] | "ETA_TOKENS_\(.key)=\(.value)"' | while read -r line; do
                 echo "$line" >> $GITHUB_ENV
-                echo "Cargado: $line"
               done
             else
               echo "${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ${key}=${value}"
             fi
           done
-
-
 
       - name: Set timestamp
         id: set-timestamp
@@ -73,12 +68,13 @@ jobs:
       - name: Set ENV
         id: set-env
         run: |
-          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and"))") | join(" ")' $PARAMETERS_TAG)
+          TAGS=$(jq -r 'map("\(.Key)=\(.Value|gsub(" "; "_")|gsub("&"; "and")))" | join(" ")' $PARAMETERS_TAG)
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
           COMMON_PARAMS="pTeamName=$TEAM Stage=$ENVIRONMENT pBranchName=$BRANCH_NAME pdbAnalyticsName=$DB_ANALYTICS pArtifactsBucket=$ARTIFACTORY_BUCKET pAWSRegion=us-east-1 pAWSAccountId=$AWS_ACCOUNT_ID pAWSAccountOpt=$AWS_ACCOUNT_ID_OPT pdbStageName=$DB_STAGE pAccountName=$AWS_ACCOUNT pbucketAnalytics=$ANALYTICS_BUCKET pdeploymentDate=${{ steps.set-timestamp.outputs.timestamp }} pRDAWSAccountId=$AWS_RUTADIGITAL_ID"
           echo "common_params=$COMMON_PARAMS" >> $GITHUB_OUTPUT
           echo "region=us-east-1" >> $GITHUB_OUTPUT
           echo "aws_iam_role=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_OUTPUT
+          echo "AWS_IAM_ROLE=${{ secrets.AWS_IAM_ROLE }}" >> $GITHUB_ENV
 
       - name: Determine matrix for deploy-projects
         id: set-matrix
@@ -93,14 +89,12 @@ jobs:
           MATRIX="${MATRIX%,}]}"
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
-
   deploy-resources-cross:
     needs: [prepare]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-      pull-requests: write
     outputs:
       tags: ${{ steps.export-env.outputs.tags }}
       common_params: ${{ steps.export-env.outputs.common_params }}
@@ -118,10 +112,6 @@ jobs:
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
           echo "AWS_IAM_ROLE=${{ needs.prepare.outputs.aws_iam_role }}" >> $GITHUB_ENV
-
-          echo "::set-output name=tags::${{ needs.prepare.outputs.tags }}"
-          echo "::set-output name=common_params::${{ needs.prepare.outputs.common_params }}"
-          echo "::set-output name=region::${{ needs.prepare.outputs.region }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -141,14 +131,6 @@ jobs:
             local template=$1
             local stack_name=$2
             local extra_params="${3:-}"
-
-            echo "Deploying $stack_name using template: templates/$template"
-            echo "With extra params: $extra_params"
-
-            if [ -z "$template" ] || [ -z "$stack_name" ]; then
-              echo "ERROR: template and stack_name are required"
-              exit 1
-            fi
 
             TAGS_PARAM="${TAGS:+--tags $TAGS}"
             PARAMS="${COMMON_PARAMS:+--parameter-overrides $COMMON_PARAMS $extra_params}"
@@ -190,23 +172,20 @@ jobs:
           source ./deploy_stack.sh
           deploy_stack "athenacatalogo.yml" "da-josemaria-athenacatalogo" "pdbAnalyticsName=$DB_ANALYTICS"
 
-
-
   deploy-projects-ecodistribucion:
-    if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
+    if: ${{ needs.deploy-resources-cross.outputs.matrix != '{}' }}
     needs: deploy-resources-cross
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     strategy:
-      matrix: ${{ fromJson(needs.deploy-core.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.deploy-resources-cross.outputs.matrix) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Export ENV variables
-        id: export-env
         run: |
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
@@ -217,8 +196,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: $AWS_IAM_ROLE
-          aws-region: $REGION
+          role-to-assume: ${{ env.AWS_IAM_ROLE }}
+          aws-region: ${{ env.REGION }}
 
       - name: Load Deployment Script
         run: |
@@ -261,4 +240,3 @@ jobs:
               deploy_stack koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
-
