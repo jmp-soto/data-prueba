@@ -86,11 +86,16 @@ jobs:
           MATRIX='{"include":['
           for stack in eta misupply nps-feedback optimizador; do
             if [[ "$TITLE" == *"koa-da-ecodistribucion-$stack"* || "$TITLE" == *"-all"* ]]; then
-              MATRIX+='{"stack":"koa-da-ecodistribucion-'$stack'"},'
+              MATRIX+="{\"stack\":\"koa-da-ecodistribucion-$stack\"},"
             fi
           done
-          MATRIX="${MATRIX%,}]}"
+          if [[ "$MATRIX" == '{"include":[' ]]; then
+            MATRIX='{"include":[]}'
+          else
+            MATRIX="${MATRIX%,}]}"
+          fi
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
 
 
   deploy-resources-cross:
@@ -193,8 +198,8 @@ jobs:
 
 
   deploy-projects-ecodistribucion:
-    if: ${{ needs.deploy-core.outputs.matrix != '{}' }}
-    needs: deploy-resources-cross
+    if: ${{ contains(needs.prepare.outputs.matrix, 'koa-da-ecodistribucion') }}
+    needs: prepare
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
@@ -202,21 +207,16 @@ jobs:
       id-token: write
       contents: read
     strategy:
-      matrix: ${{ fromJson(needs.deploy-core.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Export ENV variables
-        id: export-env
         run: |
           echo "TAGS=${{ needs.prepare.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.prepare.outputs.common_params }}" >> $GITHUB_ENV
           echo "REGION=${{ needs.prepare.outputs.region }}" >> $GITHUB_ENV
-
-          echo "::set-output name=tags::${{ needs.prepare.outputs.tags }}"
-          echo "::set-output name=common_params::${{ needs.prepare.outputs.common_params }}"
-          echo "::set-output name=region::${{ needs.prepare.outputs.region }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -254,7 +254,7 @@ jobs:
           source ./deploy_stack.sh
           case "${{ matrix.stack }}" in
             koa-da-ecodistribucion-eta)
-              deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta pEtaCronExpression=$ETA_CONFIG_CRON_EXPRESSION pEtaMemorySizeMl=$ETA_CONFIG_MEMORY_SIZE_ML pEtaMemorySizeSr=$ETA_CONFIG_MEMORY_SIZE_SR pEtaMemorySizeConsolidado=$ETA_CONFIG_MEMORY_SIZE_CONSOLIDADO pEtaTimeoutMl=$ETA_CONFIG_TIMEOUT_ML pEtaTimeoutSr=$ETA_CONFIG_TIMEOUT_SR pEtaTimeoutConsolidado=$ETA_CONFIG_TIMEOUT_CONSOLIDADO pEtaheremapskey=$ETA_TOKENS_HEREMAPS_KEY pEtaCarlosValdovinosSr=$ETA_TOKENS_CARLOS_VALDOVINOS_SR pPuenteAltoSr=$ETA_TOKENS_PUENTE_ALTO_SR"
+              deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta "pEtaCronExpression=$ETA_CONFIG_CRON_EXPRESSION pEtaMemorySizeMl=$ETA_CONFIG_MEMORY_SIZE_ML pEtaMemorySizeSr=$ETA_CONFIG_MEMORY_SIZE_SR pEtaMemorySizeConsolidado=$ETA_CONFIG_MEMORY_SIZE_CONSOLIDADO pEtaTimeoutMl=$ETA_CONFIG_TIMEOUT_ML pEtaTimeoutSr=$ETA_CONFIG_TIMEOUT_SR pEtaTimeoutConsolidado=$ETA_CONFIG_TIMEOUT_CONSOLIDADO pEtaheremapskey=$ETA_TOKENS_HEREMAPS_KEY pEtaCarlosValdovinosSr=$ETA_TOKENS_CARLOS_VALDOVINOS_SR pPuenteAltoSr=$ETA_TOKENS_PUENTE_ALTO_SR"
               ;;
             koa-da-ecodistribucion-misupply)
               deploy_stack koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
