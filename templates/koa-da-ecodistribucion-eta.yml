@@ -312,7 +312,6 @@ Resources:
           DYNAMO_TABLE_ETA: !Ref etaCLDynamo
           DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-          ETA_SECRETS_NAME: !Ref etaCredentialSecretApiHereMaps
       Layers:
         - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
