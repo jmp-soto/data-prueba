@@ -491,29 +491,3 @@ Resources:
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
 
-
-
-Outputs:
-  EtaSecretArn:
-    Description: "ARN del secreto de credenciales ETA"
-    Value: !Ref etaCredentialsSecrets
-    Export:
-      Name: !Sub "${AWS::StackName}-eta-secret-arn"
-
-  EtaSqsQueueUrl:
-    Description: "URL de la cola SQS para procesamiento ML"
-    Value: !Ref taMlCLSqs
-    Export:
-      Name: !Sub "${AWS::StackName}-eta-sqs-url"
-
-  EtaDynamoTableName:
-    Description: "Nombre de la tabla DynamoDB principal ETA"
-    Value: !Ref etaCLDynamo
-    Export:
-      Name: !Sub "${AWS::StackName}-eta-dynamo-table"
- 
-  ETADataTable:
-    Description: "La tabla de Athena para datos de ETA consolidados"
-    Value: !Ref etaAnalyticsTable
-    Export:
-      Name: !Sub "Athena-ETA-Table-${Stage}"
