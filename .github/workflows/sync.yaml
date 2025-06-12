@@ -43,24 +43,19 @@ jobs:
       - name: Load JSON into Environment Variables
         run: |
           JSON_CONTENT=$(cat "$PARAMETERS_FILE")
-
           echo "$JSON_CONTENT" | jq -c '.[]' | while read -r item; do
             key=$(echo "$item" | jq -r 'keys[0]')
             value=$(echo "$item" | jq -r ".[\"$key\"]")
-
             if [ "$key" = "ETA_CONFIG" ]; then
               echo "$item" | jq -r '.ETA_CONFIG | to_entries[] | "ETA_CONFIG_\(.key)=\(.value)"' | while read -r line; do
                 echo "$line" >> $GITHUB_ENV
-                echo "Cargado: $line"
               done
             elif [ "$key" = "ETA_TOKENS" ]; then
               echo "$item" | jq -r '.ETA_TOKENS | to_entries[] | "ETA_TOKENS_\(.key)=\(.value)"' | while read -r line; do
                 echo "$line" >> $GITHUB_ENV
-                echo "Cargado: $line"
               done
             else
               echo "${key}=${value}" >> $GITHUB_ENV
-              echo "Cargado: ${key}=${value}"
             fi
           done
 
@@ -189,7 +184,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Export ENV variables
-        id: export-env
         run: |
           echo "TAGS=${{ needs.deploy-resources-cross.outputs.tags }}" >> $GITHUB_ENV
           echo "COMMON_PARAMS=${{ needs.deploy-resources-cross.outputs.common_params }}" >> $GITHUB_ENV
@@ -200,8 +194,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-session-name: awssyncsession
-          role-to-assume: $AWS_IAM_ROLE
-          aws-region: $REGION
+          role-to-assume: ${{ env.AWS_IAM_ROLE }}
+          aws-region: ${{ env.REGION }}
 
       - name: Load Deployment Script
         run: |
