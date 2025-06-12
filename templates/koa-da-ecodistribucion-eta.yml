@@ -451,6 +451,7 @@ Resources:
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
 
+Resources:
   VisitasRutaTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -460,10 +461,22 @@ Resources:
           AttributeType: S
         - AttributeName: nro_envio_order_id_visita
           AttributeType: S
+        - AttributeName: process_date
+          AttributeType: S  # Para la GSI
       KeySchema:
-        - AttributeName: route
-          KeyType: HASH  # Partition Key
+        - AttributeName: route_id
+          KeyType: HASH
         - AttributeName: nro_envio_order_id_visita
-          KeyType: RANGE  # Sort Key
+          KeyType: RANGE
       BillingMode: PAYPERREQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: GSIProcessDate
+          KeySchema:
+            - AttributeName: process_date
+              KeyType: HASH
+            - AttributeName: nro_envio_order_id_visita
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
 
