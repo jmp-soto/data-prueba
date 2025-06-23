@@ -149,3 +149,10 @@ Resources:
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}"
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/cl/miruta/cl_nps_feedback/*"
               - !Sub "arn:aws:s3:::${daEcodistribucionAnalyticsBucket}/cl/miruta/eta/*"
+
+  daEcodistribucionAnalyticsBuckets:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Join ['-', [!Ref pTeamName, !Ref pAccountName, "analytics-c", !Ref Stage]]
+      AccessControl: Private
