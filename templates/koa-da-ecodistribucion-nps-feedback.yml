@@ -183,20 +183,5 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  rtNpsFeedbackCLLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt rtNpsFeedbackCLLambda.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: !Sub "arn:aws:iam::${pRDAWSAccountId}:root"
-      SourceAccount: !Ref pRDAWSAccountId
 
-  npsFeedbackClEventRule:
-      Type: AWS::Events::Rule
-      Properties:
-        ScheduleExpression: "cron(0 7 * * ? *)" 
-        State: "ENABLED"
-        Targets:
-          - Id: !Sub "Eventrule-${pTeamName}-nps-feedback"
-            Arn: !GetAtt consolidadoNpsFeedbackCLLambda.Arn
   
