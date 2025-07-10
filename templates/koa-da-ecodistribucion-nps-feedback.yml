@@ -153,7 +153,21 @@ Resources:
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
-  
+  npsFeedbackCLDynamopruebaroles:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-nps-feedback-pbs-${pCountryCl}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: truck
+          AttributeType: S
+      KeySchema:
+        - AttributeName: truck
+          KeyType: HASH
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
   rtNpsFeedbackCLLambda:
     Type: AWS::Lambda::Function
     Properties:
