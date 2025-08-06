@@ -184,6 +184,49 @@ Resources:
                 Action: sns:Publish
                 Resource: !Ref DevTeamsNotifications
 
+Resources:
+  LambdaSimpliRouteKpiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaSimpliRouteKpiRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Rol para Step Function
+  SMSimpliRouteKpiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SMSimpliRouteKpiRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SMLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: 
+                  - !GetAtt LambdaRoutesSimplirouteCL.Arn
+                  - !GetAtt LambdaInvoicesSimplirouteCL.Arn
+                  - !GetAtt LambdaVisitsSimplirouteCL.Arn
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref DevTeamsNotifications
+
   SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -212,6 +255,13 @@ Resources:
                             "BackoffRate": 2.0
                           }
                         ],
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "PrepareErrorMessage"
+                          }
+                        ],
                         "End": true
                       }
                     }
@@ -228,6 +278,13 @@ Resources:
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
+                          }
+                        ],
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "PrepareErrorMessage"
                           }
                         ],
                         "End": true
@@ -248,28 +305,25 @@ Resources:
                             "BackoffRate": 2.0
                           }
                         ],
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "PrepareErrorMessage"
+                          }
+                        ],
                         "End": true
                       }
                     }
                   }
                 ],
-                "Next": "SuccessState",
-                "Catch": [
-                  {
-                    "ErrorEquals": ["States.ALL"],
-                    "ResultPath": "$.ErrorInfo",
-                    "Next": "PrepareErrorMessage"
-                  }
-                ]
+                "Next": "SuccessState"
               },
               "PrepareErrorMessage": {
                 "Type": "Pass",
                 "ResultPath": "$.NotificationMessage",
                 "Parameters": {
-                  "StateName.$": "$$.State.Name",
-                  "Error.$": "$.ErrorInfo.Error",
-                  "LambdaArn.$": "States.JsonToString(States.Choice($.StateName == 'LambdaRoutes', '${LambdaRoutesSimplirouteCL.Arn}', States.Choice($.StateName == 'LambdaInvoices', '${LambdaInvoicesSimplirouteCL.Arn}', '${LambdaVisitsSimplirouteCL.Arn}')))",
-                  "Message.$": "States.Format('La Step Function falló en el estado {0} (ARN: {1}) con error: {2}', $$.State.Name, States.JsonToString(States.Choice($.StateName == 'LambdaRoutes', '${LambdaRoutesSimplirouteCL.Arn}', States.Choice($.StateName == 'LambdaInvoices', '${LambdaInvoicesSimplirouteCL.Arn}', '${LambdaVisitsSimplirouteCL.Arn}'))), $.ErrorInfo.Error)"
+                  "Message.$": "States.Format('La Step Function falló en el estado {} con error: {}', $$.State.Name, $.ErrorInfo.Error)"
                 },
                 "Next": "NotifyFailure"
               },
@@ -292,5 +346,6 @@ Resources:
               }
             }
           }
+
 
 
