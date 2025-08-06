@@ -258,16 +258,27 @@ Resources:
                   {
                     "ErrorEquals": ["States.ALL"],
                     "ResultPath": "$.ErrorInfo",
-                    "Next": "NotifyFailure"
+                    "Next": "PrepareErrorMessage"
                   }
                 ]
+              },
+              "PrepareErrorMessage": {
+                "Type": "Pass",
+                "ResultPath": "$.NotificationMessage",
+                "Parameters": {
+                  "StateName.$": "$$.State.Name",
+                  "Error.$": "$.ErrorInfo.Error",
+                  "LambdaArn.$": "States.JsonToString(States.Choice($.StateName == 'LambdaRoutes', '${LambdaRoutesSimplirouteCL.Arn}', States.Choice($.StateName == 'LambdaInvoices', '${LambdaInvoicesSimplirouteCL.Arn}', '${LambdaVisitsSimplirouteCL.Arn}')))",
+                  "Message.$": "States.Format('La Step Function falló en el estado {0} (ARN: {1}) con error: {2}', $$.State.Name, States.JsonToString(States.Choice($.StateName == 'LambdaRoutes', '${LambdaRoutesSimplirouteCL.Arn}', States.Choice($.StateName == 'LambdaInvoices', '${LambdaInvoicesSimplirouteCL.Arn}', '${LambdaVisitsSimplirouteCL.Arn}'))), $.ErrorInfo.Error)"
+                },
+                "Next": "NotifyFailure"
               },
               "NotifyFailure": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
-                  "Message.$": "States.Format('La Step Function falló en el estado {0} con ARN {1} y error: {2}', $$.State.Name, States.StringToJson(States.JsonMerge('{\"LambdaRoutes\":\"${LambdaRoutesSimplirouteCL.Arn}\",\"LambdaInvoices\":\"${LambdaInvoicesSimplirouteCL.Arn}\",\"LambdaVisits\":\"${LambdaVisitsSimplirouteCL.Arn}\"}', '{}'))[$$.State.Name], $.ErrorInfo.Error)"
+                  "Message.$": "$.NotificationMessage.Message"
                 },
                 "Next": "FailState"
               },
