@@ -157,10 +157,10 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   # Rol para Step Function
-  StepFunctionSimpliRouteKpiRole:
+  SMSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: StepFunctionSimpliRouteKpiRole
+      RoleName: SMSimpliRouteKpiRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -169,7 +169,7 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: StepFunctionLambdaPolicy
+        - PolicyName: SMLambdaPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -185,66 +185,94 @@ Resources:
                 Resource: !Ref DevTeamsNotifications
 
   # Step Function
-  StepFunctionSimpliRouteKpi:
+  SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      RoleArn: !GetAtt StepFunctionSimpliRouteKpiRole.Arn
-      StateMachineName: !Sub "StepFunction-simpliroute-kpi-${pCountryCl}"
+      RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
+      StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
       DefinitionString:
         !Sub |
           {
-            "Comment": "Step Function con 3 Lambdas, reintentos y notificación",
-            "StartAt": "LambdaRoutes",
+            "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos y notificación",
+            "StartAt": "ParallelExecution",
             "States": {
-              "LambdaRoutes": {
-                "Type": "Task",
-                "Resource": "${LambdaRoutesSimplirouteCL.Arn}",
-                "Retry": [
+              "ParallelExecution": {
+                "Type": "Parallel",
+                "Branches": [
                   {
-                    "ErrorEquals": ["States.ALL"],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 2.0
-                  }
-                ],
-                "Next": "LambdaInvoices",
-                "Catch": [
+                    "StartAt": "LambdaRoutes",
+                    "States": {
+                      "LambdaRoutes": {
+                        "Type": "Task",
+                        "Resource": "${LambdaRoutesSimplirouteCL.Arn}",
+                        "Retry": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true,
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "NotifyFailure"
+                          }
+                        ]
+                      }
+                    }
+                  },
                   {
-                    "ErrorEquals": ["States.ALL"],
-                    "ResultPath": "$.ErrorInfo",
-                    "Next": "NotifyFailure"
-                  }
-                ]
-              },
-              "LambdaInvoices": {
-                "Type": "Task",
-                "Resource": "${LambdaInvoicesSimplirouteCL.Arn}",
-                "Retry": [
+                    "StartAt": "LambdaInvoices",
+                    "States": {
+                      "LambdaInvoices": {
+                        "Type": "Task",
+                        "Resource": "${LambdaInvoicesSimplirouteCL.Arn}",
+                        "Retry": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true,
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "NotifyFailure"
+                          }
+                        ]
+                      }
+                    }
+                  },
                   {
-                    "ErrorEquals": ["States.ALL"],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 2.0
-                  }
-                ],
-                "Next": "LambdaVisits",
-                "Catch": [
-                  {
-                    "ErrorEquals": ["States.ALL"],
-                    "ResultPath": "$.ErrorInfo",
-                    "Next": "NotifyFailure"
-                  }
-                ]
-              },
-              "LambdaVisits": {
-                "Type": "Task",
-                "Resource": "${LambdaVisitsSimplirouteCL.Arn}",
-                "Retry": [
-                  {
-                    "ErrorEquals": ["States.ALL"],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 2.0
+                    "StartAt": "LambdaVisits",
+                    "States": {
+                      "LambdaVisits": {
+                        "Type": "Task",
+                        "Resource": "${LambdaVisitsSimplirouteCL.Arn}",
+                        "Retry": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true,
+                        "Catch": [
+                          {
+                            "ErrorEquals": ["States.ALL"],
+                            "ResultPath": "$.ErrorInfo",
+                            "Next": "NotifyFailure"
+                          }
+                        ]
+                      }
+                    }
                   }
                 ],
                 "Next": "SuccessState",
@@ -261,7 +289,7 @@ Resources:
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
-                  "Message.$": "States.Format('La Step Function falló en el estado {} con error: {}', $$.State.Name, $.ErrorInfo.Error)"
+                  "Message.$": "States.Format('La Step Function falló en una rama con error: {}', $.ErrorInfo.Error)"
                 },
                 "Next": "FailState"
               },
@@ -275,3 +303,4 @@ Resources:
               }
             }
           }
+
