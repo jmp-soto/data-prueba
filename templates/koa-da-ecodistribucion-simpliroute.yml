@@ -7,168 +7,145 @@ Parameters:
     Description: Environment name (dev/qa/prod)
     AllowedValues: [dev, qa, prod]
   pBranchName:
+    Type: String
     Description: "Branch Name(all lowercase, no symbols or spaces)"
-    Type: String
   pArtifactsBucket:
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
     Type: String
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
   pbucketAnalytics:
+    Type: String
     Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
-    Type: String
   pAWSRegion:
+    Type: String
     Description: "AWS region (all lowercase, no symbols or spaces)"
-    Type: String
   pAWSAccountId:
+    Type: String
     Description: "AWS account ID (all lowercase, no symbols or spaces)"
-    Type: String
   pAWSAccountOpt:
+    Type: String
     Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
-    Type: String
   pAccountName:
+    Type: String
     Description: "AWS account name (all lowercase, no symbols or spaces)"
-    Type: String
   pTeamName:
+    Type: String
     Description: "Team Name (all lowercase, no symbols or spaces)"
-    Type: String
   pdeploymentDate:
+    Type: String
     Description: "Deployment date (all lowercase, no symbols or spaces)"
-    Type: String
   pdbStageName:
+    Type: String
     Description: "Database Stage name (all lowercase, no symbols or spaces)"
-    Type: String
   pdbAnalyticsName:
-    Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
   pdeveloper:
-    Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
+    Description: "Developer name"
     Default: Josemaria_Paucar
   pRDAWSAccountId:
-    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
     Type: String
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
   # Country parameters
   pCountryCl:
-    Description: "Country code for Chile"
     Type: String
+    Description: "Country code for Chile"
     Default: "cl"
   pCountryPy:
-    Description: "Country code for Paraguay"
     Type: String
+    Description: "Country code for Paraguay"
     Default: "py"
   pCountryAr:
-    Description: "Country code for Argentina"
     Type: String
+    Description: "Country code for Argentina"
     Default: "ar"
   pCountryBr:
-    Description: "Country code for Brazil"
     Type: String
+    Description: "Country code for Brazil"
     Default: "br"
   pCountryRg:
-    Description: "Country code for Regional"
     Type: String
+    Description: "Country code for Regional"
     Default: "rg"
-  # Required for referenced resources
-
 
 Resources:
 
-  LambdaErrorTopic:
+  DevTeamsNotifications:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: lambda-error-notifications
+      TopicName: develop-teams-notifications
 
-  LambdaFunction2:
+  LambdaRoutesSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbackss-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-da-routes-simpliroute-${pCountryCl}"
       Handler: lambda_function.lambda_handler
-      Role: !GetAtt npsFeedbackRole.Arn
+      Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
       MemorySize: 512
       Code:
         ZipFile: |
           import os
-
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {
-                  "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
-              }
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
       Environment:
         Variables:
-          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-      Layers:
-        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
 
-  LambdaFunction1:
+  LambdaInvoicesSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbacksss-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-da-invoices-simpliroute-${pCountryCl}"
       Handler: lambda_function.lambda_handler
-      Role: !GetAtt npsFeedbackRole.Arn
+      Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
       MemorySize: 512
       Code:
         ZipFile: |
           import os
-
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {
-                  "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
-              }
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
       Environment:
         Variables:
-          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-      Layers:
-        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
 
-  LambdaFunction3:
+  LambdaVisitsSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbacks-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-da-visits-simpliroute-${pCountryCl}"
       Handler: lambda_function.lambda_handler
-      Role: !GetAtt npsFeedbackRole.Arn
+      Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
       MemorySize: 512
       Code:
         ZipFile: |
           import os
-
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {
-                  "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
-              }
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
       Environment:
         Variables:
-          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
           ACCOUNT_ID: !Ref pAWSAccountId
-      Layers:
-        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
 
   # Rol para las Lambdas
-  LambdaExecutionRole:
+  LambdaSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LambdaExecutionRole
+      RoleName: LambdaSimpliRouteKpiRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -180,10 +157,10 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   # Rol para Step Function
-  StepFunctionRole:
+  StepFunctionSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: StepFunctionRole
+      RoleName: StepFunctionSimpliRouteKpiRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -200,28 +177,28 @@ Resources:
                 Action:
                   - lambda:InvokeFunction
                 Resource: 
-                  - !GetAtt LambdaFunction1.Arn
-                  - !GetAtt LambdaFunction2.Arn
-                  - !GetAtt LambdaFunction3.Arn
+                  - !GetAtt LambdaRoutesSimplirouteCL.Arn
+                  - !GetAtt LambdaInvoicesSimplirouteCL.Arn
+                  - !GetAtt LambdaVisitsSimplirouteCL.Arn
               - Effect: Allow
                 Action: sns:Publish
-                Resource: !Ref LambdaErrorTopic
+                Resource: !Ref DevTeamsNotifications
 
   # Step Function
-  MyStateMachine:
+  StepFunctionSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      RoleArn: !GetAtt StepFunctionRole.Arn
-      StateMachineName: LambdaStepMachine
+      RoleArn: !GetAtt StepFunctionSimpliRouteKpiRole.Arn
+      StateMachineName: !Sub "StepFunction-simpliroute-kpi-${pCountryCl}"
       DefinitionString:
         !Sub |
           {
             "Comment": "Step Function con 3 Lambdas, reintentos y notificación",
-            "StartAt": "Lambda1",
+            "StartAt": "LambdaRoutes",
             "States": {
-              "Lambda1": {
+              "LambdaRoutes": {
                 "Type": "Task",
-                "Resource": "${LambdaFunction1.Arn}",
+                "Resource": "${LambdaRoutesSimplirouteCL.Arn}",
                 "Retry": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -230,7 +207,7 @@ Resources:
                     "BackoffRate": 2.0
                   }
                 ],
-                "Next": "Lambda2",
+                "Next": "LambdaInvoices",
                 "Catch": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -239,9 +216,9 @@ Resources:
                   }
                 ]
               },
-              "Lambda2": {
+              "LambdaInvoices": {
                 "Type": "Task",
-                "Resource": "${LambdaFunction2.Arn}",
+                "Resource": "${LambdaInvoicesSimplirouteCL.Arn}",
                 "Retry": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -250,7 +227,7 @@ Resources:
                     "BackoffRate": 2.0
                   }
                 ],
-                "Next": "Lambda3",
+                "Next": "LambdaVisits",
                 "Catch": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -259,9 +236,9 @@ Resources:
                   }
                 ]
               },
-              "Lambda3": {
+              "LambdaVisits": {
                 "Type": "Task",
-                "Resource": "${LambdaFunction3.Arn}",
+                "Resource": "${LambdaVisitsSimplirouteCL.Arn}",
                 "Retry": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -283,7 +260,7 @@ Resources:
                 "Type": "Task",
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
-                  "TopicArn": "${LambdaErrorTopic}",
+                  "TopicArn": "${DevTeamsNotifications}",
                   "Message.$": "States.Format('La Step Function falló en el estado {} con error: {}', $$.State.Name, $.ErrorInfo.Error)"
                 },
                 "Next": "FailState"
@@ -298,7 +275,3 @@ Resources:
               }
             }
           }
-
-
-
-
