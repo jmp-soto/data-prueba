@@ -268,7 +268,7 @@ Resources:
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
-                  "Message.$": "States.Format('La Step Function falló en el estado {0} con error: {1}', $$.State.Name, $.ErrorInfo.Error)"
+                  "Message.$": "States.Format(\"La Step Function falló en el estado {0} con error: {1}\", $$.State.Name, $.ErrorInfo.Error)"
                 },
                 "Next": "FailState"
               },
