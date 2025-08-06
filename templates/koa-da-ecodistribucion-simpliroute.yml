@@ -213,14 +213,7 @@ Resources:
                             "BackoffRate": 2.0
                           }
                         ],
-                        "End": true,
-                        "Catch": [
-                          {
-                            "ErrorEquals": ["States.ALL"],
-                            "ResultPath": "$.ErrorInfo",
-                            "Next": "NotifyFailure"
-                          }
-                        ]
+                        "End": true
                       }
                     }
                   },
@@ -238,14 +231,7 @@ Resources:
                             "BackoffRate": 2.0
                           }
                         ],
-                        "End": true,
-                        "Catch": [
-                          {
-                            "ErrorEquals": ["States.ALL"],
-                            "ResultPath": "$.ErrorInfo",
-                            "Next": "NotifyFailure"
-                          }
-                        ]
+                        "End": true
                       }
                     }
                   },
@@ -263,14 +249,7 @@ Resources:
                             "BackoffRate": 2.0
                           }
                         ],
-                        "End": true,
-                        "Catch": [
-                          {
-                            "ErrorEquals": ["States.ALL"],
-                            "ResultPath": "$.ErrorInfo",
-                            "Next": "NotifyFailure"
-                          }
-                        ]
+                        "End": true
                       }
                     }
                   }
