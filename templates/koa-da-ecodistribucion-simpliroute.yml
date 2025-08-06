@@ -184,7 +184,6 @@ Resources:
                 Action: sns:Publish
                 Resource: !Ref DevTeamsNotifications
 
-  # Step Function
   SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -270,8 +269,6 @@ Resources:
                   "TopicArn": "${DevTeamsNotifications}",
                   "Message.$": "States.Format('La Step Function falló en el estado {0} con error: {1}', $$.State.Name, $.ErrorInfo.Error)"
                 },
-                "Next": "FailState"
-              },
                 "Next": "FailState"
               },
               "SuccessState": {
