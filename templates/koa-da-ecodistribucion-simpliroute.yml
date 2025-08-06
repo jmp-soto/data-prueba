@@ -77,10 +77,10 @@ Resources:
     Properties:
       TopicName: lambda-error-notifications
 
-  rtNpsFeedbackCLLambda:
+  LambdaFunction2:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbackss-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
       Runtime: python3.12
@@ -106,10 +106,10 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  rtNpsFeedbackCLLambda:
+  LambdaFunction1:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbacksss-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
       Runtime: python3.12
@@ -135,10 +135,10 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  rtNpsFeedbackCLLambda:
+  LambdaFunction3:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedbacks-rt-${pCountryCl}"
       Handler: lambda_function.lambda_handler
       Role: !GetAtt npsFeedbackRole.Arn
       Runtime: python3.12
