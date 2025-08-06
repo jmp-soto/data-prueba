@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating AWS Proyecto Optimizador
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Team Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
+
+
+Resources:
+
+  LambdaErrorTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: lambda-error-notifications
+
+  rtNpsFeedbackCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt npsFeedbackRole.Arn
+      Runtime: python3.12
+      Timeout: 180
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  rtNpsFeedbackCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt npsFeedbackRole.Arn
+      Runtime: python3.12
+      Timeout: 180
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  rtNpsFeedbackCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-nps-feedback-rt-${pCountryCl}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt npsFeedbackRole.Arn
+      Runtime: python3.12
+      Timeout: 180
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          import os
+
+          def handler(event, context):
+              desarrollador = os.getenv("DEVELOPER", "Desconocido")
+              return {
+                  "statusCode": 200,
+                  "body": f"Hola mundo desde {desarrollador}"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE: !Ref npsFeedbackCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  # Rol para las Lambdas
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Rol para Step Function
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: StepFunctionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: 
+                  - !GetAtt LambdaFunction1.Arn
+                  - !GetAtt LambdaFunction2.Arn
+                  - !GetAtt LambdaFunction3.Arn
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref LambdaErrorTopic
+
+  # Step Function
+  MyStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      StateMachineName: LambdaStepMachine
+      DefinitionString:
+        !Sub |
+          {
+            "Comment": "Step Function con 3 Lambdas, reintentos y notificación",
+            "StartAt": "Lambda1",
+            "States": {
+              "Lambda1": {
+                "Type": "Task",
+                "Resource": "${LambdaFunction1.Arn}",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "Next": "Lambda2",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.ErrorInfo",
+                    "Next": "NotifyFailure"
+                  }
+                ]
+              },
+              "Lambda2": {
+                "Type": "Task",
+                "Resource": "${LambdaFunction2.Arn}",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "Next": "Lambda3",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.ErrorInfo",
+                    "Next": "NotifyFailure"
+                  }
+                ]
+              },
+              "Lambda3": {
+                "Type": "Task",
+                "Resource": "${LambdaFunction3.Arn}",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "Next": "SuccessState",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.ErrorInfo",
+                    "Next": "NotifyFailure"
+                  }
+                ]
+              },
+              "NotifyFailure": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::sns:publish",
+                "Parameters": {
+                  "TopicArn": "${LambdaErrorTopic}",
+                  "Message.$": "States.Format('La Step Function falló en el estado {} con error: {}', $$.State.Name, $.ErrorInfo.Error)"
+                },
+                "Next": "FailState"
+              },
+              "SuccessState": {
+                "Type": "Succeed"
+              },
+              "FailState": {
+                "Type": "Fail",
+                "Error": "StepFunctionFailed",
+                "Cause": "Una Lambda falló incluso después de reintentos"
+              }
+            }
+          }
+
+
+
+
