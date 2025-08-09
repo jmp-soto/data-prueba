@@ -396,7 +396,7 @@ Resources:
               - Effect: Allow
                 Action: states:StartExecution
                 Resource: !Ref SMSimpliRouteKpi
-
+##
   SMfnEventRule:
     Type: AWS::Events::Rule
     Properties:
