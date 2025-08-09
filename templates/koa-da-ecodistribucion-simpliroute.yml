@@ -321,7 +321,7 @@ Resources:
               "BuildSuccessMessage": {
                 "Type": "Pass",
                 "Parameters": {
-                  "SuccessMessage.$": "States.Format('Ejecución OK | Exec: {0} | Routes: {1} | Invoices: {2} | Visits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
+                  "SuccessMessage.$": "States.Format('Ejecución OK | Exec: {} | Routes: {} | Invoices: {} | Visits: {}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
                 },
                 "ResultPath": "$",
                 "Next": "NotifySuccess"
@@ -351,7 +351,7 @@ Resources:
               "BuildFailureMessage": {
                 "Type": "Pass",
                 "Parameters": {
-                  "FailureMessage.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, $.ParsedCause.errorMessage, $$.Execution.Id)"
+                  "FailureMessage.$": "States.Format('Falla en {}: {} | Msg: {} | Exec: {}', $$.State.Name, $.ErrorInfo.Error, $.ParsedCause.errorMessage, $$.Execution.Id)"
                 },
                 "ResultPath": "$",
                 "Next": "NotifyFailure"
