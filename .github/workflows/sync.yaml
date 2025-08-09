@@ -1,9 +1,6 @@
 name: CloudFormation deploy
 
 on:
-  push:
-    branches:
-      - develop
   pull_request:
     types: [closed]
     branches:
