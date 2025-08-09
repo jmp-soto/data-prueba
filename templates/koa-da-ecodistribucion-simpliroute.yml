@@ -206,7 +206,7 @@ Resources:
       LogGroupName: !Sub "/aws/vended/sfn/sm-simpliroute-kpi-${pCountryCl}"
       RetentionInDays: 14
 
-  # ---------- Step Functions State Machine ----------
+  # ---------- Step Functions State Machine ----------.
   SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
