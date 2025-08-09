@@ -378,24 +378,24 @@ Resources:
             }
           }
 
-EventRuleSMRole:
-  Type: AWS::IAM::Role
-  Properties:
-    AssumeRolePolicyDocument:
-      Version: "2012-10-17"
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service: events.amazonaws.com
-          Action: sts:AssumeRole
-    Policies:
-      - PolicyName: AllowStartExecution
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Action: states:StartExecution
-              Resource: !Ref SMSimpliRouteKpi
+  EventRuleSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowStartExecution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: !Ref SMSimpliRouteKpi
 
   SMfnEventRule:
     Type: AWS::Events::Rule
