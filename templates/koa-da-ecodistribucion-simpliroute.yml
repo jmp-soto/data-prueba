@@ -378,40 +378,31 @@ Resources:
             }
           }
 
-  EventBridgeSchedulerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "SchedulerRole-sm-simpliroute-kpi-${pCountryCl}"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: scheduler.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: AllowStartExecutionOnStateMachine
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - states:StartExecution
-                Resource: !Ref SMSimpliRouteKpi
+EventRuleSMRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: events.amazonaws.com
+          Action: sts:AssumeRole
+    Policies:
+      - PolicyName: AllowStartExecution
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: states:StartExecution
+              Resource: !Ref SMSimpliRouteKpi
 
-  Daily7AMSantiagoSchedule:
-    Type: AWS::Scheduler::Schedule
-    Properties:
-      Name: !Sub "sch-sm-simpliroute-kpi-7am-${pCountryCl}"
-      Description: !Sub "Ejecuta sm-simpliroute-kpi-${pCountryCl} todos los días a las 07:00 America/Santiago"
-      FlexibleTimeWindow:
-        Mode: OFF
-      ScheduleExpression: "cron(0 7 * * ? *)"
-      ScheduleExpressionTimezone: "America/Santiago"
-      State: ENABLED
-      Target:
+SMfnEventRule:
+  Type: AWS::Events::Rule
+  Properties:
+    ScheduleExpression: "cron(0 11 * * ? *)"
+    State: ENABLED
+    Targets:
+      - Id: !Sub "target-sfn-${pCountryCl}"
         Arn: !Ref SMSimpliRouteKpi
-        RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
-        RetryPolicy:
-          MaximumEventAgeInSeconds: 3600
-          MaximumRetryAttempts: 2
+        RoleArn: !GetAtt EventRuleStartSfnRole.Arn
