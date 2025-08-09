@@ -397,12 +397,12 @@ EventRuleSMRole:
               Action: states:StartExecution
               Resource: !Ref SMSimpliRouteKpi
 
-SMfnEventRule:
-  Type: AWS::Events::Rule
-  Properties:
-    ScheduleExpression: "cron(0 11 * * ? *)"
-    State: ENABLED
-    Targets:
-      - Id: !Sub "target-sfn-${pCountryCl}"
-        Arn: !Ref SMSimpliRouteKpi
-        RoleArn: !GetAtt EventRuleSMRole.Arn
+  SMfnEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "cron(0 11 * * ? *)"
+      State: ENABLED
+      Targets:
+        - Id: !Sub "target-sfn-${pCountryCl}"
+          Arn: !Ref SMSimpliRouteKpi
+          RoleArn: !GetAtt EventRuleSMRole.Arn
