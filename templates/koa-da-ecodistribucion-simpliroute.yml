@@ -126,7 +126,7 @@ Resources:
                   - xray:PutTelemetryRecords
                 Resource: "*"
 
-  # (Opcional) Log group para Step Functions
+  # (Opcional) Log group para Step Functions.
   StepFnLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
