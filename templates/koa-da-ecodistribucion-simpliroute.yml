@@ -234,11 +234,7 @@ Resources:
                         "OutputPath": "$.Payload",
                         "Retry": [
                           {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
+                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -262,11 +258,7 @@ Resources:
                         "OutputPath": "$.Payload",
                         "Retry": [
                           {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
+                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -290,11 +282,7 @@ Resources:
                         "OutputPath": "$.Payload",
                         "Retry": [
                           {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
+                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -310,10 +298,11 @@ Resources:
                   {
                     "ErrorEquals": ["States.ALL"],
                     "ResultPath": "$.ErrorInfo",
-                    "Next": "NotifyFailure"
+                    "Next": "ParseError"
                   }
                 ]
               },
+
               "ConsolidateResults": {
                 "Type": "Pass",
                 "Parameters": {
@@ -324,27 +313,41 @@ Resources:
                 "ResultPath": "$",
                 "Next": "NotifySuccess"
               },
+
               "NotifySuccess": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
                   "Subject": "SFN sm-simpliroute-kpi - Éxito",
-                  "Message.$": "States.Format('Ejecución OK | Exec: {0}\nRoutes: {1}\nInvoices: {2}\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
+                  "Message.$": "States.Format('Ejecución OK | Exec: {0}\\nRoutes: {1}\\nInvoices: {2}\\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
                 },
                 "Next": "SuccessState"
               },
+
+              "ParseError": {
+                "Type": "Pass",
+                "Parameters": {
+                  "ErrorInfo.$": "$.ErrorInfo",
+                  "ParsedCause.$": "States.StringToJson($.ErrorInfo.Cause)"
+                },
+                "ResultPath": "$",
+                "Next": "NotifyFailure"
+              },
+
               "NotifyFailure": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
                   "Subject": "SFN sm-simpliroute-kpi - Falla",
-                  "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, States.StringToJson($.ErrorInfo.Cause).errorMessage, $$.Execution.Id)"
+                  "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, $.ParsedCause.errorMessage, $$.Execution.Id)"
                 },
                 "Next": "FailState"
               },
+
               "SuccessState": { "Type": "Succeed" },
+
               "FailState": {
                 "Type": "Fail",
                 "Error": "StepFunctionFailed",
@@ -352,3 +355,4 @@ Resources:
               }
             }
           }
+
