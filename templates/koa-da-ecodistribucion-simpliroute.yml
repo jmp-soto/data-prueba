@@ -195,13 +195,6 @@ Resources:
                   - xray:PutTelemetryRecords
                 Resource: "*"
 
-  # (Opcional) Log group para Step Functions
-  StepFnLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/aws/vended/sfn/sm-simpliroute-kpi-${pCountryCl}"
-      RetentionInDays: 14
-
   # ---------- Step Functions State Machine ----------
   SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
@@ -227,13 +220,18 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaRoutesSimplirouteCL}",
+                          "FunctionName": "${LambdaRoutesSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "OutputPath": "$.Payload",
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -251,13 +249,18 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaInvoicesSimplirouteCL}",
+                          "FunctionName": "${LambdaInvoicesSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "OutputPath": "$.Payload",
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -275,13 +278,18 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaVisitsSimplirouteCL}",
+                          "FunctionName": "${LambdaVisitsSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "OutputPath": "$.Payload",
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
