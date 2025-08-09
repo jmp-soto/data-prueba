@@ -8,64 +8,64 @@ Parameters:
     AllowedValues: [dev, qa, prod]
   pBranchName:
     Type: String
-    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Description: Branch Name (lowercase, no symbols or spaces)
   pArtifactsBucket:
     Type: String
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Description: Artifact Bucket (lowercase, no symbols or spaces)
   pbucketAnalytics:
     Type: String
-    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Description: Analytics Bucket (lowercase, no symbols or spaces)
   pAWSRegion:
     Type: String
-    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Description: AWS region (e.g., us-east-1)
   pAWSAccountId:
     Type: String
-    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Description: AWS account ID (12 digits)
   pAWSAccountOpt:
     Type: String
-    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Description: AWS account optimizador ID
   pAccountName:
     Type: String
-    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Description: AWS account name (lowercase, no symbols or spaces)
   pTeamName:
     Type: String
-    Description: "Team Name (all lowercase, no symbols or spaces)"
+    Description: Team Name (lowercase, no symbols or spaces)
   pdeploymentDate:
     Type: String
-    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Description: Deployment date (YYYY-MM-DD)
   pdbStageName:
     Type: String
-    Description: "Database Stage name (all lowercase, no symbols or spaces)"
+    Description: Database Stage name
   pdbAnalyticsName:
     Type: String
-    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Description: Database analytics name
   pdeveloper:
     Type: String
-    Description: "Developer name"
+    Description: Developer name
     Default: Josemaria_Paucar
   pRDAWSAccountId:
     Type: String
-    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Description: Account Ruta Digital
   # Country parameters
   pCountryCl:
     Type: String
-    Description: "Country code for Chile"
+    Description: Country code for Chile
     Default: "cl"
   pCountryPy:
     Type: String
-    Description: "Country code for Paraguay"
+    Description: Country code for Paraguay
     Default: "py"
   pCountryAr:
     Type: String
-    Description: "Country code for Argentina"
+    Description: Country code for Argentina
     Default: "ar"
   pCountryBr:
     Type: String
-    Description: "Country code for Brazil"
+    Description: Country code for Brazil
     Default: "br"
   pCountryRg:
     Type: String
-    Description: "Country code for Regional"
+    Description: Country code for Regional
     Default: "rg"
 
 Resources:
@@ -75,11 +75,12 @@ Resources:
     Properties:
       TopicName: develop-teams-notifications
 
+  # ---------- Lambda Functions ----------
   LambdaRoutesSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "Lambda-da-routes-simpliroute-${pCountryCl}"
-      Handler: lambda_function.lambda_handler
+      Handler: index.handler
       Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
@@ -89,19 +90,20 @@ Resources:
           import os
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}", "input": event}
       Environment:
         Variables:
           ACCOUNT_ID: !Ref pAWSAccountId
+          DEVELOPER: !Ref pdeveloper
       Tags:
-        - Key: develop
+        - Key: Developer
           Value: !Ref pdeveloper
 
   LambdaInvoicesSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "Lambda-da-invoices-simpliroute-${pCountryCl}"
-      Handler: lambda_function.lambda_handler
+      Handler: index.handler
       Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
@@ -111,19 +113,20 @@ Resources:
           import os
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}", "input": event}
       Environment:
         Variables:
           ACCOUNT_ID: !Ref pAWSAccountId
+          DEVELOPER: !Ref pdeveloper
       Tags:
-        - Key: develop
+        - Key: Developer
           Value: !Ref pdeveloper
 
   LambdaVisitsSimplirouteCL:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "Lambda-da-visits-simpliroute-${pCountryCl}"
-      Handler: lambda_function.lambda_handler
+      Handler: index.handler
       Role: !GetAtt LambdaSimpliRouteKpiRole.Arn
       Runtime: python3.12
       Timeout: 180
@@ -133,15 +136,17 @@ Resources:
           import os
           def handler(event, context):
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
-              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}"}
+              return {"statusCode": 200, "body": f"Hola mundo desde {desarrollador}", "input": event}
       Environment:
         Variables:
           ACCOUNT_ID: !Ref pAWSAccountId
+          DEVELOPER: !Ref pdeveloper
       Tags:
-        - Key: develop
+        - Key: Developer
           Value: !Ref pdeveloper
 
-  # Rol para las Lambdas
+  # ---------- IAM Roles ----------
+  # Role for Lambdas
   LambdaSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
@@ -156,7 +161,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-  # Rol para Step Function
+  # Role for Step Functions
   SMSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
@@ -169,30 +174,56 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: SMLambdaPolicy
+        - PolicyName: SMLambdaAndSNSPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
-                Resource: 
+                Resource:
                   - !GetAtt LambdaRoutesSimplirouteCL.Arn
                   - !GetAtt LambdaInvoicesSimplirouteCL.Arn
                   - !GetAtt LambdaVisitsSimplirouteCL.Arn
               - Effect: Allow
                 Action: sns:Publish
                 Resource: !Ref DevTeamsNotifications
+        # (Opcional) Habilitar X-Ray si activas Tracing en la State Machine
+        - PolicyName: SMXRayPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                Resource: "*"
 
+  # (Opcional) Log group para Step Functions
+  StepFnLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/vended/sfn/sm-simpliroute-kpi-${pCountryCl}"
+      RetentionInDays: 14
+
+  # ---------- Step Functions State Machine ----------
   SMSimpliRouteKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
       StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
+      LoggingConfiguration:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StepFnLogGroup.Arn
+        IncludeExecutionData: true
+        Level: ALL
+      TracingConfiguration:
+        Enabled: true
       DefinitionString:
         !Sub |
           {
-            "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos y notificación",
+            "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
             "StartAt": "ParallelExecution",
             "States": {
               "ParallelExecution": {
@@ -203,10 +234,21 @@ Resources:
                     "States": {
                       "LambdaRoutes": {
                         "Type": "Task",
-                        "Resource": "${LambdaRoutesSimplirouteCL.Arn}",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaRoutesSimplirouteCL.Arn}",
+                          "Payload.$": "$"
+                        },
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["States.ALL"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -221,10 +263,21 @@ Resources:
                     "States": {
                       "LambdaInvoices": {
                         "Type": "Task",
-                        "Resource": "${LambdaInvoicesSimplirouteCL.Arn}",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaInvoicesSimplirouteCL.Arn}",
+                          "Payload.$": "$"
+                        },
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["States.ALL"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -239,10 +292,21 @@ Resources:
                     "States": {
                       "LambdaVisits": {
                         "Type": "Task",
-                        "Resource": "${LambdaVisitsSimplirouteCL.Arn}",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaVisitsSimplirouteCL.Arn}",
+                          "Payload.$": "$"
+                        },
+                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+                        "OutputPath": "$.payload",
                         "Retry": [
                           {
-                            "ErrorEquals": ["States.ALL"],
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
                             "IntervalSeconds": 2,
                             "MaxAttempts": 3,
                             "BackoffRate": 2.0
@@ -253,7 +317,7 @@ Resources:
                     }
                   }
                 ],
-                "Next": "SuccessState",
+                "Next": "ConsolidateResults",
                 "Catch": [
                   {
                     "ErrorEquals": ["States.ALL"],
@@ -261,6 +325,16 @@ Resources:
                     "Next": "NotifyFailure"
                   }
                 ]
+              },
+              "ConsolidateResults": {
+                "Type": "Pass",
+                "Parameters": {
+                  "routes.$": "$[0]",
+                  "invoices.$": "$[1]",
+                  "visits.$": "$[2]"
+                },
+                "ResultPath": "$",
+                "Next": "SuccessState"
               },
               "NotifyFailure": {
                 "Type": "Task",
@@ -271,9 +345,7 @@ Resources:
                 },
                 "Next": "FailState"
               },
-              "SuccessState": {
-                "Type": "Succeed"
-              },
+              "SuccessState": { "Type": "Succeed" },
               "FailState": {
                 "Type": "Fail",
                 "Error": "StepFunctionFailed",
@@ -281,4 +353,3 @@ Resources:
               }
             }
           }
-
