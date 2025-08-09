@@ -1,3 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating AWS Proyecto Optimizador
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Type: String
+    Description: Branch Name (lowercase, no symbols or spaces)
+  pArtifactsBucket:
+    Type: String
+    Description: Artifact Bucket (lowercase, no symbols or spaces)
+  pbucketAnalytics:
+    Type: String
+    Description: Analytics Bucket (lowercase, no symbols or spaces)
+  pAWSRegion:
+    Type: String
+    Description: AWS region (e.g., us-east-1)
+  pAWSAccountId:
+    Type: String
+    Description: AWS account ID (12 digits)
+  pAWSAccountOpt:
+    Type: String
+    Description: AWS account optimizador ID
+  pAccountName:
+    Type: String
+    Description: AWS account name (lowercase, no symbols or spaces)
+  pTeamName:
+    Type: String
+    Description: Team Name (lowercase, no symbols or spaces)
+  pdeploymentDate:
+    Type: String
+    Description: Deployment date (YYYY-MM-DD)
+  pdbStageName:
+    Type: String
+    Description: Database Stage name
+  pdbAnalyticsName:
+    Type: String
+    Description: Database analytics name
+  pdeveloper:
+    Type: String
+    Description: Developer name
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Type: String
+    Description: Account Ruta Digital
+  # Country parameters
+  pCountryCl:
+    Type: String
+    Description: Country code for Chile
+    Default: "cl"
+  pCountryPy:
+    Type: String
+    Description: Country code for Paraguay
+    Default: "py"
+  pCountryAr:
+    Type: String
+    Description: Country code for Argentina
+    Default: "ar"
+  pCountryBr:
+    Type: String
+    Description: Country code for Brazil
+    Default: "br"
+  pCountryRg:
+    Type: String
+    Description: Country code for Regional
+    Default: "rg"
+
 Resources:
 
   DevTeamsNotifications:
@@ -76,6 +146,7 @@ Resources:
           Value: !Ref pdeveloper
 
   # ---------- IAM Roles ----------
+  # Role for Lambdas
   LambdaSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
@@ -90,6 +161,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
+  # Role for Step Functions
   SMSimpliRouteKpiRole:
     Type: AWS::IAM::Role
     Properties:
@@ -116,6 +188,7 @@ Resources:
               - Effect: Allow
                 Action: sns:Publish
                 Resource: !Ref DevTeamsNotifications
+        # (Opcional) Habilitar X-Ray si activas Tracing en la State Machine
         - PolicyName: SMXRayPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -133,8 +206,153 @@ Resources:
       LogGroupName: !Sub "/aws/vended/sfn/sm-simpliroute-kpi-${pCountryCl}"
       RetentionInDays: 14
 
-  # ---------- Step Functions State Machine ----------
-# ---------- Step Functions State Machine ----------
+  # # ---------- Step Functions State Machine ----------.
+  # SMSimpliRouteKpi:
+  #   Type: AWS::StepFunctions::StateMachine
+  #   Properties:
+  #     RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
+  #     StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
+  #     LoggingConfiguration:
+  #       Destinations:
+  #         - CloudWatchLogsLogGroup:
+  #             LogGroupArn: !GetAtt StepFnLogGroup.Arn
+  #       IncludeExecutionData: true
+  #       Level: ALL
+  #     TracingConfiguration:
+  #       Enabled: true
+  #     DefinitionString:
+  #       !Sub |
+  #         {
+  #           "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
+  #           "StartAt": "ParallelExecution",
+  #           "States": {
+  #             "ParallelExecution": {
+  #               "Type": "Parallel",
+  #               "Branches": [
+  #                 {
+  #                   "StartAt": "LambdaRoutes",
+  #                   "States": {
+  #                     "LambdaRoutes": {
+  #                       "Type": "Task",
+  #                       "Resource": "arn:aws:states:::lambda:invoke",
+  #                       "TimeoutSeconds": 300,
+  #                       "Parameters": {
+  #                         "FunctionName": "${LambdaRoutesSimplirouteCL.Arn}",
+  #                         "Payload.$": "$"
+  #                       },
+  #                       "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+  #                       "OutputPath": "$.payload",
+  #                       "Retry": [
+  #                         {
+  #                           "ErrorEquals": [
+  #                             "Lambda.ServiceException",
+  #                             "Lambda.AWSLambdaException",
+  #                             "Lambda.SdkClientException"
+  #                           ],
+  #                           "IntervalSeconds": 2,
+  #                           "MaxAttempts": 3,
+  #                           "BackoffRate": 2.0
+  #                         }
+  #                       ],
+  #                       "End": true
+  #                     }
+  #                   }
+  #                 },
+  #                 {
+  #                   "StartAt": "LambdaInvoices",
+  #                   "States": {
+  #                     "LambdaInvoices": {
+  #                       "Type": "Task",
+  #                       "Resource": "arn:aws:states:::lambda:invoke",
+  #                       "TimeoutSeconds": 300,
+  #                       "Parameters": {
+  #                         "FunctionName": "${LambdaInvoicesSimplirouteCL.Arn}",
+  #                         "Payload.$": "$"
+  #                       },
+  #                       "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+  #                       "OutputPath": "$.payload",
+  #                       "Retry": [
+  #                         {
+  #                           "ErrorEquals": [
+  #                             "Lambda.ServiceException",
+  #                             "Lambda.AWSLambdaException",
+  #                             "Lambda.SdkClientException"
+  #                           ],
+  #                           "IntervalSeconds": 2,
+  #                           "MaxAttempts": 3,
+  #                           "BackoffRate": 2.0
+  #                         }
+  #                       ],
+  #                       "End": true
+  #                     }
+  #                   }
+  #                 },
+  #                 {
+  #                   "StartAt": "LambdaVisits",
+  #                   "States": {
+  #                     "LambdaVisits": {
+  #                       "Type": "Task",
+  #                       "Resource": "arn:aws:states:::lambda:invoke",
+  #                       "TimeoutSeconds": 300,
+  #                       "Parameters": {
+  #                         "FunctionName": "${LambdaVisitsSimplirouteCL.Arn}",
+  #                         "Payload.$": "$"
+  #                       },
+  #                       "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
+  #                       "OutputPath": "$.payload",
+  #                       "Retry": [
+  #                         {
+  #                           "ErrorEquals": [
+  #                             "Lambda.ServiceException",
+  #                             "Lambda.AWSLambdaException",
+  #                             "Lambda.SdkClientException"
+  #                           ],
+  #                           "IntervalSeconds": 2,
+  #                           "MaxAttempts": 3,
+  #                           "BackoffRate": 2.0
+  #                         }
+  #                       ],
+  #                       "End": true
+  #                     }
+  #                   }
+  #                 }
+  #               ],
+  #               "Next": "ConsolidateResults",
+  #               "Catch": [
+  #                 {
+  #                   "ErrorEquals": ["States.ALL"],
+  #                   "ResultPath": "$.ErrorInfo",
+  #                   "Next": "NotifyFailure"
+  #                 }
+  #               ]
+  #             },
+  #             "ConsolidateResults": {
+  #               "Type": "Pass",
+  #               "Parameters": {
+  #                 "routes.$": "$[0]",
+  #                 "invoices.$": "$[1]",
+  #                 "visits.$": "$[2]"
+  #               },
+  #               "ResultPath": "$",
+  #               "Next": "SuccessState"
+  #             },
+  #             "NotifyFailure": {
+  #               "Type": "Task",
+  #               "Resource": "arn:aws:states:::sns:publish",
+  #               "Parameters": {
+  #                 "TopicArn": "${DevTeamsNotifications}",
+  #                 "Message.$": "States.Format('La Step Function falló en el estado {0} con error: {1}', $$.State.Name, $.ErrorInfo.Error)"
+  #               },
+  #               "Next": "FailState"
+  #             },
+  #             "SuccessState": { "Type": "Succeed" },
+  #             "FailState": {
+  #               "Type": "Fail",
+  #               "Error": "StepFunctionFailed",
+  #               "Cause": "Una Lambda falló incluso después de reintentos"
+  #             }
+  #           }
+  #         }
 SMSimpliRouteKpi:
   Type: AWS::StepFunctions::StateMachine
   Properties:
@@ -253,16 +471,6 @@ SMSimpliRouteKpi:
                 "visits.$": "$[2]"
               },
               "ResultPath": "$",
-              "Next": "NotifySuccess"
-            },
-            "NotifySuccess": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::sns:publish",
-              "Parameters": {
-                "TopicArn": "${DevTeamsNotifications}",
-                "Subject": "SFN sm-simpliroute-kpi - Éxito",
-                "Message.$": "States.Format('Ejecución OK | Exec: {0}\nRoutes: {1}\nInvoices: {2}\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
-              },
               "Next": "SuccessState"
             },
             "NotifyFailure": {
@@ -283,4 +491,3 @@ SMSimpliRouteKpi:
             }
           }
         }
-
