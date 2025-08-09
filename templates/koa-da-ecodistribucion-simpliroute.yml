@@ -1,3 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating AWS Proyecto Optimizador
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Type: String
+    Description: Branch Name (lowercase, no symbols or spaces)
+  pArtifactsBucket:
+    Type: String
+    Description: Artifact Bucket (lowercase, no symbols or spaces)
+  pbucketAnalytics:
+    Type: String
+    Description: Analytics Bucket (lowercase, no symbols or spaces)
+  pAWSRegion:
+    Type: String
+    Description: AWS region (e.g., us-east-1)
+  pAWSAccountId:
+    Type: String
+    Description: AWS account ID (12 digits)
+  pAWSAccountOpt:
+    Type: String
+    Description: AWS account optimizador ID
+  pAccountName:
+    Type: String
+    Description: AWS account name (lowercase, no symbols or spaces)
+  pTeamName:
+    Type: String
+    Description: Team Name (lowercase, no symbols or spaces)
+  pdeploymentDate:
+    Type: String
+    Description: Deployment date (YYYY-MM-DD)
+  pdbStageName:
+    Type: String
+    Description: Database Stage name
+  pdbAnalyticsName:
+    Type: String
+    Description: Database analytics name
+  pdeveloper:
+    Type: String
+    Description: Developer name
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Type: String
+    Description: Account Ruta Digital
+  # Country parameters
+  pCountryCl:
+    Type: String
+    Description: Country code for Chile
+    Default: "cl"
+  pCountryPy:
+    Type: String
+    Description: Country code for Paraguay
+    Default: "py"
+  pCountryAr:
+    Type: String
+    Description: Country code for Argentina
+    Default: "ar"
+  pCountryBr:
+    Type: String
+    Description: Country code for Brazil
+    Default: "br"
+  pCountryRg:
+    Type: String
+    Description: Country code for Regional
+    Default: "rg"
+
 Resources:
 
   DevTeamsNotifications:
@@ -126,7 +196,7 @@ Resources:
                   - xray:PutTelemetryRecords
                 Resource: "*"
 
-  # (Opcional) Log group para Step Functions.
+  # (Opcional) Log group para Step Functions
   StepFnLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -134,153 +204,151 @@ Resources:
       RetentionInDays: 14
 
   # ---------- Step Functions State Machine ----------
-# ---------- Step Functions State Machine ----------
-SMSimpliRouteKpi:
-  Type: AWS::StepFunctions::StateMachine
-  Properties:
-    RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
-    StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
-    TracingConfiguration:
-      Enabled: true
-    DefinitionString:
-      !Sub |
-        {
-          "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
-          "StartAt": "ParallelExecution",
-          "States": {
-            "ParallelExecution": {
-              "Type": "Parallel",
-              "Branches": [
-                {
-                  "StartAt": "LambdaRoutes",
-                  "States": {
-                    "LambdaRoutes": {
-                      "Type": "Task",
-                      "Resource": "arn:aws:states:::lambda:invoke",
-                      "TimeoutSeconds": 300,
-                      "Parameters": {
-                        "FunctionName": "${LambdaRoutesSimplirouteCL}",
-                        "Payload.$": "$"
-                      },
-                      "OutputPath": "$.Payload",
-                      "Retry": [
-                        {
-                          "ErrorEquals": [
-                            "Lambda.ServiceException",
-                            "Lambda.AWSLambdaException",
-                            "Lambda.SdkClientException"
-                          ],
-                          "IntervalSeconds": 2,
-                          "MaxAttempts": 3,
-                          "BackoffRate": 2.0
-                        }
-                      ],
-                      "End": true
+  SMSimpliRouteKpi:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
+      StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
+      TracingConfiguration:
+        Enabled: true
+      DefinitionString:
+        !Sub |
+          {
+            "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
+            "StartAt": "ParallelExecution",
+            "States": {
+              "ParallelExecution": {
+                "Type": "Parallel",
+                "Branches": [
+                  {
+                    "StartAt": "LambdaRoutes",
+                    "States": {
+                      "LambdaRoutes": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaRoutesSimplirouteCL}",
+                          "Payload.$": "$"
+                        },
+                        "OutputPath": "$.Payload",
+                        "Retry": [
+                          {
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true
+                      }
+                    }
+                  },
+                  {
+                    "StartAt": "LambdaInvoices",
+                    "States": {
+                      "LambdaInvoices": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaInvoicesSimplirouteCL}",
+                          "Payload.$": "$"
+                        },
+                        "OutputPath": "$.Payload",
+                        "Retry": [
+                          {
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true
+                      }
+                    }
+                  },
+                  {
+                    "StartAt": "LambdaVisits",
+                    "States": {
+                      "LambdaVisits": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "TimeoutSeconds": 300,
+                        "Parameters": {
+                          "FunctionName": "${LambdaVisitsSimplirouteCL}",
+                          "Payload.$": "$"
+                        },
+                        "OutputPath": "$.Payload",
+                        "Retry": [
+                          {
+                            "ErrorEquals": [
+                              "Lambda.ServiceException",
+                              "Lambda.AWSLambdaException",
+                              "Lambda.SdkClientException"
+                            ],
+                            "IntervalSeconds": 2,
+                            "MaxAttempts": 3,
+                            "BackoffRate": 2.0
+                          }
+                        ],
+                        "End": true
+                      }
                     }
                   }
+                ],
+                "Next": "ConsolidateResults",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.ErrorInfo",
+                    "Next": "NotifyFailure"
+                  }
+                ]
+              },
+              "ConsolidateResults": {
+                "Type": "Pass",
+                "Parameters": {
+                  "routes.$": "$[0]",
+                  "invoices.$": "$[1]",
+                  "visits.$": "$[2]"
                 },
-                {
-                  "StartAt": "LambdaInvoices",
-                  "States": {
-                    "LambdaInvoices": {
-                      "Type": "Task",
-                      "Resource": "arn:aws:states:::lambda:invoke",
-                      "TimeoutSeconds": 300,
-                      "Parameters": {
-                        "FunctionName": "${LambdaInvoicesSimplirouteCL}",
-                        "Payload.$": "$"
-                      },
-                      "OutputPath": "$.Payload",
-                      "Retry": [
-                        {
-                          "ErrorEquals": [
-                            "Lambda.ServiceException",
-                            "Lambda.AWSLambdaException",
-                            "Lambda.SdkClientException"
-                          ],
-                          "IntervalSeconds": 2,
-                          "MaxAttempts": 3,
-                          "BackoffRate": 2.0
-                        }
-                      ],
-                      "End": true
-                    }
-                  }
+                "ResultPath": "$",
+                "Next": "NotifySuccess"
+              },
+              "NotifySuccess": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::sns:publish",
+                "Parameters": {
+                  "TopicArn": "${DevTeamsNotifications}",
+                  "Subject": "SFN sm-simpliroute-kpi - Éxito",
+                  "Message.$": "States.Format('Ejecución OK | Exec: {0}\nRoutes: {1}\nInvoices: {2}\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
                 },
-                {
-                  "StartAt": "LambdaVisits",
-                  "States": {
-                    "LambdaVisits": {
-                      "Type": "Task",
-                      "Resource": "arn:aws:states:::lambda:invoke",
-                      "TimeoutSeconds": 300,
-                      "Parameters": {
-                        "FunctionName": "${LambdaVisitsSimplirouteCL}",
-                        "Payload.$": "$"
-                      },
-                      "OutputPath": "$.Payload",
-                      "Retry": [
-                        {
-                          "ErrorEquals": [
-                            "Lambda.ServiceException",
-                            "Lambda.AWSLambdaException",
-                            "Lambda.SdkClientException"
-                          ],
-                          "IntervalSeconds": 2,
-                          "MaxAttempts": 3,
-                          "BackoffRate": 2.0
-                        }
-                      ],
-                      "End": true
-                    }
-                  }
-                }
-              ],
-              "Next": "ConsolidateResults",
-              "Catch": [
-                {
-                  "ErrorEquals": ["States.ALL"],
-                  "ResultPath": "$.ErrorInfo",
-                  "Next": "NotifyFailure"
-                }
-              ]
-            },
-            "ConsolidateResults": {
-              "Type": "Pass",
-              "Parameters": {
-                "routes.$": "$[0]",
-                "invoices.$": "$[1]",
-                "visits.$": "$[2]"
+                "Next": "SuccessState"
               },
-              "ResultPath": "$",
-              "Next": "NotifySuccess"
-            },
-            "NotifySuccess": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::sns:publish",
-              "Parameters": {
-                "TopicArn": "${DevTeamsNotifications}",
-                "Subject": "SFN sm-simpliroute-kpi - Éxito",
-                "Message.$": "States.Format('Ejecución OK | Exec: {0}\nRoutes: {1}\nInvoices: {2}\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
+              "NotifyFailure": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::sns:publish",
+                "Parameters": {
+                  "TopicArn": "${DevTeamsNotifications}",
+                  "Subject": "SFN sm-simpliroute-kpi - Falla",
+                  "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, States.StringToJson($.ErrorInfo.Cause).errorMessage, $$.Execution.Id)"
+                },
+                "Next": "FailState"
               },
-              "Next": "SuccessState"
-            },
-            "NotifyFailure": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::sns:publish",
-              "Parameters": {
-                "TopicArn": "${DevTeamsNotifications}",
-                "Subject": "SFN sm-simpliroute-kpi - Falla",
-                "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, States.StringToJson($.ErrorInfo.Cause).errorMessage, $$.Execution.Id)"
-              },
-              "Next": "FailState"
-            },
-            "SuccessState": { "Type": "Succeed" },
-            "FailState": {
-              "Type": "Fail",
-              "Error": "StepFunctionFailed",
-              "Cause": "Una Lambda falló incluso después de reintentos"
+              "SuccessState": { "Type": "Succeed" },
+              "FailState": {
+                "Type": "Fail",
+                "Error": "StepFunctionFailed",
+                "Cause": "Una Lambda falló incluso después de reintentos"
+              }
             }
           }
-        }
-
