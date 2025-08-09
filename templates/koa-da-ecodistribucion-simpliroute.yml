@@ -353,141 +353,141 @@ Resources:
   #             }
   #           }
   #         }
-  SMSimpliRouteKpi:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
-      StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
-      TracingConfiguration:
-        Enabled: true
-      DefinitionString:
-        !Sub |
-          {
-            "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
-            "StartAt": "ParallelExecution",
-            "States": {
-              "ParallelExecution": {
-                "Type": "Parallel",
-                "Branches": [
-                  {
-                    "StartAt": "LambdaRoutes",
-                    "States": {
-                      "LambdaRoutes": {
-                        "Type": "Task",
-                        "Resource": "arn:aws:states:::lambda:invoke",
-                        "TimeoutSeconds": 300,
-                        "Parameters": {
-                          "FunctionName": "${LambdaRoutesSimplirouteCL}",
-                          "Payload.$": "$"
-                        },
-                        "OutputPath": "$.Payload",
-                        "Retry": [
-                          {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
-                            "IntervalSeconds": 2,
-                            "MaxAttempts": 3,
-                            "BackoffRate": 2.0
-                          }
-                        ],
-                        "End": true
-                      }
-                    }
-                  },
-                  {
-                    "StartAt": "LambdaInvoices",
-                    "States": {
-                      "LambdaInvoices": {
-                        "Type": "Task",
-                        "Resource": "arn:aws:states:::lambda:invoke",
-                        "TimeoutSeconds": 300,
-                        "Parameters": {
-                          "FunctionName": "${LambdaInvoicesSimplirouteCL}",
-                          "Payload.$": "$"
-                        },
-                        "OutputPath": "$.Payload",
-                        "Retry": [
-                          {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
-                            "IntervalSeconds": 2,
-                            "MaxAttempts": 3,
-                            "BackoffRate": 2.0
-                          }
-                        ],
-                        "End": true
-                      }
-                    }
-                  },
-                  {
-                    "StartAt": "LambdaVisits",
-                    "States": {
-                      "LambdaVisits": {
-                        "Type": "Task",
-                        "Resource": "arn:aws:states:::lambda:invoke",
-                        "TimeoutSeconds": 300,
-                        "Parameters": {
-                          "FunctionName": "${LambdaVisitsSimplirouteCL}",
-                          "Payload.$": "$"
-                        },
-                        "OutputPath": "$.Payload",
-                        "Retry": [
-                          {
-                            "ErrorEquals": [
-                              "Lambda.ServiceException",
-                              "Lambda.AWSLambdaException",
-                              "Lambda.SdkClientException"
-                            ],
-                            "IntervalSeconds": 2,
-                            "MaxAttempts": 3,
-                            "BackoffRate": 2.0
-                          }
-                        ],
-                        "End": true
-                      }
+SMSimpliRouteKpi:
+  Type: AWS::StepFunctions::StateMachine
+  Properties:
+    RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
+    StateMachineName: !Sub "sm-simpliroute-kpi-${pCountryCl}"
+    TracingConfiguration:
+      Enabled: true
+    DefinitionString:
+      !Sub |
+        {
+          "Comment": "Step Function ejecutando 3 Lambdas en paralelo con reintentos, timeouts y consolidación de resultados",
+          "StartAt": "ParallelExecution",
+          "States": {
+            "ParallelExecution": {
+              "Type": "Parallel",
+              "Branches": [
+                {
+                  "StartAt": "LambdaRoutes",
+                  "States": {
+                    "LambdaRoutes": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "TimeoutSeconds": 300,
+                      "Parameters": {
+                        "FunctionName": "${LambdaRoutesSimplirouteCL}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 2,
+                          "MaxAttempts": 3,
+                          "BackoffRate": 2.0
+                        }
+                      ],
+                      "End": true
                     }
                   }
-                ],
-                "Next": "ConsolidateResults",
-                "Catch": [
-                  {
-                    "ErrorEquals": ["States.ALL"],
-                    "ResultPath": "$.ErrorInfo",
-                    "Next": "NotifyFailure"
+                },
+                {
+                  "StartAt": "LambdaInvoices",
+                  "States": {
+                    "LambdaInvoices": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "TimeoutSeconds": 300,
+                      "Parameters": {
+                        "FunctionName": "${LambdaInvoicesSimplirouteCL}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 2,
+                          "MaxAttempts": 3,
+                          "BackoffRate": 2.0
+                        }
+                      ],
+                      "End": true
+                    }
                   }
-                ]
-              },
-              "ConsolidateResults": {
-                "Type": "Pass",
-                "Parameters": {
-                  "routes.$": "$[0]",
-                  "invoices.$": "$[1]",
-                  "visits.$": "$[2]"
                 },
-                "ResultPath": "$",
-                "Next": "SuccessState"
+                {
+                  "StartAt": "LambdaVisits",
+                  "States": {
+                    "LambdaVisits": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "TimeoutSeconds": 300,
+                      "Parameters": {
+                        "FunctionName": "${LambdaVisitsSimplirouteCL}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 2,
+                          "MaxAttempts": 3,
+                          "BackoffRate": 2.0
+                        }
+                      ],
+                      "End": true
+                    }
+                  }
+                }
+              ],
+              "Next": "ConsolidateResults",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "ResultPath": "$.ErrorInfo",
+                  "Next": "NotifyFailure"
+                }
+              ]
+            },
+            "ConsolidateResults": {
+              "Type": "Pass",
+              "Parameters": {
+                "routes.$": "$[0]",
+                "invoices.$": "$[1]",
+                "visits.$": "$[2]"
               },
-              "NotifyFailure": {
-                "Type": "Task",
-                "Resource": "arn:aws:states:::sns:publish",
-                "Parameters": {
-                  "TopicArn": "${DevTeamsNotifications}",
-                  "Subject": "SFN sm-simpliroute-kpi - Falla",
-                  "Message.$": "States.Format('Falla en {0}: {1} | Exec: {2}', $$.State.Name, $.ErrorInfo.Error, $$.Execution.Id)"
-                },
-                "Next": "FailState"
+              "ResultPath": "$",
+              "Next": "SuccessState"
+            },
+            "NotifyFailure": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${DevTeamsNotifications}",
+                "Subject": "SFN sm-simpliroute-kpi - Falla",
+                "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, States.StringToJson($.ErrorInfo.Cause).errorMessage, $$.Execution.Id)"
               },
-              "SuccessState": { "Type": "Succeed" },
-              "FailState": {
-                "Type": "Fail",
-                "Error": "StepFunctionFailed",
-                "Cause": "Una Lambda falló incluso después de reintentos"
-              }
+              "Next": "FailState"
+            },
+            "SuccessState": { "Type": "Succeed" },
+            "FailState": {
+              "Type": "Fail",
+              "Error": "StepFunctionFailed",
+              "Cause": "Una Lambda falló incluso después de reintentos"
             }
           }
+        }
