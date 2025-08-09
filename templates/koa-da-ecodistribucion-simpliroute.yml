@@ -377,7 +377,7 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${pLambdaRoutesArn}",
+                          "FunctionName": "${LambdaRoutesSimplirouteCL}",
                           "Payload.$": "$"
                         },
                         "OutputPath": "$.Payload",
@@ -405,7 +405,7 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${pLambdaInvoicesArn}",
+                          "FunctionName": "${LambdaInvoicesSimplirouteCL}",
                           "Payload.$": "$"
                         },
                         "OutputPath": "$.Payload",
@@ -433,7 +433,7 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${pLambdaVisitsArn}",
+                          "FunctionName": "${LambdaVisitsSimplirouteCL}",
                           "Payload.$": "$"
                         },
                         "OutputPath": "$.Payload",
