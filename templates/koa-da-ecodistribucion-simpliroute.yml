@@ -377,11 +377,10 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaRoutesSimplirouteCL.Arn}",
+                          "FunctionName": "${pLambdaRoutesArn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
@@ -406,11 +405,10 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaInvoicesSimplirouteCL.Arn}",
+                          "FunctionName": "${pLambdaInvoicesArn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
@@ -435,11 +433,10 @@ Resources:
                         "Resource": "arn:aws:states:::lambda:invoke",
                         "TimeoutSeconds": 300,
                         "Parameters": {
-                          "FunctionName": "${LambdaVisitsSimplirouteCL.Arn}",
+                          "FunctionName": "${pLambdaVisitsArn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
@@ -481,7 +478,8 @@ Resources:
                 "Resource": "arn:aws:states:::sns:publish",
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
-                  "Message.$": "States.Format('La Step Function falló en el estado {0} con error: {1}', $$.State.Name, $.ErrorInfo.Error)"
+                  "Subject": "SFN sm-simpliroute-kpi - Falla",
+                  "Message.$": "States.Format('Falla en {0}: {1} | Exec: {2}', $$.State.Name, $.ErrorInfo.Error, $$.Execution.Id)"
                 },
                 "Next": "FailState"
               },
