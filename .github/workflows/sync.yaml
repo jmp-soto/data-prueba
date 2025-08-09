@@ -12,6 +12,7 @@ on:
       - prod
 jobs:
   prepare:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.base_ref }}
@@ -34,8 +35,7 @@ jobs:
 
       - name: Set environment and parameters
         run: |
-          ENVIRONMENT="${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}"
-          ENVIRONMENT="dev"
+          ENVIRONMENT=${{ github.base_ref == 'develop' && 'dev' || github.base_ref }}
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
           echo "REGION=us-east-1" >> $GITHUB_ENV
           echo "PARAMETERS_FILE=./parameters-$ENVIRONMENT.json" >> $GITHUB_ENV
