@@ -223,8 +223,7 @@ Resources:
                           "FunctionName": "${LambdaRoutesSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
@@ -252,8 +251,7 @@ Resources:
                           "FunctionName": "${LambdaInvoicesSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
@@ -281,8 +279,7 @@ Resources:
                           "FunctionName": "${LambdaVisitsSimplirouteCL.Arn}",
                           "Payload.$": "$"
                         },
-                        "ResultSelector": { "payload.$": "States.StringToJson($.Payload)" },
-                        "OutputPath": "$.payload",
+                        "OutputPath": "$.Payload",
                         "Retry": [
                           {
                             "ErrorEquals": [
