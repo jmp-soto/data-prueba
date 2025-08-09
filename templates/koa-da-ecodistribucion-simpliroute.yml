@@ -405,4 +405,4 @@ SMfnEventRule:
     Targets:
       - Id: !Sub "target-sfn-${pCountryCl}"
         Arn: !Ref SMSimpliRouteKpi
-        RoleArn: !GetAtt EventRuleStartSfnRole.Arn
+        RoleArn: !GetAtt EventRuleSMRole.Arn
