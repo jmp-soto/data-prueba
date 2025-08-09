@@ -46,7 +46,6 @@ Parameters:
   pRDAWSAccountId:
     Type: String
     Description: Account Ruta Digital
-  # Country parameters
   pCountryCl:
     Type: String
     Description: Country code for Chile
@@ -311,6 +310,15 @@ Resources:
                   "visits.$": "$[2]"
                 },
                 "ResultPath": "$",
+                "Next": "BuildSuccessMessage"
+              },
+
+              "BuildSuccessMessage": {
+                "Type": "Pass",
+                "Parameters": {
+                  "SuccessMessage.$": "States.Format('Ejecución OK | Exec: {0} | Routes: {1} | Invoices: {2} | Visits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
+                },
+                "ResultPath": "$",
                 "Next": "NotifySuccess"
               },
 
@@ -320,7 +328,7 @@ Resources:
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
                   "Subject": "SFN sm-simpliroute-kpi - Éxito",
-                  "Message.$": "States.Format('Ejecución OK | Exec: {0}\\nRoutes: {1}\\nInvoices: {2}\\nVisits: {3}', $$.Execution.Id, States.JsonToString($.routes), States.JsonToString($.invoices), States.JsonToString($.visits))"
+                  "Message.$": "$.SuccessMessage"
                 },
                 "Next": "SuccessState"
               },
@@ -332,6 +340,15 @@ Resources:
                   "ParsedCause.$": "States.StringToJson($.ErrorInfo.Cause)"
                 },
                 "ResultPath": "$",
+                "Next": "BuildFailureMessage"
+              },
+
+              "BuildFailureMessage": {
+                "Type": "Pass",
+                "Parameters": {
+                  "FailureMessage.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, $.ParsedCause.errorMessage, $$.Execution.Id)"
+                },
+                "ResultPath": "$",
                 "Next": "NotifyFailure"
               },
 
@@ -341,7 +358,7 @@ Resources:
                 "Parameters": {
                   "TopicArn": "${DevTeamsNotifications}",
                   "Subject": "SFN sm-simpliroute-kpi - Falla",
-                  "Message.$": "States.Format('Falla en {0}: {1} | Msg: {2} | Exec: {3}', $$.State.Name, $.ErrorInfo.Error, $.ParsedCause.errorMessage, $$.Execution.Id)"
+                  "Message.$": "$.FailureMessage"
                 },
                 "Next": "FailState"
               },
@@ -355,4 +372,3 @@ Resources:
               }
             }
           }
-
