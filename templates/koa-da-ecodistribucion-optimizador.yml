@@ -274,49 +274,175 @@ Resources:
         - Key: develop
           Value: !Ref pdeveloper
 
-  skycopEventsConsolidadoPyLambda:
-    Type: AWS::Lambda::Function
+  SMSkycopKpi:
+    Type: AWS::StepFunctions::StateMachine
     Properties:
-      FunctionName: !Sub "Lambda-${pTeamName}-skycop-eventos-consolidado-${pCountryPy}"
-      Handler: lambda_function.lambda_handler
-      Role: !GetAtt skycopPyRole.Arn
-      Runtime: python3.12
-      Timeout: !Ref pSkycopTimeoutConsolidado
-      MemorySize: !Ref pSkycopMemorySizeConsolidado
-      Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              return {
-                  "statusCode": 200,
-                  "body": "hola koandina"
-              }
-      Environment:
-        Variables:
-          ACCOUNT_ID: !Ref pAWSAccountId
-          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
-          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
-      Layers:
-        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
-      Tags:
-        - Key: develop
-          Value: !Ref pdeveloper
-  
-  skycopEventsPyEventRule:
-      Type: AWS::Events::Rule
-      Properties:
-        ScheduleExpression: !Ref pSkycopCronExpression
-        State: "ENABLED"
-        Targets:
-          - Id: !Sub "Eventrule-${pTeamName}-skycop-eventos"
-            Arn: !GetAtt skycopEventsPyLambda.Arn
+      RoleArn: !GetAtt skycopPyRole.Arn
+      StateMachineName: !Sub "sm-skycop-${pCountryPy}"
+      TracingConfiguration:
+        Enabled: true
+      DefinitionString: !Sub |
+        {
+          "Comment": "Step Function ejecutando 4 Lambdas en paralelo con reintentos",
+          "StartAt": "ParallelExecution",
+          "States": {
+            "ParallelExecution": {
+              "Type": "Parallel",
+              "Branches": [
+                {
+                  "StartAt": "FleetDrivingEvents",
+                  "States": {
+                    "FleetDrivingEvents": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "Parameters": {
+                        "FunctionName": "${skycopFleetDrivingEventsPyLambda.Arn}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 60,
+                          "MaxAttempts": 3,
+                          "BackoffRate": 2.0
+                        }
+                      ],
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "FleetStop",
+                  "States": {
+                    "FleetStop": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "Parameters": {
+                        "FunctionName": "${skycopFleetStopPyLambda.Arn}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 60,
+                          "MaxAttempts": 2,
+                          "BackoffRate": 1.0
+                        }
+                      ],
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "Speedings",
+                  "States": {
+                    "Speedings": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "Parameters": {
+                        "FunctionName": "${skycopSpeedingsPyLambda.Arn}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 60,
+                          "MaxAttempts": 2,
+                          "BackoffRate": 1.0
+                        }
+                      ],
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "Eventos",
+                  "States": {
+                    "Eventos": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "Parameters": {
+                        "FunctionName": "${skycopEventsPyLambda.Arn}",
+                        "Payload.$": "$"
+                      },
+                      "OutputPath": "$.Payload",
+                      "Retry": [
+                        {
+                          "ErrorEquals": [
+                            "Lambda.ServiceException",
+                            "Lambda.AWSLambdaException",
+                            "Lambda.SdkClientException"
+                          ],
+                          "IntervalSeconds": 60,
+                          "MaxAttempts": 2,
+                          "BackoffRate": 1.0
+                        }
+                      ],
+                      "End": true
+                    }
+                  }
+                }
+              ],
+              "Next": "SuccessState",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "FailState"
+                }
+              ]
+            },
+            "SuccessState": { "Type": "Succeed" },
+            "FailState": {
+              "Type": "Fail",
+              "Error": "StepFunctionFailed",
+              "Cause": "Una Lambda falló incluso después de reintentos"
+            }
+          }
+        }
 
-  skycopEventsPyLambdaPermission:
-    Type: AWS::Lambda::Permission
+  EventRuleSMRole:
+    Type: AWS::IAM::Role
     Properties:
-      FunctionName: !GetAtt skycopEventsPyLambda.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt skycopEventsPyEventRule.Arn
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowStartExecution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: !Ref SMSkycopKpi
+
+  SMfnEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "cron(0 11 * * ? *)" 
+      State: ENABLED
+      Targets:
+        - Id: !Sub "target-skycop-${pCountryPy}"
+          Arn: !Ref SMSkycopKpi
+          RoleArn: !GetAtt EventRuleSMRole.Arn
 
   # Tabla para datos SKYCOP de eventos.
   skycopEventosAnalyticsTable:
