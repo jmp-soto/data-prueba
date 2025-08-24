@@ -271,7 +271,7 @@ jobs:
               deploy_stack koa-da-ecodistribucion-nps-feedback.yml koa-da-ecodistribucion-nps-feedback
               ;;
             koa-da-ecodistribucion-optimizador)
-              deploy_stack koa-da-ecodistribucion-simpliroute.yml koa-da-ecodistribucion-optimizador
+              deploy_stack koa-da-ecodistribucion-optimizador.yml koa-da-ecodistribucion-optimizador
               ;;
           esac
 
