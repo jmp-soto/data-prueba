@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating AWS Proyecto Optimizador
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Team Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: Josemaria_Paucar
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # Country parameters
+  pCountryCl:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
+
+Resources:
+
+
+
+  S3LocationOptimizadorRg:
+    Type: AWS::DataSync::LocationS3
+    Properties:
+      S3BucketArn: !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
+      S3Config:
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
+      Subdirectory: "/regional/externa/rg_in_optimizador_stage/"
+
+  S3DestinationOptimizadorRg:
+    Type: AWS::DataSync::LocationS3
+    Properties:
+      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
+      S3Config:
+        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
+      Subdirectory: "/regional/externa/rg_in_optimizador/"
+
+  TaskEjecOptimizadorRg:
+    Type: AWS::DataSync::Task
+    Properties:
+      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diarios"
+      SourceLocationArn: !Ref S3LocationOptimizadorRg
+      DestinationLocationArn: !Ref S3DestinationOptimizadorRg
+      Options:
+        VerifyMode: "ONLY_FILES_TRANSFERRED"
+        OverwriteMode: "ALWAYS"
+        TransferMode: "CHANGED"
+      Includes:
+        - FilterType: "SIMPLE_PATTERN"
+          Value: "/year=*"
+      Schedule:
+        ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
+
+  OptimizadorTableAnalyticsRg:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: rg_in_optimizador_analitycsss
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+        - {Name: year, Type: string}
+        - {Name: month, Type: string}
+        - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: plan_id, Type: bigint}
+            - {Name: plan_created_at, Type: timestamp}
+            - {Name: plan_bukrs, Type: string}
+            - {Name: plan_profile, Type: string}
+            - {Name: plan_tpp, Type: string}
+            - {Name: plan_date, Type: date}
+            - {Name: plan_user_id, Type: int}
+            - {Name: plan_description, Type: string}
+            - {Name: calc_id, Type: bigint}
+            - {Name: calc_created_at, Type: timestamp}
+            - {Name: calc_bukrs, Type: string}
+            - {Name: calc_ptot, Type: int}
+            - {Name: calc_ptotm, Type: int}
+            - {Name: calc_ptotc, Type: int}
+            - {Name: calc_tknumr, Type: string}
+            - {Name: calc_ptotr, Type: int}
+            - {Name: calc_clients, Type: int}
+            - {Name: calc_utilization, Type: string}
+            - {Name: calc_peso, Type: string}
+            - {Name: calc_utilizationp, Type: string}
+            - {Name: calc_exception_sap, Type: string}
+            - {Name: calc_status, Type: string}
+            - {Name: calc_transactionid, Type: string}
+            - {Name: calc_transactionidexport, Type: string}
+            - {Name: calc_ntrip, Type: int}
+            - {Name: calc_truck, Type: string}
+            - {Name: calc_truck_box, Type: string}
+            - {Name: calc_delivery_pallet, Type: string}
+            - {Name: calc_user_comments, Type: string}
+            - {Name: calc_planheader_id, Type: bigint}
+            - {Name: sap_bukrs, Type: string}
+            - {Name: sap_tknum, Type: string}
+            - {Name: sap_shtyp, Type: string}
+            - {Name: sap_tplst, Type: string}
+            - {Name: sap_erdat, Type: timestamp}
+            - {Name: sap_route, Type: string}
+            - {Name: sap_tdlnr, Type: string}
+            - {Name: sap_rpfar1, Type: string}
+            - {Name: sap_rpmowa, Type: string}
+            - {Name: sap_stdis, Type: string}
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Location: !Sub s3://josemaria-s3-prueba-dev/regional/externa/rg_in_optimizador
+          Compressed: True
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+

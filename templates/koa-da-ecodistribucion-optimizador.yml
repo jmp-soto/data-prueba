@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Template for creating AWS Proyecto Optimizador
+Description: Template for creating AWS Proyecto skycop API
 
 Parameters:
   Stage:
@@ -42,11 +42,11 @@ Parameters:
   pdeveloper:
     Description: "Database analytics name (all lowercase, no symbols or spaces)"
     Type: String
-    Default: Josemaria_Paucar
+    Default: "Josemaria_Paucar"
   pRDAWSAccountId:
     Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
     Type: String
-  # Country parameters
+  # País parameters
   pCountryCl:
     Description: "Country code for Chile"
     Type: String
@@ -67,52 +67,267 @@ Parameters:
     Description: "Country code for Regional"
     Type: String
     Default: "rg"
-  # Required for referenced resources
+  # Required for referenced resources.
+  pAccountAwsLayer:
+    Description: "Id account layer for AWS Wrangler"
+    Type: String
+    Default: 336392948345
+  # Nuevos parámetros para configuración dinámica
+  pSkycopCronExpression:
+    Description: "Expresión cron para la programación del consolidado ETA"
+    Type: String
+    Default: "cron(0 7 * * ? *)"
+  pSkycopMemorySize:
+    Description: "Tamaño de memoria para la función Lambda SR de ETA"
+    Type: Number
+    Default: 512
+  pSkycopMemorySizeConsolidado:
+    Description: "Tamaño de memoria para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 2048
+  pSkycopTimeout:
+    Description: "Timeout para la función Lambda SR de ETA"
+    Type: Number
+    Default: 360
+  pSkycopSpeedingTimeout:
+    Description: "Timeout para la función Lambda SR de ETA"
+    Type: Number
+    Default: 500    
+  pSkycopTimeoutConsolidado:
+    Description: "Timeout para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 900
 
 Resources:
-
-
-
-  S3LocationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
+  skycopPyRole:
+    Type: AWS::IAM::Role
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev"
-      S3Config:
-        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
-      Subdirectory: "/regional/externa/rg_in_optimizador_stage/"
+      RoleName: !Sub "role-${pTeamName}-skycop-${pCountryPy}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: cloudwatchlog
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+                Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
 
-  S3DestinationOptimizadorRg:
-    Type: AWS::DataSync::LocationS3
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::da-ecodistribucion-analytics-${Stage}"
+              - Sid: ReadSecretsManager
+                Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecrets"
+                Resource:
+                  - !Ref skycopKeyCredentialsSecrets                
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  # Recurso para almacenar los tokens de API en Secrets Manager
+  skycopKeyCredentialsSecrets:
+    Type: AWS::SecretsManager::Secret
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
     Properties:
-      S3BucketArn: !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}"
-      S3Config:
-        BucketAccessRoleArn: !Sub "arn:aws:iam::${pAWSAccountId}:role/role-${pTeamName}-datasync-${pCountryRg}"
-      Subdirectory: "/regional/externa/rg_in_optimizador/"
-
-  TaskEjecOptimizadorRg:
-    Type: AWS::DataSync::Task
+      Name: "key-skycop-credential"
+      Description: "Credenciales token para (skycop)"
+      SecretString: !Sub |
+        {
+          "key-skycop": {
+            "token": "your-token"
+          }
+        }
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+ 
+  skycopFleetDrivingEventsPyLambda: 
+    Type: AWS::Lambda::Function
     Properties:
-      Name: !Sub "Optimizador_${Stage}-Ecodistribucion_${Stage}-Optimizador-diarios"
-      SourceLocationArn: !Ref S3LocationOptimizadorRg
-      DestinationLocationArn: !Ref S3DestinationOptimizadorRg
-      Options:
-        VerifyMode: "ONLY_FILES_TRANSFERRED"
-        OverwriteMode: "ALWAYS"
-        TransferMode: "CHANGED"
-      Includes:
-        - FilterType: "SIMPLE_PATTERN"
-          Value: "/year=*"
-      Schedule:
-        ScheduleExpression: "cron(30 17-23/2,1,3,5 * * ? *)"
+      FunctionName: !Sub "Lambda-${pTeamName}-skycop-fleetdrivingevents-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt skycopPyRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pSkycopTimeout
+      MemorySize: !Ref pSkycopMemorySize
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
+          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
 
-  OptimizadorTableAnalyticsRg:
+  skycopFleetStopPyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-skycop-fleetstop-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt skycopPyRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pSkycopTimeout
+      MemorySize: !Ref pSkycopMemorySize
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
+          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  skycopSpeedingsPyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-skycop-speedings-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt skycopPyRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pSkycopSpeedingTimeout
+      MemorySize: !Ref pSkycopMemorySize
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
+          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper          
+
+  skycopEventsPyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-skycop-eventos-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt skycopPyRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pSkycopTimeout
+      MemorySize: !Ref pSkycopMemorySize
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
+          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  skycopEventsConsolidadoPyLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-skycop-eventos-consolidado-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt skycopPyRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pSkycopTimeoutConsolidado
+      MemorySize: !Ref pSkycopMemorySizeConsolidado
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pAWSAccountId
+          SKYCOP_TOKEN_SECRETS_NAME: !Ref skycopKeyCredentialsSecrets
+          ANALYTICS_BUCKET_NAME : !Ref pbucketAnalytics
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+  
+  skycopEventsPyEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: !Ref pSkycopCronExpression
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-skycop-eventos"
+            Arn: !GetAtt skycopEventsPyLambda.Arn
+
+  skycopEventsPyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt skycopEventsPyLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt skycopEventsPyEventRule.Arn
+
+  # Tabla para datos SKYCOP de eventos.
+  skycopEventosAnalyticsTable:
     Type: AWS::Glue::Table
     Properties:
       CatalogId: !Ref pAWSAccountId
       DatabaseName: !Ref pdbAnalyticsName
       TableInput:
-        Name: rg_in_optimizador_analitycsss
+        Name: py_sc_skycop_event_ent_sal_analytics
         TableType: EXTERNAL_TABLE
+        Description: Tabla para consultar datos de SKYCOP Eventos
         Parameters:
           "classification": "json"
           "compressionType": "SNAPPY"
@@ -127,55 +342,162 @@ Resources:
           "projection.day.digits": "2"
           "projection.day.range": "01,31"
         PartitionKeys:
-        - {Name: year, Type: string}
-        - {Name: month, Type: string}
-        - {Name: day, Type: string}
+          - {Name: year, Type: string}
+          - {Name: month, Type: string}
+          - {Name: day, Type: string}
         StorageDescriptor:
           OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
           Columns:
-            - {Name: plan_id, Type: bigint}
-            - {Name: plan_created_at, Type: timestamp}
-            - {Name: plan_bukrs, Type: string}
-            - {Name: plan_profile, Type: string}
-            - {Name: plan_tpp, Type: string}
-            - {Name: plan_date, Type: date}
-            - {Name: plan_user_id, Type: int}
-            - {Name: plan_description, Type: string}
-            - {Name: calc_id, Type: bigint}
-            - {Name: calc_created_at, Type: timestamp}
-            - {Name: calc_bukrs, Type: string}
-            - {Name: calc_ptot, Type: int}
-            - {Name: calc_ptotm, Type: int}
-            - {Name: calc_ptotc, Type: int}
-            - {Name: calc_tknumr, Type: string}
-            - {Name: calc_ptotr, Type: int}
-            - {Name: calc_clients, Type: int}
-            - {Name: calc_utilization, Type: string}
-            - {Name: calc_peso, Type: string}
-            - {Name: calc_utilizationp, Type: string}
-            - {Name: calc_exception_sap, Type: string}
-            - {Name: calc_status, Type: string}
-            - {Name: calc_transactionid, Type: string}
-            - {Name: calc_transactionidexport, Type: string}
-            - {Name: calc_ntrip, Type: int}
-            - {Name: calc_truck, Type: string}
-            - {Name: calc_truck_box, Type: string}
-            - {Name: calc_delivery_pallet, Type: string}
-            - {Name: calc_user_comments, Type: string}
-            - {Name: calc_planheader_id, Type: bigint}
-            - {Name: sap_bukrs, Type: string}
-            - {Name: sap_tknum, Type: string}
-            - {Name: sap_shtyp, Type: string}
-            - {Name: sap_tplst, Type: string}
-            - {Name: sap_erdat, Type: timestamp}
-            - {Name: sap_route, Type: string}
-            - {Name: sap_tdlnr, Type: string}
-            - {Name: sap_rpfar1, Type: string}
-            - {Name: sap_rpmowa, Type: string}
-            - {Name: sap_stdis, Type: string}
+            - {Name: fecha, Type: string}
+            - {Name: deviceid, Type: string}
+            - {Name: date_time, Type: string}
+            - {Name: description, Type: string}
+            - {Name: deviceNumber, Type: string}            
+            - {Name: driverName, Type: string}
+            - {Name: event, Type: string}
+            - {Name: geofence, Type: string}
+            - {Name: heading , Type: double}
+            - {Name: latitude, Type: double}
+            - {Name: longitude, Type: double}
+            - {Name: speed, Type: double}
+            - {Name: title, Type: string}
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/py/skycop/eventos_ent_sal/
           InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          Location: !Sub s3://josemaria-s3-prueba-dev/regional/externa/rg_in_optimizador
-          Compressed: True
+          Compressed: true
           SerdeInfo:
             SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-
+  skycopFleetDrivingEventsAnalyticsTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: py_sc_skycop_fleet_driving_events_analytics
+        TableType: EXTERNAL_TABLE
+        Description: Tabla para consultar datos de SKYCOP FleetDrivingEvents
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+          - {Name: year, Type: string}
+          - {Name: month, Type: string}
+          - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: fecha, Type: string}
+            - {Name: deviceId, Type: string}
+            - {Name: date_time, Type: string}
+            - {Name: eventCode, Type: string}
+            - {Name: eventDescription, Type: string}
+            - {Name: latitude, Type: double}
+            - {Name: longitude, Type: double}
+            - {Name: speed, Type: double}
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/py/skycop/fleet_driving_events/
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Compressed: true
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+  skycopFleetStopAnalyticsTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: py_sc_skycop_fleet_stop_analytics
+        TableType: EXTERNAL_TABLE
+        Description: Tabla para consultar datos de SKYCOP FleetStop
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+          - {Name: year, Type: string}
+          - {Name: month, Type: string}
+          - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: fecha, Type: string}
+            - {Name: deviceId, Type: string}
+            - {Name: date_time, Type: string}
+            - {Name: duration, Type: double}
+            - {Name: latitude, Type: double}
+            - {Name: longitude, Type: double}
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/py/skycop/fleet_stops/
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Compressed: true
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+  skycopSpeedingsAnalyticsTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: py_sc_skycop_speedings_analytics
+        TableType: EXTERNAL_TABLE
+        Description: Tabla para consultar datos de SKYCOP Speedings
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+          - {Name: year, Type: string}
+          - {Name: month, Type: string}
+          - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: fecha, Type: string}
+            - {Name: deviceId, Type: string}
+            - {Name: deviceNumber, Type: string}
+            - {Name: driverId, Type: string}
+            - {Name: driverName, Type: string}
+            - {Name: iButtonId, Type: string}
+            - {Name: startDate, Type: string}
+            - {Name: endDate, Type: string}
+            - {Name: description, Type: string}
+            - {Name: startLatitude, Type: double}
+            - {Name: startLongitude, Type: double}
+            - {Name: endLatitude, Type: double}
+            - {Name: endLongitude, Type: double}
+            - {Name: averageSpeed, Type: double}
+            - {Name: maxSpeed, Type: double}
+            - {Name: distance, Type: double}
+            - {Name: duration, Type: double}
+            - {Name: positions, Type: bigint}
+            - {Name: zone, Type: string}
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/py/skycop/speedings/
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Compressed: true
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
