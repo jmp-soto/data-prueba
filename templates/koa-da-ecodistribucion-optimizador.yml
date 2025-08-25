@@ -273,11 +273,36 @@ Resources:
       Tags:
         - Key: develop
           Value: !Ref pdeveloper
+  SMSimpliRouteKpiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SMSimpliRouteKpiRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SMLambdaAndSNSPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt skycopEventsPyLambda.Arn
+                  - !GetAtt skycopSpeedingsPyLambda.Arn
+                  - !GetAtt skycopFleetDrivingEventsPyLambda.Arn
+                  - !GetAtt skycopFleetStopPyLambda.Arn
+
 
   SMSkycopKpi:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      RoleArn: !GetAtt skycopPyRole.Arn
+      RoleArn: !GetAtt SMSimpliRouteKpiRole.Arn
       StateMachineName: !Sub "sm-skycop-${pCountryPy}"
       TracingConfiguration:
         Enabled: true
