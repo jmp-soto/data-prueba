@@ -185,7 +185,7 @@ Resources:
               desarrollador = os.getenv("DEVELOPER", "Desconocido")
               return {
                   "statusCode": 200,
-                  "body": f"Hola mundo desde {desarrollador}"
+                  "body": f"Hola mundo desde desd {desarrollador}"
               }
       Environment:
         Variables:
