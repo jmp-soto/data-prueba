@@ -83,7 +83,7 @@ jobs:
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           MATRIX='{"include":['
-          for stack in eta misupply nps-feedback optimizador; do
+          for stack in eta misupply nps-feedback optimizador eta-py; do
             if [[ "$TITLE" == *"koa-da-ecodistribucion-$stack"* || "$TITLE" == *"-all"* ]]; then
               MATRIX+="{\"stack\":\"koa-da-ecodistribucion-$stack\"},"
             fi
@@ -264,8 +264,8 @@ jobs:
             koa-da-ecodistribucion-eta)
               deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta 
               ;;
-            koa-da-ecodistribucion-py-eta)
-              deploy_stack koa-da-ecodistribucion-py-eta.yml koa-da-ecodistribucion-py-eta 
+            koa-da-ecodistribucion-eta-py)
+              deploy_stack koa-da-ecodistribucion-eta-py.yml koa-da-ecodistribucion-eta-py 
               ;;  
             koa-da-ecodistribucion-misupply)
               deploy_stack koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
