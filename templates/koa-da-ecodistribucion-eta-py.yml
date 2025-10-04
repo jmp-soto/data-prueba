@@ -1,0 +1,504 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for creating AWS Proyecto Eta
+
+Parameters:
+  Stage:
+    Type: String
+    Description: Environment name (dev/qa/prod)
+    AllowedValues: [dev, qa, prod]
+  pBranchName:
+    Description: "Branch Name(all lowercase, no symbols or spaces)"
+    Type: String
+  pArtifactsBucket:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pbucketAnalytics:
+    Description: "Artifact Bucket (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSRegion:
+    Description: "AWS region (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountId:
+    Description: "AWS account ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAWSAccountOpt:
+    Description: "AWS account optimizador ID (all lowercase, no symbols or spaces)"
+    Type: String
+  pAccountName:
+    Description: "AWS account name (all lowercase, no symbols or spaces)"
+    Type: String
+  pTeamName:
+    Description: "Team Name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeploymentDate:
+    Description: "Deployment date (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbStageName:
+    Description: "Database Stage name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdbAnalyticsName:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+  pdeveloper:
+    Description: "Database analytics name (all lowercase, no symbols or spaces)"
+    Type: String
+    Default: "Josemaria_Paucar"
+  pRDAWSAccountId:
+    Description: "Account Ruta Digital (all lowercase, no symbols or spaces)"
+    Type: String
+  # País parameters
+  pCountryPy:
+    Description: "Country code for Chile"
+    Type: String
+    Default: "cl"
+  pCountryPy:
+    Description: "Country code for Paraguay"
+    Type: String
+    Default: "py"
+  pCountryAr:
+    Description: "Country code for Argentina"
+    Type: String
+    Default: "ar"
+  pCountryBr:
+    Description: "Country code for Brazil"
+    Type: String
+    Default: "br"
+  pCountryRg:
+    Description: "Country code for Regional"
+    Type: String
+    Default: "rg"
+  # Required for referenced resources
+  pAccountAwsLayer:
+    Description: "Id account layer for AWS Wrangler"
+    Type: String
+    Default: 336392948345
+  # Nuevos parámetros para configuración dinámica
+  pEtaCronExpression:
+    Description: "Expresión cron para la programación del consolidado ETA"
+    Type: String
+    Default: "cron(0 7 * * ? *)"
+  pEtaMemorySizeMl:
+    Description: "Tamaño de memoria para la función Lambda ML de ETA"
+    Type: Number
+    Default: 2048
+  pEtaMemorySizeSr:
+    Description: "Tamaño de memoria para la función Lambda SR de ETA"
+    Type: Number
+    Default: 2048
+  pEtaMemorySizeConsolidado:
+    Description: "Tamaño de memoria para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 1024
+  pEtaTimeoutMl:
+    Description: "Timeout para la función Lambda ML de ETA"
+    Type: Number
+    Default: 900
+  pEtaTimeoutSr:
+    Description: "Timeout para la función Lambda SR de ETA"
+    Type: Number
+    Default: 900
+  pEtaTimeoutConsolidado:
+    Description: "Timeout para la función Lambda de consolidado ETA"
+    Type: Number
+    Default: 360
+
+Mappings:
+  center:
+    dev:
+      default: "puente-alto"
+    qa:
+      default: "carlos-valdovinos"
+    prod:
+      default: "puente-alto"
+
+#Conditions:
+#  IsDev: !Equals [!Ref Stage, "dev"]
+Resources:
+  projectEtaClRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "Role-${pTeamName}-Eta-${pCountryPy}"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        - "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${pTeamName}-access-to-s3-policy-bucketfile"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AccessToS3Policy
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub "arn:aws:s3:::${pTeamName}-${pAccountName}-analytics-${Stage}/*"
+              - Sid: ReadSecretsManager
+                Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:ListSecrets"
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${pAWSRegion}:${pAWSAccountId}:secret:*"
+              - Sid: AccessTosqsPolicy
+                Effect: Allow
+                Action:
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                  - "sqs:GetQueueAttributes"
+                  - "sqs:GetQueueUrl"
+                  - "sqs:SendMessage"
+                Resource:
+                  - !GetAtt taMlCLSqs.Arn
+                  - !GetAtt taMlCLSqsDeadLetter.Arn
+              - Sid: AccessToLogsPolicy
+                Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
+
+  etaCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-${pCountryPy}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: process_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: process_date
+          KeySchema:
+            - AttributeName: process_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  etaDetailCLDynamo:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-detail-${pCountryPy}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: process_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: process_date
+          KeySchema:
+            - AttributeName: process_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  etaDetailCLDynamos:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "table-${pTeamName}-eta-detail-b-${pCountryPy}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: process_date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: process_date
+          KeySchema:
+            - AttributeName: process_date
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+  # Recurso para almacenar los tokens de API en Secrets Manager
+
+  etaSrCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-sr-eta-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pEtaTimeoutSr
+      MemorySize: !Ref pEtaMemorySizeSr
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
+          CENTRO: !FindInMap [center, !Ref Stage, default]
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  etaMlCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-ml-eta-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pEtaTimeoutMl
+      MemorySize: !Ref pEtaMemorySizeMl
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          ACCOUNT_ID: !Ref pAWSAccountId
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  taMlCLSqsDeadLetter:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-dlq-${pTeamName}-ml-eta-${pCountryPy}"
+
+  taMlCLSqs:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "sqs-${pTeamName}-ml-eta-${pCountryPy}"
+      VisibilityTimeout: 900
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt taMlCLSqsDeadLetter.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  taMlCLSqsMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt taMlCLSqs.Arn
+      FunctionName: !GetAtt etaMlCLLambda.Arn
+      BatchSize: 1
+      Enabled: true
+
+  consolidadoetaCLLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "Lambda-${pTeamName}-eta-consolidado-${pCountryPy}"
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt projectEtaClRole.Arn
+      Runtime: python3.12
+      Timeout: !Ref pEtaTimeoutConsolidado
+      MemorySize: !Ref pEtaMemorySizeConsolidado
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": "hola koandina"
+              }
+      Environment:
+        Variables:
+          ACCOUNT_ID: !Ref pRDAWSAccountId
+          DYNAMO_TABLE_ETA: !Ref etaCLDynamo
+          DYNAMO_TABLE_ETA_DETAIL: !Ref etaDetailCLDynamo
+          BUCKET_STAGE: !Sub "da-ecodistribucion-analytics-${Stage}"
+      Layers:
+        - !Sub "arn:aws:lambda:${pAWSRegion}:${pAccountAwsLayer}:layer:AWSSDKPandas-Python312:16"
+      Tags:
+        - Key: develop
+          Value: !Ref pdeveloper
+
+  etaConsolidadoClEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        ScheduleExpression: !Ref pEtaCronExpression
+        State: "ENABLED"
+        Targets:
+          - Id: !Sub "Eventrule-${pTeamName}-eta-consolidado"
+            Arn: !GetAtt consolidadoetaCLLambda.Arn
+
+  etaConsolidadoClLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt consolidadoetaCLLambda.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt etaConsolidadoClEventRule.Arn
+ 
+  VwDimMaterialEtaTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: db_ecodistribucion_regional_stage
+      TableInput:
+        Name: vw_dim_material_eta
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: csv
+          has_encrypted_data: false
+          skip.header.line.count: '1'
+        StorageDescriptor:
+          Columns:
+            - Name: material
+              Type: string
+              Comment: from deserializer
+            - Name: matnr
+              Type: string
+              Comment: from deserializer
+            - Name: mat_text
+              Type: string
+              Comment: from deserializer
+            - Name: return_pack_text
+              Type: string
+              Comment: from deserializer
+            - Name: peso_neto
+              Type: string
+              Comment: from deserializer
+            - Name: unidad_peso
+              Type: string
+              Comment: from deserializer
+            - Name: zuc_measure
+              Type: string
+              Comment: from deserializer
+          Location: !Sub s3://da-ecodistribucion-stage-${Stage}/regional/eta/vw_dim_material_eta
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          Compressed: false
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              escapeChar: '\\'
+              quoteChar: '"'
+              separatorChar: ','
+          StoredAsSubDirectories: false
+
+  # Tabla para datos ETA consolidados
+  etaAnalyticsTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref pAWSAccountId
+      DatabaseName: !Ref pdbAnalyticsName
+      TableInput:
+        Name: cl_in_eta_analytics
+        TableType: EXTERNAL_TABLE
+        Description: Tabla para consultar datos de ETA consolidados
+        Parameters:
+          "classification": "json"
+          "compressionType": "SNAPPY"
+          "projection.enabled": "true"
+          "projection.year.type": "integer"
+          "projection.year.digits": "4"
+          "projection.year.range": "2023,2035"
+          "projection.month.type": "integer"
+          "projection.month.digits": "2"
+          "projection.month.range": "01,12"
+          "projection.day.type": "integer"
+          "projection.day.digits": "2"
+          "projection.day.range": "01,31"
+        PartitionKeys:
+          - {Name: year, Type: string}
+          - {Name: month, Type: string}
+          - {Name: day, Type: string}
+        StorageDescriptor:
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Columns:
+            - {Name: visita_id, Type: string}
+            - {Name: address, Type: string}
+            - {Name: start_time_route, Type: timestamp}
+            - {Name: tiempo_descarga, Type: bigint}            
+            - {Name: driver_id, Type: string}
+            - {Name: latitude, Type: string}
+            - {Name: longitude, Type: string}
+            - {Name: order, Type: bigint}
+            - {Name: reorder, Type: bigint}
+            - {Name: eta_start, Type: string}
+            - {Name: eta_end, Type: string}
+            - {Name: eta, Type: string}
+            - {Name: eta_message, Type: string}
+            - {Name: checkout_time, Type: timestamp}
+            - {Name: visit, Type: string}
+            - {Name: route_id, Type: string}
+            - {Name: planned_date, Type: string}
+            - {Name: process_date, Type: string}
+          Location: !Sub s3://da-ecodistribucion-analytics-${Stage}/cl/miruta/eta/
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          Compressed: true
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+
+  VisitasRutaTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VisitasRuta
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: route_id
+          AttributeType: S
+        - AttributeName: nro_envio_order_id_visita
+          AttributeType: S
+        - AttributeName: process_date
+          AttributeType: S  # Para la GSI
+      KeySchema:
+        - AttributeName: route_id
+          KeyType: HASH
+        - AttributeName: nro_envio_order_id_visita
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSIProcessDate
+          KeySchema:
+            - AttributeName: process_date
+              KeyType: HASH
+            - AttributeName: nro_envio_order_id_visita
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+
