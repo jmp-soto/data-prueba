@@ -265,7 +265,7 @@ jobs:
               deploy_stack koa-da-ecodistribucion-eta.yml koa-da-ecodistribucion-eta 
               ;;
             koa-da-ecodistribucion-py-eta)
-              deploy_stack koa-da-ecodistribucion-eta-py.yml koa-da-ecodistribucion-eta-py 
+              deploy_stack koa-da-ecodistribucion-py-eta.yml koa-da-ecodistribucion-py-eta 
               ;;  
             koa-da-ecodistribucion-misupply)
               deploy_stack koa-da-ecodistribucion-misupply.yml koa-da-ecodistribucion-misupply
