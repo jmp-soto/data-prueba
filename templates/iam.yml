@@ -113,3 +113,4 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:s3:::prueba-josemaria-analytics-${Stage}/*"
                   - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev/*"
+                  - !Sub "arn:aws:s3:::cuenta-cuenta-stage-dev/*"
