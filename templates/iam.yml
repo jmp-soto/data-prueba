@@ -74,7 +74,7 @@ Resources:
   dataSyncOptimizadorRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "role-${pTeamName}-datasync-${pCountryRg}"
+      RoleName: !Sub "role-${pTeamName}-datasync-${pCountryPy}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
